@@ -1,8 +1,13 @@
 # Copyright (c) 2024 Microsoft Corporation.
 # Licensed under the MIT License
 
-from ._version import __version__
+from __future__ import annotations
+
+from ._errors import GraphRAGError
+from ._version import __title__, __version__
 
 __all__ = [
-    "__version__"
+    "GraphRAGError",
+    "__title__",
+    "__version__",
 ]

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from itertools import islice
 from typing import (
     Generator,

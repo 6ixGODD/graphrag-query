@@ -1,6 +1,8 @@
 # Copyright (c) 2024 Microsoft Corporation.
 # Licensed under the MIT License
 
+from __future__ import annotations
+
 from ..._search._context import _builders
 from ..._search._context import _loaders
 

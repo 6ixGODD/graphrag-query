@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import List, Optional
 
 PARQUET_FILE_NAME__NODES: str = "create_final_nodes.parquet"

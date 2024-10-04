@@ -1,6 +1,8 @@
 # Copyright (c) 2024 Microsoft Corporation.
 # Licensed under the MIT License
 
+from __future__ import annotations
+
 from collections import defaultdict
 from typing import (
     Any,

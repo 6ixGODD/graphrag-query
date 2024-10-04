@@ -1,8 +1,8 @@
+from __future__ import annotations
+
 from typing import Literal, Optional
 
 import pydantic
-
-from ..._search._types import _search
 
 
 class Delta(pydantic.BaseModel):

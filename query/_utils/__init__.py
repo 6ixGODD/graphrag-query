@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from ._text import (
     chunk_text,
     combine_embeddings,

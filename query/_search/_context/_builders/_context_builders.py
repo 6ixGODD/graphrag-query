@@ -1,6 +1,8 @@
 # Copyright (c) 2024 Microsoft Corporation.
 # Licensed under the MIT License
 
+from __future__ import annotations
+
 import warnings
 from abc import ABC, abstractmethod
 from typing import (

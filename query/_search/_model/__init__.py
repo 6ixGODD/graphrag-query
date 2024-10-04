@@ -1,6 +1,8 @@
 # Copyright (c) 2024 Microsoft Corporation.
 # Licensed under the MIT License
 
+from __future__ import annotations
+
 from ..._search._model._community import Community
 from ..._search._model._community_report import CommunityReport
 from ..._search._model._covariate import Covariate

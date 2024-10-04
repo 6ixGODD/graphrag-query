@@ -1,6 +1,11 @@
 # Copyright (c) 2024 Microsoft Corporation.
 # Licensed under the MIT License
 
+from __future__ import annotations
+
+import importlib
+from typing import Any
+
 from .._search import (
     _base,
     _context,
@@ -85,3 +90,10 @@ __all__ = [
     "QueryResultChunkVerbose",
     "QueryResultVerbose",
 ]
+
+
+# Copied from https://peps.python.org/pep-0562/
+def __getattr__(name: str) -> Any:
+    if name in __all__:
+        return importlib.import_module("." + name, __name__)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

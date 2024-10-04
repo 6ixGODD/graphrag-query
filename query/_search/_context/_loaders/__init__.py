@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from ...._search._context._loaders._base import BaseContextLoader
 from ...._search._context._loaders._context_loaders import (
     GlobalContextLoader,

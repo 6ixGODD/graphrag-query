@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import time
 from abc import ABC, abstractmethod
 from typing import (
@@ -57,7 +59,8 @@ class QueryEngine(ABC):
         verbose: bool = True,
         stream: bool = False,
         **kwargs: Any,
-    ) -> Union[_types.SearchResult_T, _types.StreamSearchResult_T]: ...
+    ) -> Union[_types.SearchResult_T, _types.StreamSearchResult_T]:
+        ...
 
     def _parse_result(
         self,
@@ -206,7 +209,8 @@ class AsyncQueryEngine(ABC):
         verbose: bool = True,
         stream: bool = False,
         **kwargs: Any,
-    ) -> Union[_types.SearchResult_T, _types.AsyncStreamSearchResult_T]: ...
+    ) -> Union[_types.SearchResult_T, _types.AsyncStreamSearchResult_T]:
+        ...
 
     def _parse_result(
         self,
