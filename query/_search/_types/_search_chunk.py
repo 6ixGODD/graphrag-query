@@ -4,6 +4,8 @@ from typing import Literal, Optional
 
 import pydantic
 
+from . import _search
+
 
 class Delta(pydantic.BaseModel):
     content: Optional[str] = None
@@ -42,5 +44,5 @@ class SearchResultChunk(pydantic.BaseModel):
     choice: ChunkChoice
     """A list of chat completion choices."""
 
-    usage: Optional[_query.Usage] = None
+    usage: Optional[_search.Usage] = None
     """Usage statistics for the completion request."""

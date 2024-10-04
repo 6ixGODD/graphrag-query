@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from os import PathLike
+from pathlib import Path
 from typing import (
     Annotated,
     Any,
@@ -145,8 +147,45 @@ class GraphRAGConfig(pydantic_settings.BaseSettings):
     embedding: EmbeddingConfig
     logging: LoggingConfig
     context: ContextConfig
-    query: Union[LocalSearchConfig, GlobalSearchConfig]
+    local_search: LocalSearchConfig
+    global_search: GlobalSearchConfig
 
     model_config = pydantic_settings.SettingsConfigDict(
-        env_prefix='GRAPHRAG_SERVER_', validate_default=False, env_nested_delimiter='__'
+        env_prefix='GRAPHRAG_SERVER_',
+        validate_default=False,
+        env_nested_delimiter='__'
     )
+
+    @classmethod
+    def from_config_file(
+        cls,
+        config_file: Union[str, PathLike[str], Path],
+        **kwargs: Any,
+    ) -> GraphRAGConfig:
+        config_file_ = Path(config_file)
+        if not config_file_.exists():
+            raise FileNotFoundError(f"Config file not found: {config_file_}")
+
+        if config_file_.suffix not in ['.json', '.toml', '.yaml', '.yml']:
+            raise ValueError(f"Unsupported config file format: {config_file_.suffix}")
+
+        if config_file_.suffix == '.json':
+            import json
+            with open(config_file_, 'r') as f:
+                config_dict = json.load(f)
+        elif config_file_.suffix == '.toml':
+            try:
+                import toml
+            except ImportError:
+                raise ImportError("Please install the 'toml' package to read TOML files.")
+            with open(config_file_, 'r') as f:
+                config_dict = toml.load(f)
+        else:
+            try:
+                import yaml
+            except ImportError:
+                raise ImportError("Please install the 'pyyaml' package to read YAML files.")
+            with open(config_file_, 'r') as f:
+                config_dict = yaml.safe_load(f)
+
+        return cls(**config_dict, **kwargs)

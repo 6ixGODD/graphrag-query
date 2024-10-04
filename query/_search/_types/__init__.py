@@ -12,7 +12,7 @@ from typing import (
 
 from ..._search import _context
 from ..._search._types._search import Choice, Message, SearchResult, Usage
-from ..._search._types._search_chunk import ChunkChoice, Delta, QueryResultChunk
+from ..._search._types._search_chunk import ChunkChoice, Delta, SearchResultChunk
 from ..._search._types._search_chunk_verbose import SearchResultChunkVerbose
 from ..._search._types._search_verbose import SearchResultVerbose
 
@@ -21,7 +21,7 @@ __all__ = [
     "Choice",
     "Message",
     "Usage",
-    "QueryResultChunk",
+    "SearchResultChunk",
     "ChunkChoice",
     "Delta",
     "SearchResultChunkVerbose",
@@ -30,9 +30,9 @@ __all__ = [
 
 SearchResult_T: TypeAlias = Union[SearchResult, SearchResultVerbose]
 
-StreamSearchResult_T: TypeAlias = Generator[Union[QueryResultChunk, SearchResultChunkVerbose], None, None]
+StreamSearchResult_T: TypeAlias = Generator[Union[SearchResultChunk, SearchResultChunkVerbose], None, None]
 
-AsyncStreamSearchResult_T: TypeAlias = AsyncGenerator[Union[QueryResultChunk, SearchResultChunkVerbose], None]
+AsyncStreamSearchResult_T: TypeAlias = AsyncGenerator[Union[SearchResultChunk, SearchResultChunkVerbose], None]
 
 ConversationHistory_T: TypeAlias = Union[
     _context.ConversationHistory,

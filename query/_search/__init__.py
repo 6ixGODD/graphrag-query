@@ -47,10 +47,10 @@ Identified = _model.Identified
 Named = _model.Named
 Relationship = _model.Relationship
 TextUnit = _model.TextUnit
-QueryResult = _types.SearchResult
-QueryResultChunk = _types.QueryResultChunk
-QueryResultChunkVerbose = _types.SearchResultChunkVerbose
-QueryResultVerbose = _types.SearchResultVerbose
+SearchResult = _types.SearchResult
+SearchResultChunk = _types.SearchResultChunk
+SearchResultChunkVerbose = _types.SearchResultChunkVerbose
+SearchResultVerbose = _types.SearchResultVerbose
 
 __all__ = [
     "AsyncQueryEngine",
@@ -85,10 +85,10 @@ __all__ = [
     "Named",
     "Relationship",
     "TextUnit",
-    "QueryResult",
-    "QueryResultChunk",
-    "QueryResultChunkVerbose",
-    "QueryResultVerbose",
+    "SearchResult",
+    "SearchResultChunk",
+    "SearchResultChunkVerbose",
+    "SearchResultVerbose",
 ]
 
 

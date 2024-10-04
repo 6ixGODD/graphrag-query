@@ -23,7 +23,7 @@ class ChatLLM(_base.BaseChatLLM):
         organization: Optional[str] = None,
         base_url: Optional[str] = None,
         timeout: Optional[float] = None,
-        max_retries: int = 3,
+        max_retries: Optional[int] = None,
         http_client: Optional[httpx.Client] = None,
         **kwargs: Any
     ) -> None:
@@ -32,7 +32,7 @@ class ChatLLM(_base.BaseChatLLM):
             organization=organization,
             base_url=base_url,
             timeout=timeout,
-            max_retries=max_retries,
+            max_retries=max_retries or 3,
             http_client=http_client,
             **_utils.filter_kwargs(openai.OpenAI, kwargs)
         )
@@ -73,7 +73,7 @@ class AsyncChatLLM(_base.BaseAsyncChatLLM):
         organization: Optional[str] = None,
         base_url: Optional[str] = None,
         timeout: Optional[float] = None,
-        max_retries: int = 3,
+        max_retries: Optional[int] = None,
         http_client: Optional[httpx.AsyncClient] = None,
         **kwargs: Any
     ) -> None:
@@ -82,7 +82,7 @@ class AsyncChatLLM(_base.BaseAsyncChatLLM):
             organization=organization,
             base_url=base_url,
             timeout=timeout,
-            max_retries=max_retries,
+            max_retries=max_retries or 3,
             http_client=http_client,
             **_utils.filter_kwargs(openai.AsyncOpenAI, kwargs)
         )

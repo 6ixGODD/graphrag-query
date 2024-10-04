@@ -24,10 +24,10 @@ class Embedding(_base.BaseEmbedding):
         organization: Optional[str] = None,
         base_url: Optional[str] = None,
         timeout: Optional[float] = None,
-        max_retries: int = 3,
+        max_retries: Optional[int] = None,
         http_client: Optional[httpx.Client] = None,
-        max_tokens: int = 8191,
-        token_encoder: tiktoken.Encoding = tiktoken.get_encoding("cl100k_base"),
+        max_tokens: Optional[int] = None,
+        token_encoder: Optional[tiktoken.Encoding] = None,
         **kwargs: Any
     ) -> None:
         self._client = openai.OpenAI(
@@ -35,13 +35,13 @@ class Embedding(_base.BaseEmbedding):
             organization=organization,
             base_url=base_url,
             timeout=timeout,
-            max_retries=max_retries,
+            max_retries=max_retries or 3,
             http_client=http_client,
             **_utils.filter_kwargs(openai.OpenAI, kwargs)
         )
         self._model = model
-        self._max_tokens = max_tokens
-        self._token_encoder = token_encoder
+        self._max_tokens = max_tokens or 8191
+        self._token_encoder = token_encoder or tiktoken.get_encoding("cl100k_base")
 
     def embed(self, text: str, **kwargs: Any) -> _types.EmbeddingResponse_T:
         chunk_embeddings: List[List[float]] = []
@@ -74,10 +74,10 @@ class AsyncEmbedding(_base.BaseAsyncEmbedding):
         organization: Optional[str] = None,
         base_url: Optional[str] = None,
         timeout: Optional[float] = None,
-        max_retries: int = 3,
+        max_retries: Optional[int] = None,
         http_client: Optional[httpx.AsyncClient] = None,
-        max_tokens: int = 8191,
-        token_encoder: tiktoken.Encoding = tiktoken.get_encoding("cl100k_base"),
+        max_tokens: Optional[int] = None,
+        token_encoder: Optional[tiktoken.Encoding] = None,
         **kwargs: Any
     ) -> None:
         self._aclient = openai.AsyncOpenAI(
@@ -85,13 +85,13 @@ class AsyncEmbedding(_base.BaseAsyncEmbedding):
             organization=organization,
             base_url=base_url,
             timeout=timeout,
-            max_retries=max_retries,
+            max_retries=max_retries or 3,
             http_client=http_client,
             **_utils.filter_kwargs(openai.AsyncOpenAI, kwargs)
         )
         self._model = model
-        self._max_tokens = max_tokens
-        self._token_encoder = token_encoder
+        self._max_tokens = max_tokens or 8191
+        self._token_encoder = token_encoder or tiktoken.get_encoding("cl100k_base")
 
     async def aembed(self, text: str, **kwargs: Any) -> List[float]:
         chunk_embeddings: List[List[float]] = []

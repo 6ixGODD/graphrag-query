@@ -20,7 +20,7 @@ class LoggingMiddleware:
             f"[ {scope[const.Constants.METHOD_SCOPE_KEY]} {scope[const.Constants.PATH_SCOPE_KEY]} ]"
         )
 
-        async def send_wrapper(message):
+        async def send_wrapper(message) -> None:
             if message["type"] == "http.response.start":
                 logger.bind(
                     status_code=message[const.Constants.STATUS_MESSAGE_KEY],

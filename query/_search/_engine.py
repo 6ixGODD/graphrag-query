@@ -221,11 +221,11 @@ class GlobalSearchEngine(_base.QueryEngine):
         community_level: Optional[int] = None,
         map_sys_prompt: Optional[str] = None,
         reduce_sys_prompt: Optional[str] = None,
-        allow_general_knowledge: bool = True,
+        allow_general_knowledge: Optional[bool] = None,
         general_knowledge_sys_prompt: Optional[str] = None,
         no_data_answer: Optional[str] = None,
-        json_mode: bool = True,
-        max_data_tokens: int = 8000,
+        json_mode: Optional[bool] = None,
+        max_data_tokens: Optional[int] = None,
         encoding_model: Optional[str] = None,
 
         logger: Optional[_base.Logger] = None,
@@ -247,11 +247,11 @@ class GlobalSearchEngine(_base.QueryEngine):
         self._reduce_sys_prompt = reduce_sys_prompt or _defaults.GLOBAL_SEARCH__REDUCE__SYS_PROMPT
         if '{report_data}' not in self._reduce_sys_prompt:
             warnings.warn('Global Search\'s Reduce System Prompt does not contain "{report_data}"', RuntimeWarning)
-        self._allow_general_knowledge = allow_general_knowledge
+        self._allow_general_knowledge = allow_general_knowledge if allow_general_knowledge is not None else True
         self._general_knowledge_sys_prompt = (general_knowledge_sys_prompt or
                                               _defaults.GLOBAL_SEARCH__REDUCE__GENERAL_KNOWLEDGE_INSTRUCTION)
         self._no_data_answer = no_data_answer or _defaults.GLOBAL_SEARCH__REDUCE__NO_DATA_ANSWER
-        self._json_mode = json_mode
+        self._json_mode = json_mode if json_mode is not None else True
         self._data_max_tokens = max_data_tokens or _defaults.DEFAULT__GLOBAL_SEARCH__DATA_MAX_TOKENS
         self._logger = logger
 
@@ -475,13 +475,13 @@ class AsyncGlobalSearchEngine(_base.AsyncQueryEngine):
         community_level: Optional[int] = None,
         map_sys_prompt: Optional[str] = None,
         reduce_sys_prompt: Optional[str] = None,
-        allow_general_knowledge: bool = True,
+        allow_general_knowledge: Optional[bool] = None,
         general_knowledge_sys_prompt: Optional[str] = None,
         no_data_answer: Optional[str] = None,
-        json_mode: bool = True,
-        max_data_tokens: int = 8000,
+        json_mode: Optional[bool] = None,
+        max_data_tokens: Optional[int] = None,
         encoding_model: Optional[str] = None,
-        concurrent_coroutines: int = 16,
+        concurrent_coroutines: Optional[int] = None,
 
         logger: Optional[_base.Logger] = None,
         **kwargs: Any,
@@ -497,15 +497,15 @@ class AsyncGlobalSearchEngine(_base.AsyncQueryEngine):
         )
         self._map_sys_prompt = map_sys_prompt or _defaults.GLOBAL_SEARCH__MAP__SYS_PROMPT
         self._reduce_sys_prompt = reduce_sys_prompt or _defaults.GLOBAL_SEARCH__REDUCE__SYS_PROMPT
-        self._allow_general_knowledge = allow_general_knowledge
+        self._allow_general_knowledge = allow_general_knowledge if allow_general_knowledge is not None else True
         self._general_knowledge_sys_prompt = (general_knowledge_sys_prompt or
                                               _defaults.GLOBAL_SEARCH__REDUCE__GENERAL_KNOWLEDGE_INSTRUCTION)
         self._no_data_answer = no_data_answer or _defaults.GLOBAL_SEARCH__REDUCE__NO_DATA_ANSWER
-        self._json_mode = json_mode
+        self._json_mode = json_mode if json_mode is not None else True
         self._data_max_tokens = max_data_tokens or _defaults.DEFAULT__GLOBAL_SEARCH__DATA_MAX_TOKENS
         self._token_encoder = tiktoken.get_encoding(encoding_model or _defaults.DEFAULT__ENCODING_MODEL)
         self._logger = logger
-        self._semaphore = asyncio.Semaphore(concurrent_coroutines)
+        self._semaphore = asyncio.Semaphore(concurrent_coroutines or _defaults.DEFAULT__CONCURRENT_COROUTINES)
 
     async def asearch(
         self,

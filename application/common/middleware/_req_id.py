@@ -24,7 +24,7 @@ class RequestIDMiddleware:
             request_id = utils.gen_id(prefix=const.Constants.REQUEST_ID_PREFIX, __split='_')
             ctx.set_request_id(request_id)
 
-        async def send_wrapper(message):
+        async def send_wrapper(message) -> None:
             # Add request ID to the response headers
             if message[const.Constants.TYPE_MESSAGE_KEY] == "http.response.start":
                 message[const.Constants.HEADERS_MESSAGE_KEY].append(

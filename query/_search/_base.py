@@ -134,7 +134,7 @@ class QueryEngine(ABC):
                 total_tokens=chunk.usage.total_tokens,
             ) if chunk.usage else None
             if not verbose:
-                yield _types.QueryResultChunk(
+                yield _types.SearchResultChunk(
                     created=created.__int__(),
                     model=self._chat_llm.model,
                     system_fingerprint=chunk.system_fingerprint,
@@ -284,7 +284,7 @@ class AsyncQueryEngine(ABC):
                 total_tokens=chunk.usage.total_tokens,
             ) if chunk.usage else None
             if not verbose:
-                yield _types.QueryResultChunk(
+                yield _types.SearchResultChunk(
                     created=created.__int__(),
                     model=self._chat_llm.model,
                     system_fingerprint=chunk.system_fingerprint,
