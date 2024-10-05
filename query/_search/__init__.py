@@ -4,19 +4,17 @@
 from __future__ import annotations
 
 import importlib
-from typing import Any
+import typing
 
-from .._search import (
-    _base,
-    _context,
-    _engine,
-    _llm,
-    _model,
-    _types,
-)
+from .._search import _base_engine
+from .._search import _context
+from .._search import _engine
+from .._search import _llm
+from .._search import _model
+from .._search import _types
 
-AsyncQueryEngine = _base.AsyncQueryEngine
-QueryEngine = _base.QueryEngine
+AsyncQueryEngine = _base_engine.AsyncQueryEngine
+QueryEngine = _base_engine.QueryEngine
 BaseContextBuilder = _context.BaseContextBuilder
 GlobalContextBuilder = _context.GlobalContextBuilder
 LocalContextBuilder = _context.LocalContextBuilder
@@ -93,7 +91,7 @@ __all__ = [
 
 
 # Copied from https://peps.python.org/pep-0562/
-def __getattr__(name: str) -> Any:
+def __getattr__(name: str) -> typing.Any:
     if name in __all__:
         return importlib.import_module("." + name, __name__)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

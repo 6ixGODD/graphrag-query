@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from typing import cast, List, Optional
-
+import typing
 import pandas as pd
 
 from ...._search import _model
@@ -15,23 +14,23 @@ def get_entities(
     entities: pd.DataFrame,
     community_level: int,
     *,
-    id_col: Optional[str] = None,
-    short_id_col: Optional[str] = None,
-    title_col: Optional[str] = None,
-    type_col: Optional[str] = None,
-    description_col: Optional[str] = None,
-    name_embedding_col: Optional[str] = None,
-    description_embedding_col: Optional[str] = None,
-    graph_embedding_col: Optional[str] = None,
-    community_col: Optional[str] = None,
-    text_unit_ids_col: Optional[str] = None,
-    document_ids_col: Optional[str] = None,
-    rank_col: Optional[str] = None,
-    attributes_cols: Optional[List[str]] = None,
-) -> List[_model.Entity]:
+    id_col: typing.Optional[str] = None,
+    short_id_col: typing.Optional[str] = None,
+    title_col: typing.Optional[str] = None,
+    type_col: typing.Optional[str] = None,
+    description_col: typing.Optional[str] = None,
+    name_embedding_col: typing.Optional[str] = None,
+    description_embedding_col: typing.Optional[str] = None,
+    graph_embedding_col: typing.Optional[str] = None,
+    community_col: typing.Optional[str] = None,
+    text_unit_ids_col: typing.Optional[str] = None,
+    document_ids_col: typing.Optional[str] = None,
+    rank_col: typing.Optional[str] = None,
+    attributes_cols: typing.Optional[typing.List[str]] = None,
+) -> typing.List[_model.Entity]:
     # Filter entities by community level
     nodes_ = nodes.copy()
-    nodes_ = cast(pd.DataFrame, nodes_[nodes_.level <= community_level])
+    nodes_ = typing.cast(pd.DataFrame, nodes_[nodes_.level <= community_level])
     # Rename columns
     nodes_ = nodes_[['title', 'degree', 'community']].copy()
     nodes_ = nodes_.rename(
@@ -71,11 +70,11 @@ def get_community_reports(
     nodes: pd.DataFrame,
     community_level: int,
     *,
-    id_col: Optional[str] = None,
-    short_id_col: Optional[str] = None,
-    summary_embedding_col: Optional[str] = None,
-    content_embedding_col: Optional[str] = None,
-) -> List[_model.CommunityReport]:
+    id_col: typing.Optional[str] = None,
+    short_id_col: typing.Optional[str] = None,
+    summary_embedding_col: typing.Optional[str] = None,
+    content_embedding_col: typing.Optional[str] = None,
+) -> typing.List[_model.CommunityReport]:
     # Filter community reports by community level
     nodes_ = nodes.copy()
     nodes_ = nodes_[nodes_.level <= community_level]
@@ -105,11 +104,11 @@ def get_community_reports(
 def get_relationships(
     relationships: pd.DataFrame,
     *,
-    short_id_col: Optional[str] = None,
-    description_embedding_col: Optional[str] = None,
-    document_ids_col: Optional[str] = None,
-    attributes_cols: Optional[List[str]] = None,
-) -> List[_model.Relationship]:
+    short_id_col: typing.Optional[str] = None,
+    description_embedding_col: typing.Optional[str] = None,
+    document_ids_col: typing.Optional[str] = None,
+    attributes_cols: typing.Optional[typing.List[str]] = None,
+) -> typing.List[_model.Relationship]:
     return _dfs.read_relationships(
         relationships.copy(),
         short_id_col=short_id_col or _defaults.COLUMN__RELATIONSHIP__SHORT_ID,
@@ -122,10 +121,10 @@ def get_relationships(
 def get_covariates(
     covariates: pd.DataFrame,
     *,
-    short_id_col: Optional[str] = None,
-    attributes_cols: Optional[List[str]] = None,
-    text_unit_ids_col: Optional[str] = None,
-) -> List[_model.Covariate]:
+    short_id_col: typing.Optional[str] = None,
+    attributes_cols: typing.Optional[typing.List[str]] = None,
+    text_unit_ids_col: typing.Optional[str] = None,
+) -> typing.List[_model.Covariate]:
     covariates_ = covariates.copy()
     covariates_['id'] = covariates_['id'].astype(str)
     return _dfs.read_covariates(
@@ -139,9 +138,9 @@ def get_covariates(
 def get_text_units(
     text_units: pd.DataFrame,
     *,
-    short_id_col: Optional[str] = None,
-    covariates_col: Optional[str] = None,
-) -> List[_model.TextUnit]:
+    short_id_col: typing.Optional[str] = None,
+    covariates_col: typing.Optional[str] = None,
+) -> typing.List[_model.TextUnit]:
     return _dfs.read_text_units(
         text_units.copy(),
         short_id_col=short_id_col or _defaults.COLUMN__TEXT_UNIT__SHORT_ID,
@@ -149,7 +148,7 @@ def get_text_units(
     )
 
 
-def get_store(entities: List[_model.Entity], coll_name: str, uri: str) -> LanceDBVectorStore:
+def get_store(entities: typing.List[_model.Entity], coll_name: str, uri: str) -> LanceDBVectorStore:
     store = LanceDBVectorStore(
         collection_name=coll_name,
         uri=uri,

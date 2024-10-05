@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import Any, cast, List
+import typing
 
 import pandas as pd
 
@@ -11,8 +11,8 @@ from ...._search import _model
 
 
 def get_candidate_text_units(
-    selected_entities: List[_model.Entity],
-    text_units: List[_model.TextUnit],
+    selected_entities: typing.List[_model.Entity],
+    text_units: typing.List[_model.TextUnit],
 ) -> pd.DataFrame:
     """Get all text units that are associated to selected entities."""
     selected_text_ids_ = [
@@ -23,7 +23,7 @@ def get_candidate_text_units(
     return to_text_unit_dataframe(selected_text_units)
 
 
-def to_text_unit_dataframe(text_units: List[_model.TextUnit]) -> pd.DataFrame:
+def to_text_unit_dataframe(text_units: typing.List[_model.TextUnit]) -> pd.DataFrame:
     """Convert a list of text units to a pandas dataframe."""
     if len(text_units) == 0:
         return pd.DataFrame()
@@ -49,4 +49,4 @@ def to_text_unit_dataframe(text_units: List[_model.TextUnit]) -> pd.DataFrame:
             ],
         ]
         records.append(new_record)
-    return pd.DataFrame(records, columns=cast(Any, header))
+    return pd.DataFrame(records, columns=typing.cast(typing.Any, header))

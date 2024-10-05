@@ -3,15 +3,9 @@
 
 from __future__ import annotations
 
+import abc
+import typing
 import warnings
-from abc import ABC, abstractmethod
-from typing import (
-    Any,
-    Dict,
-    List,
-    Optional,
-    Union,
-)
 
 import pandas as pd
 import tiktoken
@@ -38,9 +32,9 @@ from ...._search._input._retrieval import (
 )
 
 
-class BaseContextBuilder(ABC):
-    @abstractmethod
-    def build_context(self, *args: Any, **kwargs: Any) -> _types.Context_T: ...
+class BaseContextBuilder(abc.ABC):
+    @abc.abstractmethod
+    def build_context(self, *args: typing.Any, **kwargs: typing.Any) -> _types.Context_T: ...
 
 
 class GlobalContextBuilder(BaseContextBuilder):
@@ -48,9 +42,9 @@ class GlobalContextBuilder(BaseContextBuilder):
     def __init__(
         self,
         *,
-        community_reports: List[_model.CommunityReport],
-        entities: Optional[List[_model.Entity]] = None,
-        token_encoder: Optional[tiktoken.Encoding] = None,
+        community_reports: typing.List[_model.CommunityReport],
+        entities: typing.Optional[typing.List[_model.Entity]] = None,
+        token_encoder: typing.Optional[tiktoken.Encoding] = None,
         random_state: int = 42,
     ):
         self._community_reports = community_reports
@@ -61,7 +55,7 @@ class GlobalContextBuilder(BaseContextBuilder):
     def build_context(
         self,
         *,
-        conversation_history: Optional[_conversation_history.ConversationHistory] = None,
+        conversation_history: typing.Optional[_conversation_history.ConversationHistory] = None,
         use_community_summary: bool = True,
         column_delimiter: str = "|",
         shuffle_data: bool = True,
@@ -75,7 +69,7 @@ class GlobalContextBuilder(BaseContextBuilder):
         context_name: str = "Reports",
         conversation_history_user_turns_only: bool = True,
         conversation_history_max_turns: int = 5,
-        **kwargs: Any,
+        **kwargs: typing.Any,
     ) -> _types.Context_T:
         """Prepare batches of community report data table as context data for global search."""
         conversation_history_context = ""
@@ -128,14 +122,14 @@ class LocalContextBuilder(BaseContextBuilder):
     def __init__(
         self,
         *,
-        entities: List[_model.Entity],
+        entities: typing.List[_model.Entity],
         entity_text_embeddings: _vector_stores.BaseVectorStore,
         text_embedder: _llm.BaseEmbedding,
-        text_units: Optional[List[_model.TextUnit]] = None,
-        community_reports: Optional[List[_model.CommunityReport]] = None,
-        relationships: Optional[List[_model.Relationship]] = None,
-        covariates: Optional[Dict[str, List[_model.Covariate]]] = None,
-        token_encoder: Optional[tiktoken.Encoding] = None,
+        text_units: typing.Optional[typing.List[_model.TextUnit]] = None,
+        community_reports: typing.Optional[typing.List[_model.CommunityReport]] = None,
+        relationships: typing.Optional[typing.List[_model.Relationship]] = None,
+        covariates: typing.Optional[typing.Dict[str, typing.List[_model.Covariate]]] = None,
+        token_encoder: typing.Optional[tiktoken.Encoding] = None,
         embedding_vectorstore_key: str = _entity_extraction.EntityVectorStoreKey.ID,
     ) -> None:
         community_reports = community_reports or []
@@ -162,7 +156,7 @@ class LocalContextBuilder(BaseContextBuilder):
         self.token_encoder = token_encoder
         self.embedding_vectorstore_key = embedding_vectorstore_key
 
-    def filter_by_entity_keys(self, entity_keys: Union[List[int], List[str]]) -> None:
+    def filter_by_entity_keys(self, entity_keys: typing.Union[typing.List[int], typing.List[str]]) -> None:
         """Filter entity text embeddings by entity keys."""
         self.entity_text_embeddings.filter_by_id(entity_keys)
 
@@ -170,9 +164,9 @@ class LocalContextBuilder(BaseContextBuilder):
         self,
         *,
         query: str,
-        conversation_history: Optional[_conversation_history.ConversationHistory] = None,
-        include_entity_names: Optional[List[str]] = None,
-        exclude_entity_names: Optional[List[str]] = None,
+        conversation_history: typing.Optional[_conversation_history.ConversationHistory] = None,
+        include_entity_names: typing.Optional[typing.List[str]] = None,
+        exclude_entity_names: typing.Optional[typing.List[str]] = None,
         conversation_history_max_turns: int = 5,
         conversation_history_user_turns_only: bool = True,
         max_tokens: int = 8000,
@@ -190,7 +184,7 @@ class LocalContextBuilder(BaseContextBuilder):
         min_community_rank: int = 0,
         community_context_name: str = "Reports",
         column_delimiter: str = "|",
-        **kwargs: Any,
+        **kwargs: typing.Any,
     ) -> _types.Context_T:
         """
         Build data context for local search prompt.
@@ -224,8 +218,8 @@ class LocalContextBuilder(BaseContextBuilder):
         )
 
         # build context
-        final_context: List[str] = []
-        final_context_data: Dict[str, pd.DataFrame] = {}
+        final_context: typing.List[str] = []
+        final_context_data: typing.Dict[str, pd.DataFrame] = {}
 
         # build community context
         community_tokens = max(int(max_tokens * community_prop), 0)
@@ -277,7 +271,7 @@ class LocalContextBuilder(BaseContextBuilder):
     def _build_community_context(
         self,
         *,
-        selected_entities: List[_model.Entity],
+        selected_entities: typing.List[_model.Entity],
         max_tokens: int = 4000,
         use_community_summary: bool = False,
         column_delimiter: str = "|",
@@ -290,7 +284,7 @@ class LocalContextBuilder(BaseContextBuilder):
         if len(selected_entities) == 0 or len(self.community_reports) == 0:
             return "", {context_name.lower(): pd.DataFrame()}
 
-        community_matches: Dict[str, int] = {}
+        community_matches: typing.Dict[str, int] = {}
         for entity in selected_entities:
             # increase count of the community that this entity belongs to
             if entity.community_ids:
@@ -355,7 +349,7 @@ class LocalContextBuilder(BaseContextBuilder):
     def _build_text_unit_context(
         self,
         *,
-        selected_entities: List[_model.Entity],
+        selected_entities: typing.List[_model.Entity],
         max_tokens: int = 8000,
         return_candidate_context: bool = False,
         column_delimiter: str = "|",
@@ -426,7 +420,7 @@ class LocalContextBuilder(BaseContextBuilder):
     def _build_local_context(
         self,
         *,
-        selected_entities: List[_model.Entity],
+        selected_entities: typing.List[_model.Entity],
         max_tokens: int = 8000,
         include_entity_rank: bool = False,
         rank_description: str = "relationship count",

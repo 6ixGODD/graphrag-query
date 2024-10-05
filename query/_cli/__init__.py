@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
-from ._cli import main
+from . import _cli
+
+main = _cli.main
 
 __all__ = [
     'main',

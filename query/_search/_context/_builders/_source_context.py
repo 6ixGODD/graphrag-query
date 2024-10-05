@@ -4,15 +4,7 @@
 from __future__ import annotations
 
 import random
-from typing import (
-    Any,
-    cast,
-    Dict,
-    List,
-    Optional,
-    Tuple,
-)
-
+import typing
 import pandas as pd
 import tiktoken
 
@@ -21,14 +13,14 @@ from ...._search import _model
 
 
 def build_text_unit_context(
-    text_units: List[_model.TextUnit],
-    token_encoder: Optional[tiktoken.Encoding] = None,
+    text_units: typing.List[_model.TextUnit],
+    token_encoder: typing.Optional[tiktoken.Encoding] = None,
     column_delimiter: str = "|",
     shuffle_data: bool = True,
     max_tokens: int = 8000,
     context_name: str = "Sources",
     random_state: int = 86,
-) -> Tuple[str, Dict[str, pd.DataFrame]]:
+) -> typing.Tuple[str, typing.Dict[str, pd.DataFrame]]:
     """Prepare text-unit data table as context data for system prompt."""
     if text_units is None or len(text_units) == 0:
         return "", {}
@@ -73,7 +65,7 @@ def build_text_unit_context(
 
     if len(all_context_records) > 1:
         record_df = pd.DataFrame(
-            all_context_records[1:], columns=cast(Any, all_context_records[0])
+            all_context_records[1:], columns=typing.cast(typing.Any, all_context_records[0])
         )
     else:
         record_df = pd.DataFrame()
@@ -81,7 +73,7 @@ def build_text_unit_context(
 
 
 def count_relationships(
-    text_unit: _model.TextUnit, entity: _model.Entity, relationships: Dict[str, _model.Relationship]
+    text_unit: _model.TextUnit, entity: _model.Entity, relationships: typing.Dict[str, _model.Relationship]
 ) -> int:
     """Count the number of relationships of the selected entity that are associated with the text unit."""
     if text_unit.relationship_ids is None:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Optional
+import typing
 
 PARQUET_FILE_NAME__NODES: str = "create_final_nodes.parquet"
 PARQUET_FILE_NAME__ENTITIES: str = "create_final_entities.parquet"
@@ -16,26 +16,26 @@ COLUMN__ENTITY__SHORT_ID: str = "human_readable_id"
 COLUMN__ENTITY__DESCRIPTION: str = "description"
 COLUMN__ENTITY__COMMUNITY: str = "community"
 COLUMN__ENTITY__RANK: str = "rank"
-COLUMN__ENTITY__NAME_EMBEDDING: Optional[str] = None
+COLUMN__ENTITY__NAME_EMBEDDING: typing.Optional[str] = None
 COLUMN__ENTITY__DESCRIPTION_EMBEDDING: str = "description_embedding"
-COLUMN__ENTITY__GRAPH_EMBEDDING: Optional[str] = None
+COLUMN__ENTITY__GRAPH_EMBEDDING: typing.Optional[str] = None
 COLUMN__ENTITY__TEXT_UNIT_IDS: str = "text_unit_ids"
-COLUMN__ENTITY__DOCUMENT_IDS: Optional[str] = None
-COLUMN__ENTITY__ATTRIBUTES: Optional[List[str]] = None
+COLUMN__ENTITY__DOCUMENT_IDS: typing.Optional[str] = None
+COLUMN__ENTITY__ATTRIBUTES: typing.Optional[typing.List[str]] = None
 
 COLUMN__COMMUNITY_REPORT__ID: str = "community"
 COLUMN__COMMUNITY_REPORT__SHORT_ID: str = "community"
-COLUMN__COMMUNITY_REPORT__SUMMARY_EMBEDDING: Optional[str] = None
-COLUMN__COMMUNITY_REPORT__CONTENT_EMBEDDING: Optional[str] = None
+COLUMN__COMMUNITY_REPORT__SUMMARY_EMBEDDING: typing.Optional[str] = None
+COLUMN__COMMUNITY_REPORT__CONTENT_EMBEDDING: typing.Optional[str] = None
 
 COLUMN__RELATIONSHIP__SHORT_ID: str = "human_readable_id"
-COLUMN__RELATIONSHIP__DESCRIPTION_EMBEDDING: Optional[str] = None
-COLUMN__RELATIONSHIP__DOCUMENT_IDS: Optional[str] = None
-COLUMN__RELATIONSHIP__ATTRIBUTES: List[str] = ["rank"]
+COLUMN__RELATIONSHIP__DESCRIPTION_EMBEDDING: typing.Optional[str] = None
+COLUMN__RELATIONSHIP__DOCUMENT_IDS: typing.Optional[str] = None
+COLUMN__RELATIONSHIP__ATTRIBUTES: typing.List[str] = ["rank"]
 
 COLUMN__COVARIATE__SHORT_ID: str = "human_readable_id"
-COLUMN__COVARIATE__ATTRIBUTES: List[str] = ["object_id", "status", "start_date", "end_date", "description"]
-COLUMN__COVARIATE__TEXT_UNIT_IDS: Optional[str] = None
+COLUMN__COVARIATE__ATTRIBUTES: typing.List[str] = ["object_id", "status", "start_date", "end_date", "description"]
+COLUMN__COVARIATE__TEXT_UNIT_IDS: typing.Optional[str] = None
 
-COLUMN__TEXT_UNIT__SHORT_ID: Optional[str] = None
-COLUMN__TEXT_UNIT__COVARIATES: Optional[str] = None
+COLUMN__TEXT_UNIT__SHORT_ID: typing.Optional[str] = None
+COLUMN__TEXT_UNIT__COVARIATES: typing.Optional[str] = None

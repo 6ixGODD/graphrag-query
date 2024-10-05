@@ -1,23 +1,17 @@
 from __future__ import annotations
 
 import asyncio
+import collections
 import time
+import typing
+import typing_extensions
 import warnings
-from collections import defaultdict
-from typing import (
-    Any,
-    cast,
-    Dict,
-    List,
-    Optional,
-    Union,
-)
 
 import tiktoken
 
 from .. import _utils
 from .._search import (
-    _base,
+    _base_engine,
     _context,
     _defaults,
     _llm,
@@ -25,11 +19,11 @@ from .._search import (
 )
 
 
-class LocalSearchEngine(_base.QueryEngine):
+class LocalSearchEngine(_base_engine.QueryEngine):
     _chat_llm: _llm.BaseChatLLM
     _embedding: _llm.BaseEmbedding
     _context_builder: _context.LocalContextBuilder
-    _logger: Optional[_base.Logger]
+    _logger: typing.Optional[_base_engine.Logger]
     _sys_prompt: str
 
     def __init__(
@@ -39,15 +33,15 @@ class LocalSearchEngine(_base.QueryEngine):
         embedding: _llm.BaseEmbedding,
         context_loader: _context.LocalContextLoader,
 
-        sys_prompt: Optional[str] = None,
-        community_level: Optional[int] = None,
-        store_coll_name: Optional[str] = None,
-        store_uri: Optional[str] = None,
-        encoding_model: Optional[str] = None,
+        sys_prompt: typing.Optional[str] = None,
+        community_level: typing.Optional[int] = None,
+        store_coll_name: typing.Optional[str] = None,
+        store_uri: typing.Optional[str] = None,
+        encoding_model: typing.Optional[str] = None,
 
-        logger: Optional[_base.Logger] = None,
+        logger: typing.Optional[_base_engine.Logger] = None,
 
-        **kwargs: Any,
+        **kwargs: typing.Any,
     ) -> None:
         super().__init__(
             chat_llm=chat_llm,
@@ -66,6 +60,7 @@ class LocalSearchEngine(_base.QueryEngine):
         if '{context_data}' not in self._sys_prompt:
             warnings.warn('Local Search\'s System Prompt does not contain "{context_data}"', RuntimeWarning)
 
+    @typing_extensions.override
     def search(
         self,
         query: str,
@@ -73,8 +68,8 @@ class LocalSearchEngine(_base.QueryEngine):
         conversation_history: _types.ConversationHistory_T = None,
         verbose: bool = False,
         stream: bool = False,
-        **kwargs: Any,
-    ) -> Union[_types.SearchResult_T, _types.StreamSearchResult_T]:
+        **kwargs: typing.Any,
+    ) -> typing.Union[_types.SearchResult_T, _types.StreamSearchResult_T]:
         created = time.time()
         self._logger.info(f"Starting search for query: {query} at {created}") if self._logger else None
         if conversation_history is None:
@@ -87,17 +82,18 @@ class LocalSearchEngine(_base.QueryEngine):
             conversation_history=conversation_history,
             **kwargs,
         )
-        prompt = self._sys_prompt.format_map(defaultdict(str, context_data=context_text))
+        # TODO: Use Jinja2 template
+        prompt = self._sys_prompt.format_map(collections.defaultdict(str, context_data=context_text))
         messages = ([{"role": "system", "content": prompt}] +
                     conversation_history.to_dict() +
                     [{"role": "user", "content": query}])
         self._logger.info(f"Constructed messages: {messages}") if self._logger else None
 
-        result = self._chat_llm.chat(msg=cast(_llm.MessageParam_T, messages), stream=stream, **kwargs)
+        result = self._chat_llm.chat(msg=typing.cast(_llm.MessageParam_T, messages), stream=stream, **kwargs)
         self._logger.info(f"Received result: {result}") if self._logger else None
 
         if stream:
-            result = cast(_llm.SyncChatStreamResponse_T, result)
+            result = typing.cast(_llm.SyncChatStreamResponse_T, result)
             return self._parse_stream_result(
                 result,
                 verbose=verbose,
@@ -106,7 +102,7 @@ class LocalSearchEngine(_base.QueryEngine):
                 context_text=context_text
             )
         else:
-            result = cast(_llm.ChatResponse_T, result)
+            result = typing.cast(_llm.ChatResponse_T, result)
             return self._parse_result(
                 result,
                 verbose=verbose,
@@ -116,7 +112,7 @@ class LocalSearchEngine(_base.QueryEngine):
             )
 
 
-class AsyncLocalSearchEngine(_base.AsyncQueryEngine):
+class AsyncLocalSearchEngine(_base_engine.AsyncQueryEngine):
     _chat_llm: _llm.BaseAsyncChatLLM
     _embedding: _llm.BaseEmbedding
     _context_builder: _context.LocalContextBuilder
@@ -129,15 +125,15 @@ class AsyncLocalSearchEngine(_base.AsyncQueryEngine):
         embedding: _llm.BaseEmbedding,
         context_loader: _context.LocalContextLoader,
 
-        sys_prompt: Optional[str] = None,
-        community_level: Optional[int] = None,
-        store_coll_name: Optional[str] = None,
-        store_uri: Optional[str] = None,
-        encoding_model: Optional[str] = None,
+        sys_prompt: typing.Optional[str] = None,
+        community_level: typing.Optional[int] = None,
+        store_coll_name: typing.Optional[str] = None,
+        store_uri: typing.Optional[str] = None,
+        encoding_model: typing.Optional[str] = None,
 
-        logger: Optional[_base.Logger] = None,
+        logger: typing.Optional[_base_engine.Logger] = None,
 
-        **kwargs: Any,
+        **kwargs: typing.Any,
     ) -> None:
         super().__init__(
             chat_llm=chat_llm,
@@ -156,6 +152,7 @@ class AsyncLocalSearchEngine(_base.AsyncQueryEngine):
         if '{context_data}' not in self._sys_prompt:
             warnings.warn('Local Search\'s System Prompt does not contain "{context_data}"', RuntimeWarning)
 
+    @typing_extensions.override
     async def asearch(
         self,
         query: str,
@@ -163,8 +160,8 @@ class AsyncLocalSearchEngine(_base.AsyncQueryEngine):
         conversation_history: _types.ConversationHistory_T,
         verbose: bool = False,
         stream: bool = False,
-        **kwargs: Any,
-    ) -> Union[_types.SearchResult_T, _types.AsyncStreamSearchResult_T]:
+        **kwargs: typing.Any,
+    ) -> typing.Union[_types.SearchResult_T, _types.AsyncStreamSearchResult_T]:
         created = time.time()
 
         # Convert conversation_history to ConversationHistory object
@@ -178,15 +175,15 @@ class AsyncLocalSearchEngine(_base.AsyncQueryEngine):
             conversation_history=conversation_history,
             **kwargs,
         )
-        prompt = self._sys_prompt.format_map(defaultdict(str, context_data=context_text))
+        prompt = self._sys_prompt.format_map(collections.defaultdict(str, context_data=context_text))
         messages = ([{"role": "system", "content": prompt}] +
                     conversation_history.to_dict() +
                     [{"role": "user", "content": query}])
 
-        result = await self._chat_llm.achat(msg=cast(_llm.MessageParam_T, messages), stream=stream, **kwargs)
+        result = await self._chat_llm.achat(msg=typing.cast(_llm.MessageParam_T, messages), stream=stream, **kwargs)
 
         if stream:
-            result = cast(_llm.AsyncChatStreamResponse_T, result)
+            result = typing.cast(_llm.AsyncChatStreamResponse_T, result)
             return self._parse_stream_result(
                 result,
                 verbose=verbose,
@@ -195,7 +192,7 @@ class AsyncLocalSearchEngine(_base.AsyncQueryEngine):
                 context_text=context_text
             )
         else:
-            result = cast(_llm.ChatResponse_T, result)
+            result = typing.cast(_llm.ChatResponse_T, result)
             return self._parse_result(
                 result,
                 verbose=verbose,
@@ -205,7 +202,7 @@ class AsyncLocalSearchEngine(_base.AsyncQueryEngine):
             )
 
 
-class GlobalSearchEngine(_base.QueryEngine):
+class GlobalSearchEngine(_base_engine.QueryEngine):
     _chat_llm: _llm.BaseChatLLM
     _embedding: _llm.BaseEmbedding
     _context_builder: _context.GlobalContextBuilder
@@ -218,18 +215,18 @@ class GlobalSearchEngine(_base.QueryEngine):
         embedding: _llm.BaseEmbedding,
         context_loader: _context.GlobalContextLoader,
 
-        community_level: Optional[int] = None,
-        map_sys_prompt: Optional[str] = None,
-        reduce_sys_prompt: Optional[str] = None,
-        allow_general_knowledge: Optional[bool] = None,
-        general_knowledge_sys_prompt: Optional[str] = None,
-        no_data_answer: Optional[str] = None,
-        json_mode: Optional[bool] = None,
-        max_data_tokens: Optional[int] = None,
-        encoding_model: Optional[str] = None,
+        community_level: typing.Optional[int] = None,
+        map_sys_prompt: typing.Optional[str] = None,
+        reduce_sys_prompt: typing.Optional[str] = None,
+        allow_general_knowledge: typing.Optional[bool] = None,
+        general_knowledge_sys_prompt: typing.Optional[str] = None,
+        no_data_answer: typing.Optional[str] = None,
+        json_mode: typing.Optional[bool] = None,
+        max_data_tokens: typing.Optional[int] = None,
+        encoding_model: typing.Optional[str] = None,
 
-        logger: Optional[_base.Logger] = None,
-        **kwargs: Any,
+        logger: typing.Optional[_base_engine.Logger] = None,
+        **kwargs: typing.Any,
     ) -> None:
         super().__init__(
             chat_llm=chat_llm,
@@ -255,6 +252,7 @@ class GlobalSearchEngine(_base.QueryEngine):
         self._data_max_tokens = max_data_tokens or _defaults.DEFAULT__GLOBAL_SEARCH__DATA_MAX_TOKENS
         self._logger = logger
 
+    @typing_extensions.override
     def search(
         self,
         query: str,
@@ -262,8 +260,8 @@ class GlobalSearchEngine(_base.QueryEngine):
         conversation_history: _types.ConversationHistory_T = None,
         verbose: bool = False,
         stream: bool = False,
-        **kwargs: Any,
-    ) -> Union[_types.SearchResult_T, _types.StreamSearchResult_T]:
+        **kwargs: typing.Any,
+    ) -> typing.Union[_types.SearchResult_T, _types.StreamSearchResult_T]:
         created = time.time()
         self._logger.info(f"Starting search for query: {query} at {created}") if self._logger else None
         if conversation_history is None:
@@ -283,14 +281,14 @@ class GlobalSearchEngine(_base.QueryEngine):
         query: str,
         context: str,
         verbose: bool,
-        **kwargs: Any
+        **kwargs: typing.Any
     ) -> _types.SearchResult_T:
         created = time.time()
-        prompt = self._map_sys_prompt.format_map(defaultdict(str, context_data=context, query=query))
+        prompt = self._map_sys_prompt.format_map(collections.defaultdict(str, context_data=context, query=query))
         msg = [{"role": "system", "content": prompt}, {"role": "user", "content": query}]
-        response = cast(
+        response = typing.cast(
             _llm.ChatResponse_T, self._chat_llm.chat(
-                msg=cast(_llm.MessageParam_T, msg),
+                msg=typing.cast(_llm.MessageParam_T, msg),
                 stream=False,
                 **_utils.filter_kwargs(self._chat_llm.chat, kwargs, prefix='map__')
             )
@@ -337,7 +335,7 @@ class GlobalSearchEngine(_base.QueryEngine):
             )
 
     @staticmethod
-    def _parse_map(response: _llm.ChatResponse_T) -> List[Dict[str, Any]]:
+    def _parse_map(response: _llm.ChatResponse_T) -> typing.List[typing.Dict[str, typing.Any]]:
         default = [{"answer": "", "score": 0}]
         json_ = _utils.deserialize_json(response.choices[0].message.content or "")
         if json_ == {}:
@@ -355,14 +353,14 @@ class GlobalSearchEngine(_base.QueryEngine):
 
     def _reduce(
         self,
-        map_results: List[_types.SearchResult_T],
+        map_results: typing.List[_types.SearchResult_T],
         query: str,
         verbose: bool,
         stream: bool,
-        **kwargs: Any
-    ) -> Union[_types.SearchResult_T, _types.StreamSearchResult_T]:
+        **kwargs: typing.Any
+    ) -> typing.Union[_types.SearchResult_T, _types.StreamSearchResult_T]:
         created = time.time()
-        key_points: List[Dict[str, Any]] = []
+        key_points: typing.List[typing.Dict[str, typing.Any]] = []
         for idx, map_ in enumerate(map_results):
             if not isinstance(map_.choice.message.content, list):
                 continue
@@ -410,7 +408,7 @@ class GlobalSearchEngine(_base.QueryEngine):
             reverse=True
         )
 
-        data: List[str] = []
+        data: typing.List[str] = []
         total_tokens = 0
         for kp in key_points:
             formatted_response = '\n'.join(
@@ -423,18 +421,18 @@ class GlobalSearchEngine(_base.QueryEngine):
             data.append(formatted_response)
 
         report_data = '\n\n'.join(data)
-        prompt = self._reduce_sys_prompt.format_map(defaultdict(str, report_data=report_data))
+        prompt = self._reduce_sys_prompt.format_map(collections.defaultdict(str, report_data=report_data))
         if self._allow_general_knowledge:
             prompt += f'\n{self._general_knowledge_sys_prompt}'
         msg = [{"role": "system", "content": prompt}, {"role": "user", "content": query}]
         result = self._chat_llm.chat(
-            msg=cast(_llm.MessageParam_T, msg),
+            msg=typing.cast(_llm.MessageParam_T, msg),
             stream=stream,
             **_utils.filter_kwargs(self._chat_llm.chat, kwargs, prefix='reduce__')
         )
 
         if stream:
-            result = cast(_llm.SyncChatStreamResponse_T, result)
+            result = typing.cast(_llm.SyncChatStreamResponse_T, result)
             return self._parse_stream_result(
                 result,
                 verbose=verbose,
@@ -446,7 +444,7 @@ class GlobalSearchEngine(_base.QueryEngine):
                 reduce_context_text=report_data,
             )
         else:
-            result = cast(_llm.ChatResponse_T, result)
+            result = typing.cast(_llm.ChatResponse_T, result)
             return self._parse_result(
                 result,
                 verbose=verbose,
@@ -459,7 +457,7 @@ class GlobalSearchEngine(_base.QueryEngine):
             )
 
 
-class AsyncGlobalSearchEngine(_base.AsyncQueryEngine):
+class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
     _chat_llm: _llm.BaseAsyncChatLLM
     _embedding: _llm.BaseEmbedding
     _context_builder: _context.GlobalContextBuilder
@@ -472,19 +470,19 @@ class AsyncGlobalSearchEngine(_base.AsyncQueryEngine):
         embedding: _llm.BaseEmbedding,
         context_loader: _context.GlobalContextLoader,
 
-        community_level: Optional[int] = None,
-        map_sys_prompt: Optional[str] = None,
-        reduce_sys_prompt: Optional[str] = None,
-        allow_general_knowledge: Optional[bool] = None,
-        general_knowledge_sys_prompt: Optional[str] = None,
-        no_data_answer: Optional[str] = None,
-        json_mode: Optional[bool] = None,
-        max_data_tokens: Optional[int] = None,
-        encoding_model: Optional[str] = None,
-        concurrent_coroutines: Optional[int] = None,
+        community_level: typing.Optional[int] = None,
+        map_sys_prompt: typing.Optional[str] = None,
+        reduce_sys_prompt: typing.Optional[str] = None,
+        allow_general_knowledge: typing.Optional[bool] = None,
+        general_knowledge_sys_prompt: typing.Optional[str] = None,
+        no_data_answer: typing.Optional[str] = None,
+        json_mode: typing.Optional[bool] = None,
+        max_data_tokens: typing.Optional[int] = None,
+        encoding_model: typing.Optional[str] = None,
+        concurrent_coroutines: typing.Optional[int] = None,
 
-        logger: Optional[_base.Logger] = None,
-        **kwargs: Any,
+        logger: typing.Optional[_base_engine.Logger] = None,
+        **kwargs: typing.Any,
     ) -> None:
         super().__init__(
             chat_llm=chat_llm,
@@ -507,6 +505,7 @@ class AsyncGlobalSearchEngine(_base.AsyncQueryEngine):
         self._logger = logger
         self._semaphore = asyncio.Semaphore(concurrent_coroutines or _defaults.DEFAULT__CONCURRENT_COROUTINES)
 
+    @typing_extensions.override
     async def asearch(
         self,
         query: str,
@@ -514,8 +513,8 @@ class AsyncGlobalSearchEngine(_base.AsyncQueryEngine):
         conversation_history: _types.ConversationHistory_T,
         verbose: bool = False,
         stream: bool = False,
-        **kwargs: Any,
-    ) -> Union[_types.SearchResult_T, _types.AsyncStreamSearchResult_T]:
+        **kwargs: typing.Any,
+    ) -> typing.Union[_types.SearchResult_T, _types.AsyncStreamSearchResult_T]:
         created = time.time()
         self._logger.info(f"Starting search for query: {query} at {created}") if self._logger else None
 
@@ -531,7 +530,8 @@ class AsyncGlobalSearchEngine(_base.AsyncQueryEngine):
         map_results = list(
             await asyncio.gather(
                 *[
-                    self._map(query, context, verbose, **kwargs) for context in context_chunks
+                    self._map(query, context, verbose, **kwargs)
+                    for context in context_chunks
                 ]
             )
         )
@@ -542,15 +542,15 @@ class AsyncGlobalSearchEngine(_base.AsyncQueryEngine):
         query: str,
         context: str,
         verbose: bool,
-        **kwargs: Any
+        **kwargs: typing.Any
     ) -> _types.SearchResult_T:
         created = time.time()
-        prompt = self._map_sys_prompt.format_map(defaultdict(str, context_data=context, query=query))
+        prompt = self._map_sys_prompt.format_map(collections.defaultdict(str, context_data=context, query=query))
         msg = [{"role": "system", "content": prompt}, {"role": "user", "content": query}]
         async with self._semaphore:
-            response = cast(
+            response = typing.cast(
                 _llm.ChatResponse_T, (await self._chat_llm.achat(
-                    msg=cast(_llm.MessageParam_T, msg),
+                    msg=typing.cast(_llm.MessageParam_T, msg),
                     stream=False,
                     **_utils.filter_kwargs(self._chat_llm.achat, kwargs, prefix='map__')
                 ))
@@ -597,7 +597,7 @@ class AsyncGlobalSearchEngine(_base.AsyncQueryEngine):
             )
 
     @staticmethod
-    def _parse_map(response: _llm.ChatResponse_T) -> List[Dict[str, Any]]:
+    def _parse_map(response: _llm.ChatResponse_T) -> typing.List[typing.Dict[str, typing.Any]]:
         default = [{"answer": "", "score": 0}]
         json_ = _utils.deserialize_json(response.choices[0].message.content or "")
         if json_ == {}:
@@ -615,14 +615,14 @@ class AsyncGlobalSearchEngine(_base.AsyncQueryEngine):
 
     async def _reduce(
         self,
-        map_results: List[_types.SearchResult_T],
+        map_results: typing.List[_types.SearchResult_T],
         query: str,
         verbose: bool,
         stream: bool,
-        **kwargs: Any
-    ) -> Union[_types.SearchResult_T, _types.AsyncStreamSearchResult_T]:
+        **kwargs: typing.Any
+    ) -> typing.Union[_types.SearchResult_T, _types.AsyncStreamSearchResult_T]:
         created = time.time()
-        key_points: List[Dict[str, Any]] = []
+        key_points: typing.List[typing.Dict[str, typing.Any]] = []
         for idx, map_ in enumerate(map_results):
             if not isinstance(map_.choice.message.content, list):
                 continue
@@ -670,7 +670,7 @@ class AsyncGlobalSearchEngine(_base.AsyncQueryEngine):
             reverse=True
         )
 
-        data: List[str] = []
+        data: typing.List[str] = []
         total_tokens = 0
         for kp in key_points:
             formatted_response = '\n'.join(
@@ -683,20 +683,20 @@ class AsyncGlobalSearchEngine(_base.AsyncQueryEngine):
             data.append(formatted_response)
 
         report_data = '\n\n'.join(data)
-        prompt = self._reduce_sys_prompt.format_map(defaultdict(str, report_data=report_data))
+        prompt = self._reduce_sys_prompt.format_map(collections.defaultdict(str, report_data=report_data))
         if self._allow_general_knowledge:
             prompt += f'\n{self._general_knowledge_sys_prompt}'
 
         msg = [{"role": "system", "content": prompt}, {"role": "user", "content": query}]
         async with self._semaphore:
             response = await self._chat_llm.achat(
-                msg=cast(_llm.MessageParam_T, msg),
+                msg=typing.cast(_llm.MessageParam_T, msg),
                 stream=stream,
                 **_utils.filter_kwargs(self._chat_llm.achat, kwargs, prefix='reduce__')
             )
 
         if stream:
-            response = cast(_llm.AsyncChatStreamResponse_T, response)
+            response = typing.cast(_llm.AsyncChatStreamResponse_T, response)
             return self._parse_stream_result(
                 response,
                 verbose=verbose,
@@ -708,7 +708,7 @@ class AsyncGlobalSearchEngine(_base.AsyncQueryEngine):
                 reduce_context_text=report_data,
             )
         else:
-            response = cast(_llm.ChatResponse_T, response)
+            response = typing.cast(_llm.ChatResponse_T, response)
             return self._parse_result(
                 response,
                 verbose=verbose,

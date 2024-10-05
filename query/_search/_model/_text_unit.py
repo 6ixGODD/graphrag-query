@@ -3,34 +3,34 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+import typing
 
-from ..._search._model._identified import Identified
+from ..._search._model import _identified
 
 
-class TextUnit(Identified):
+class TextUnit(_identified.Identified):
     """A protocol for a TextUnit item in a Document database."""
 
     text: str = ""
     """The text of the unit."""
 
-    text_embedding: Optional[List[float]] = None
+    text_embedding: typing.Optional[typing.List[float]] = None
     """The text embedding for the text unit (optional)."""
 
-    entity_ids: Optional[List[str]] = None
+    entity_ids: typing.Optional[typing.List[str]] = None
     """List of entity IDs related to the text unit (optional)."""
 
-    relationship_ids: Optional[List[str]] = None
+    relationship_ids: typing.Optional[typing.List[str]] = None
     """List of relationship IDs related to the text unit (optional)."""
 
-    covariate_ids: Optional[Dict[str, List[str]]] = None
+    covariate_ids: typing.Optional[typing.Dict[str, typing.List[str]]] = None
     """Dictionary of different types of covariates related to the text unit (optional)."""
 
-    n_tokens: Optional[int] = None
+    n_tokens: typing.Optional[int] = None
     """The number of tokens in the text (optional)."""
 
-    document_ids: Optional[List[str]] = None
+    document_ids: typing.Optional[typing.List[str]] = None
     """List of document IDs in which the text unit appears (optional)."""
 
-    attributes: Optional[Dict[str, Any]] = None
+    attributes: typing.Optional[typing.Dict[str, typing.Any]] = None
     """A dictionary of additional attributes associated with the text unit (optional)."""

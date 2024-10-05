@@ -4,14 +4,7 @@
 from __future__ import annotations
 
 import random
-from typing import (
-    Any,
-    cast,
-    Dict,
-    List,
-    Optional,
-    Tuple,
-)
+import typing
 
 import pandas as pd
 import tiktoken
@@ -22,9 +15,9 @@ from ...._search._context import _types
 
 
 def build_community_context(
-    community_reports: List[_model.CommunityReport],
-    entities: Optional[List[_model.Entity]] = None,
-    token_encoder: Optional[tiktoken.Encoding] = None,
+    community_reports: typing.List[_model.CommunityReport],
+    entities: typing.Optional[typing.List[_model.Entity]] = None,
+    token_encoder: typing.Optional[tiktoken.Encoding] = None,
     use_community_summary: bool = True,
     column_delimiter: str = "|",
     shuffle_data: bool = True,
@@ -51,7 +44,7 @@ def build_community_context(
     def _is_included(report: _model.CommunityReport) -> bool:
         return report.rank is not None and report.rank >= min_community_rank
 
-    def _get_header(attr: List[str]) -> List[str]:
+    def _get_header(attr: typing.List[str]) -> typing.List[str]:
         _header = ["id", "title"]
         attr = [col for col in attr if col not in _header]
         if not include_community_weight:
@@ -63,8 +56,8 @@ def build_community_context(
         return _header
 
     def _report_context_text(
-        report: _model.CommunityReport, attr: List[str]
-    ) -> Tuple[str, List[str]]:
+        report: _model.CommunityReport, attr: typing.List[str]
+    ) -> typing.Tuple[str, typing.List[str]]:
         ctx = [report.short_id if report.short_id else "", report.title, *[
             str(report.attributes.get(field, "")) if report.attributes else ""
             for field in attr
@@ -107,13 +100,13 @@ def build_community_context(
         else []
     )
     header = _get_header(attributes)
-    all_context_text: List[str] = []
-    all_context_records: List[pd.DataFrame] = []
+    all_context_text: typing.List[str] = []
+    all_context_records: typing.List[pd.DataFrame] = []
 
     # batch variables
     batch_text: str = ""
     batch_tokens: int = 0
-    batch_records: List[List[str]] = []
+    batch_records: typing.List[typing.List[str]] = []
 
     def _init_batch() -> None:
         nonlocal batch_text, batch_tokens, batch_records
@@ -171,16 +164,16 @@ def build_community_context(
 
 
 def _compute_community_weights(
-    community_reports: List[_model.CommunityReport],
-    entities: Optional[List[_model.Entity]],
+    community_reports: typing.List[_model.CommunityReport],
+    entities: typing.Optional[typing.List[_model.Entity]],
     weight_attribute: str = "occurrence",
     normalize: bool = True,
-) -> List[_model.CommunityReport]:
+) -> typing.List[_model.CommunityReport]:
     """Calculate a community's weight as count of text units associated with entities within the community."""
     if not entities:
         return community_reports
 
-    community_text_units: Dict[str, List[str]] = {}
+    community_text_units: typing.Dict[str, typing.List[str]] = {}
     for entity in entities:
         if entity.community_ids:
             for community_id in entity.community_ids:
@@ -211,11 +204,11 @@ def _compute_community_weights(
 
 def _rank_report_context(
     report_df: pd.DataFrame,
-    weight_column: Optional[str] = "occurrence weight",
-    rank_column: Optional[str] = "rank",
+    weight_column: typing.Optional[str] = "occurrence weight",
+    rank_column: typing.Optional[str] = "rank",
 ) -> pd.DataFrame:
     """Sort report context by community weight and rank if existed."""
-    rank_attributes: List[str] = []
+    rank_attributes: typing.List[str] = []
     if weight_column:
         rank_attributes.append(weight_column)
         report_df[weight_column] = report_df[weight_column].astype(float)
@@ -228,10 +221,10 @@ def _rank_report_context(
 
 
 def _convert_report_context_to_df(
-    context_records: List[List[str]],
-    header: List[str],
-    weight_column: Optional[str] = None,
-    rank_column: Optional[str] = None,
+    context_records: typing.List[typing.List[str]],
+    header: typing.List[str],
+    weight_column: typing.Optional[str] = None,
+    rank_column: typing.Optional[str] = None,
 ) -> pd.DataFrame:
     """Convert report context records to pandas dataframe and sort by weight and rank if existed."""
     if len(context_records) == 0:
@@ -239,7 +232,7 @@ def _convert_report_context_to_df(
 
     record_df = pd.DataFrame(
         context_records,
-        columns=cast(Any, header),
+        columns=typing.cast(typing.Any, header),
     )
     return _rank_report_context(
         report_df=record_df,

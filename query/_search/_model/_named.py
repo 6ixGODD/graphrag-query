@@ -3,10 +3,10 @@
 
 from __future__ import annotations
 
-from ..._search._model._identified import Identified
+from ..._search._model import _identified
 
 
-class Named(Identified):
+class Named(_identified.Identified):
     """A protocol for an item with a name/title."""
 
     title: str = ""

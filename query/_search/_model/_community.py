@@ -3,30 +3,30 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+import typing
 
-from ..._search._model._named import Named
+from ..._search._model import _named
 
 
-class Community(Named):
+class Community(_named.Named):
     """A protocol for a community in the system."""
 
     level: str = ""
     """Community level."""
 
-    entity_ids: Optional[List[str]] = None
-    """List of entity IDs related to the community (optional)."""
+    entity_ids: typing.Optional[typing.List[str]] = None
+    """typing.List of entity IDs related to the community (optional)."""
 
-    relationship_ids: Optional[List[str]] = None
-    """List of relationship IDs related to the community (optional)."""
+    relationship_ids: typing.Optional[typing.List[str]] = None
+    """typing.List of relationship IDs related to the community (optional)."""
 
-    covariate_ids: Optional[Dict[str, List[str]]] = None
+    covariate_ids: typing.Optional[typing.Dict[str, typing.List[str]]] = None
     """
-    Dictionary of different types of covariates related to the community (optional), 
+    typing.Dictionary of different types of covariates related to the community (optional), 
     e.g. claims
     """
 
-    attributes: Optional[Dict[str, Any]] = None
+    attributes: typing.Optional[typing.Dict[str, typing.Any]] = None
     """
     A dictionary of additional attributes associated with the community (optional). 
     To be included in the search prompt.

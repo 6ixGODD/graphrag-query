@@ -1,20 +1,22 @@
 from __future__ import annotations
 
-from typing import (
-    AsyncGenerator,
-    Dict,
-    Generator,
-    List,
-    Literal,
-    TypeAlias,
-    Union,
-)
+import typing
 
 from ..._search import _context
-from ..._search._types._search import Choice, Message, SearchResult, Usage
-from ..._search._types._search_chunk import ChunkChoice, Delta, SearchResultChunk
-from ..._search._types._search_chunk_verbose import SearchResultChunkVerbose
-from ..._search._types._search_verbose import SearchResultVerbose
+from ..._search._types import _search
+from ..._search._types import _search_chunk
+from ..._search._types import _search_chunk_verbose
+from ..._search._types import _search_verbose
+
+Choice = _search.Choice
+Message = _search.Message
+SearchResult = _search.SearchResult
+Usage = _search.Usage
+ChunkChoice = _search_chunk.ChunkChoice
+Delta = _search_chunk.Delta
+SearchResultChunk = _search_chunk.SearchResultChunk
+SearchResultChunkVerbose = _search_chunk_verbose.SearchResultChunkVerbose
+SearchResultVerbose = _search_verbose.SearchResultVerbose
 
 __all__ = [
     "SearchResult",
@@ -28,14 +30,18 @@ __all__ = [
     "SearchResultVerbose",
 ]
 
-SearchResult_T: TypeAlias = Union[SearchResult, SearchResultVerbose]
+SearchResult_T: typing.TypeAlias = typing.Union[SearchResult, SearchResultVerbose]
 
-StreamSearchResult_T: TypeAlias = Generator[Union[SearchResultChunk, SearchResultChunkVerbose], None, None]
+StreamSearchResult_T: typing.TypeAlias = typing.Generator[
+    typing.Union[SearchResultChunk, SearchResultChunkVerbose], None, None
+]
 
-AsyncStreamSearchResult_T: TypeAlias = AsyncGenerator[Union[SearchResultChunk, SearchResultChunkVerbose], None]
+AsyncStreamSearchResult_T: typing.TypeAlias = typing.AsyncGenerator[
+    typing.Union[SearchResultChunk, SearchResultChunkVerbose], None
+]
 
-ConversationHistory_T: TypeAlias = Union[
+ConversationHistory_T: typing.TypeAlias = typing.Union[
     _context.ConversationHistory,
-    List[Dict[Literal["role", "content"], str]],
+    typing.List[typing.Dict[typing.Literal["role", "content"], str]],
     None,
 ]

@@ -1,13 +1,9 @@
 from __future__ import annotations
 
-from os import PathLike
-from pathlib import Path
-from typing import (
-    Any,
-    Optional,
-    Self,
-    Union,
-)
+import os
+import pathlib
+import typing
+import typing_extensions
 
 import pandas as pd
 import tiktoken
@@ -24,15 +20,16 @@ class LocalContextLoader(_base.BaseContextLoader):
     _community_reports: pd.DataFrame
     _text_units: pd.DataFrame
     _relationships: pd.DataFrame
-    _covariates: Optional[pd.DataFrame] = None
+    _covariates: typing.Optional[pd.DataFrame] = None
 
     @classmethod
+    @typing_extensions.override
     def from_parquet_directory(
         cls,
-        directory: Union[str, PathLike[str], Path],
+        directory: typing.Union[str, os.PathLike[str], pathlib.Path],
         **kwargs: str
-    ) -> Self:
-        directory = Path(directory)
+    ) -> typing.Self:
+        directory = pathlib.Path(directory)
         if not directory.exists() or not directory.is_dir():
             raise FileNotFoundError(f"Directory not found: {directory}")
         nodes = pd.read_parquet(directory / kwargs.get("nodes", _defaults.PARQUET_FILE_NAME__NODES))
@@ -63,7 +60,7 @@ class LocalContextLoader(_base.BaseContextLoader):
         community_reports: pd.DataFrame,
         text_units: pd.DataFrame,
         relationships: pd.DataFrame,
-        covariates: Optional[pd.DataFrame],
+        covariates: typing.Optional[pd.DataFrame],
     ) -> None:
         self._nodes = nodes
         self._entities = entities
@@ -72,6 +69,7 @@ class LocalContextLoader(_base.BaseContextLoader):
         self._relationships = relationships
         self._covariates = covariates
 
+    @typing_extensions.override
     def to_context_builder(
         self,
         community_level: int,
@@ -79,7 +77,7 @@ class LocalContextLoader(_base.BaseContextLoader):
         store_coll_name: str,
         store_uri: str,
         encoding_model: str,
-        **kwargs: Any
+        **kwargs: typing.Any
     ) -> _builders.LocalContextBuilder:
         entities_list = _utils.get_entities(
             nodes=self._nodes,
@@ -126,12 +124,13 @@ class GlobalContextLoader(_base.BaseContextLoader):
     _community_reports: pd.DataFrame
 
     @classmethod
+    @typing_extensions.override
     def from_parquet_directory(
         cls,
-        directory: Union[str, PathLike[str], Path],
+        directory: typing.Union[str, os.PathLike[str], pathlib.Path],
         **kwargs: str
-    ) -> Self:
-        directory = Path(directory)
+    ) -> typing.Self:
+        directory = pathlib.Path(directory)
         if not directory.exists() or not directory.is_dir():
             raise FileNotFoundError(f"Directory not found: {directory}")
 
@@ -162,11 +161,12 @@ class GlobalContextLoader(_base.BaseContextLoader):
         self._entities = entities
         self._community_reports = community_reports
 
+    @typing_extensions.override
     def to_context_builder(
         self,
         community_level: int,
         encoding_model: str,
-        **kwargs: Any
+        **kwargs: typing.Any
     ) -> _builders.GlobalContextBuilder:
         community_reports_list = _utils.get_community_reports(
             community_reports=self._community_reports,

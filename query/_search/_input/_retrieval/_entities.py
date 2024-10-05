@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import Any, cast, Iterable, List, Optional
+import typing
 
 import pandas as pd
 
@@ -12,8 +12,8 @@ from ...._search import _model
 
 
 def get_entity_by_key(
-    entities: Iterable[_model.Entity], key: str, value: str | int
-) -> Optional[_model.Entity]:
+    entities: typing.Iterable[_model.Entity], key: str, value: str | int
+) -> typing.Optional[_model.Entity]:
     """Get entity by key."""
     for entity in entities:
         if isinstance(value, str) and is_valid_uuid(value):
@@ -25,14 +25,14 @@ def get_entity_by_key(
     return None
 
 
-def get_entity_by_name(entities: Iterable[_model.Entity], entity_name: str) -> List[_model.Entity]:
+def get_entity_by_name(entities: typing.Iterable[_model.Entity], entity_name: str) -> typing.List[_model.Entity]:
     """Get entities by name."""
     return [entity for entity in entities if entity.title == entity_name]
 
 
 def get_entity_by_attribute(
-    entities: Iterable[_model.Entity], attribute_name: str, attribute_value: Any
-) -> List[_model.Entity]:
+    entities: typing.Iterable[_model.Entity], attribute_name: str, attribute_value: typing.Any
+) -> typing.List[_model.Entity]:
     """Get entities by attribute."""
     return [
         entity for entity in entities
@@ -41,7 +41,7 @@ def get_entity_by_attribute(
 
 
 def to_entity_dataframe(
-    entities: List[_model.Entity],
+    entities: typing.List[_model.Entity],
     include_entity_rank: bool = True,
     rank_description: str = "number of relationships",
 ) -> pd.DataFrame:
@@ -73,7 +73,7 @@ def to_entity_dataframe(
             )
             new_record.append(field_value)
         records.append(new_record)
-    return pd.DataFrame(records, columns=cast(Any, header))
+    return pd.DataFrame(records, columns=typing.cast(typing.Any, header))
 
 
 def is_valid_uuid(value: str) -> bool:

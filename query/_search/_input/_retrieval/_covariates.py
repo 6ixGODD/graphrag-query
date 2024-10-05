@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import Any, cast, List
+import typing
 
 import pandas as pd
 
@@ -11,9 +11,9 @@ from ...._search import _model
 
 
 def get_candidate_covariates(
-    selected_entities: List[_model.Entity],
-    covariates: List[_model.Covariate],
-) -> List[_model.Covariate]:
+    selected_entities: typing.List[_model.Entity],
+    covariates: typing.List[_model.Covariate],
+) -> typing.List[_model.Covariate]:
     """Get all covariates that are related to selected entities."""
     selected_entity_names = [entity.title for entity in selected_entities]
     return [
@@ -23,7 +23,7 @@ def get_candidate_covariates(
     ]
 
 
-def to_covariate_dataframe(covariates: List[_model.Covariate]) -> pd.DataFrame:
+def to_covariate_dataframe(covariates: typing.List[_model.Covariate]) -> pd.DataFrame:
     """Convert a list of covariates to a pandas dataframe."""
     if len(covariates) == 0:
         return pd.DataFrame()
@@ -49,4 +49,4 @@ def to_covariate_dataframe(covariates: List[_model.Covariate]) -> pd.DataFrame:
             )
             new_record.append(field_value)
         records.append(new_record)
-    return pd.DataFrame(records, columns=cast(Any, header))
+    return pd.DataFrame(records, columns=typing.cast(typing.Any, header))

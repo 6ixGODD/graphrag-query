@@ -3,36 +3,36 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+import typing
 
-from ..._search._model._named import Named
+from ..._search._model import _named
 
 
-class Entity(Named):
+class Entity(_named.Named):
     """A protocol for an entity in the system."""
 
-    type: Optional[str] = None
+    type: typing.Optional[str] = None
     """Type of the entity (can be any string, optional)."""
 
-    description: Optional[str] = None
+    description: typing.Optional[str] = None
     """Description of the entity (optional)."""
 
-    description_embedding: Optional[List[float]] = None
+    description_embedding: typing.Optional[typing.List[float]] = None
     """The semantic (i.e. text) embedding of the entity (optional)."""
 
-    name_embedding: Optional[List[float]] = None
+    name_embedding: typing.Optional[typing.List[float]] = None
     """The semantic (i.e. text) embedding of the entity (optional)."""
 
-    graph_embedding: Optional[List[float]] = None
+    graph_embedding: typing.Optional[typing.List[float]] = None
     """The graph embedding of the entity, likely from node2vec (optional)."""
 
-    community_ids: Optional[List[str]] = None
+    community_ids: typing.Optional[typing.List[str]] = None
     """The community IDs of the entity (optional)."""
 
-    text_unit_ids: Optional[List[str]] = None
+    text_unit_ids: typing.Optional[typing.List[str]] = None
     """List of text unit IDs in which the entity appears (optional)."""
 
-    document_ids: Optional[List[str]] = None
+    document_ids: typing.Optional[typing.List[str]] = None
     """List of document IDs in which the entity appears (optional)."""
 
     rank: int = 1
@@ -41,7 +41,7 @@ class Entity(Named):
     entity. This can be based on centrality or other metrics.
     """
 
-    attributes: Optional[Dict[str, Any]] = None
+    attributes: typing.Optional[typing.Dict[str, typing.Any]] = None
     """
     Additional attributes associated with the entity (optional), e.g. start time, end 
     time, etc. To be included in the search prompt.

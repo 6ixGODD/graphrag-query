@@ -3,15 +3,8 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
-from typing import (
-    Any,
-    cast,
-    Dict,
-    List,
-    Optional,
-    Tuple,
-)
+import collections
+import typing
 
 import pandas as pd
 import tiktoken
@@ -19,21 +12,21 @@ import tiktoken
 from .... import _utils
 from ...._search import _model
 from ...._search._input._retrieval import (
-    _covariates as _covariates,
-    _entities as _entities,
-    _relationships as _relationships,
+    _covariates,
+    _entities,
+    _relationships,
 )
 
 
 def build_entity_context(
-    selected_entities: List[_model.Entity],
-    token_encoder: Optional[tiktoken.Encoding] = None,
+    selected_entities: typing.List[_model.Entity],
+    token_encoder: typing.Optional[tiktoken.Encoding] = None,
     max_tokens: int = 8000,
     include_entity_rank: bool = True,
     rank_description: str = "number of relationships",
     column_delimiter: str = "|",
     context_name: str = "Entities",
-) -> Tuple[str, pd.DataFrame]:
+) -> typing.Tuple[str, pd.DataFrame]:
     """Prepare entity data table as context data for system prompt."""
     if len(selected_entities) == 0:
         return "", pd.DataFrame()
@@ -78,7 +71,7 @@ def build_entity_context(
 
     if len(all_context_records) > 1:
         record_df = pd.DataFrame(
-            all_context_records[1:], columns=cast(Any, all_context_records[0])
+            all_context_records[1:], columns=typing.cast(typing.Any, all_context_records[0])
         )
     else:
         record_df = pd.DataFrame()
@@ -87,19 +80,19 @@ def build_entity_context(
 
 
 def build_covariates_context(
-    selected_entities: List[_model.Entity],
-    covariates: List[_model.Covariate],
-    token_encoder: Optional[tiktoken.Encoding] = None,
+    selected_entities: typing.List[_model.Entity],
+    covariates: typing.List[_model.Covariate],
+    token_encoder: typing.Optional[tiktoken.Encoding] = None,
     max_tokens: int = 8000,
     column_delimiter: str = "|",
     context_name: str = "_model.Covariates",
-) -> Tuple[str, pd.DataFrame]:
+) -> typing.Tuple[str, pd.DataFrame]:
     """Prepare covariate data tables as context data for system prompt."""
     # create an empty list of covariates
     if len(selected_entities) == 0 or len(covariates) == 0:
         return "", pd.DataFrame()
 
-    selected_covariates = List[_model.Covariate]()
+    selected_covariates = typing.List[_model.Covariate]()
     record_df = pd.DataFrame()
 
     # add context header
@@ -144,7 +137,7 @@ def build_covariates_context(
 
         if len(all_context_records) > 1:
             record_df = pd.DataFrame(
-                all_context_records[1:], columns=cast(Any, all_context_records[0])
+                all_context_records[1:], columns=typing.cast(typing.Any, all_context_records[0])
             )
         else:
             record_df = pd.DataFrame()
@@ -153,16 +146,16 @@ def build_covariates_context(
 
 
 def build_relationship_context(
-    selected_entities: List[_model.Entity],
-    relationships: List[_model.Relationship],
-    token_encoder: Optional[tiktoken.Encoding] = None,
+    selected_entities: typing.List[_model.Entity],
+    relationships: typing.List[_model.Relationship],
+    token_encoder: typing.Optional[tiktoken.Encoding] = None,
     include_relationship_weight: bool = False,
     max_tokens: int = 8000,
     top_k_relationships: int = 10,
     relationship_ranking_attribute: str = "rank",
     column_delimiter: str = "|",
     context_name: str = "_model.Relationships",
-) -> Tuple[str, pd.DataFrame]:
+) -> typing.Tuple[str, pd.DataFrame]:
     """Prepare relationship data tables as context data for system prompt."""
     selected_relationships = _filter_relationships(
         selected_entities=selected_entities,
@@ -217,7 +210,7 @@ def build_relationship_context(
 
     if len(all_context_records) > 1:
         record_df = pd.DataFrame(
-            all_context_records[1:], columns=cast(Any, all_context_records[0])
+            all_context_records[1:], columns=typing.cast(typing.Any, all_context_records[0])
         )
     else:
         record_df = pd.DataFrame()
@@ -226,11 +219,11 @@ def build_relationship_context(
 
 
 def _filter_relationships(
-    selected_entities: List[_model.Entity],
-    relationships: List[_model.Relationship],
+    selected_entities: typing.List[_model.Entity],
+    relationships: typing.List[_model.Relationship],
     top_k_relationships: int = 10,
     relationship_ranking_attribute: str = "rank",
-) -> List[_model.Relationship]:
+) -> typing.List[_model.Relationship]:
     """Filter and sort relationships based on a set of selected entities and a ranking attribute."""
     # First priority: in-network relationships (i.e. relationships between selected entities)
     in_network_relationships = _relationships.get_in_network_relationships(
@@ -265,7 +258,7 @@ def _filter_relationships(
     out_network_entity_names = list(
         set(out_network_source_names + out_network_target_names)
     )
-    out_network_entity_links = defaultdict(int)
+    out_network_entity_links = collections.defaultdict(int)
     for entity_name in out_network_entity_names:
         targets = [
             relationship.target
@@ -309,14 +302,14 @@ def _filter_relationships(
 
 
 def get_candidate_context(
-    selected_entities: List[_model.Entity],
-    entities: List[_model.Entity],
-    relationships: List[_model.Relationship],
-    covariates: Dict[str, List[_model.Covariate]],
+    selected_entities: typing.List[_model.Entity],
+    entities: typing.List[_model.Entity],
+    relationships: typing.List[_model.Relationship],
+    covariates: typing.Dict[str, typing.List[_model.Covariate]],
     include_entity_rank: bool = True,
     entity_rank_description: str = "number of relationships",
     include_relationship_weight: bool = False,
-) -> Dict[str, pd.DataFrame]:
+) -> typing.Dict[str, pd.DataFrame]:
     """Prepare entity, relationship, and covariate data tables as context data for system prompt."""
     candidate_context = {}
     candidate_relationships = _relationships.get_candidate_relationships(

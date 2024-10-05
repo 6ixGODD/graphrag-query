@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import List, Optional
+import typing
 
 import pandas as pd
 
@@ -16,19 +16,19 @@ def read_entities(
     df: pd.DataFrame,
     *,
     id_col: str = "id",
-    short_id_col: Optional[str] = "short_id",
+    short_id_col: typing.Optional[str] = "short_id",
     title_col: str = "title",
-    type_col: Optional[str] = "type",
-    description_col: Optional[str] = "description",
-    name_embedding_col: Optional[str] = "name_embedding",
-    description_embedding_col: Optional[str] = "description_embedding",
-    graph_embedding_col: Optional[str] = "graph_embedding",
-    community_col: Optional[str] = "community_ids",
-    text_unit_ids_col: Optional[str] = "text_unit_ids",
-    document_ids_col: Optional[str] = "document_ids",
-    rank_col: Optional[str] = "degree",
-    attributes_cols: Optional[List[str]] = None,
-) -> List[_model.Entity]:
+    type_col: typing.Optional[str] = "type",
+    description_col: typing.Optional[str] = "description",
+    name_embedding_col: typing.Optional[str] = "name_embedding",
+    description_embedding_col: typing.Optional[str] = "description_embedding",
+    graph_embedding_col: typing.Optional[str] = "graph_embedding",
+    community_col: typing.Optional[str] = "community_ids",
+    text_unit_ids_col: typing.Optional[str] = "text_unit_ids",
+    document_ids_col: typing.Optional[str] = "document_ids",
+    rank_col: typing.Optional[str] = "degree",
+    attributes_cols: typing.Optional[typing.List[str]] = None,
+) -> typing.List[_model.Entity]:
     """Read entities from a dataframe."""
     entities = []
     for idx, row in df.iterrows():
@@ -56,7 +56,7 @@ def read_entities(
 
 
 def store_entity_semantic_embeddings(
-    entities: List[_model.Entity],
+    entities: typing.List[_model.Entity],
     vectorstore: _vector_stores.BaseVectorStore,
 ) -> _vector_stores.BaseVectorStore:
     """Store entity semantic embeddings in a vectorstore."""
@@ -76,7 +76,7 @@ def store_entity_semantic_embeddings(
 
 
 def store_entity_behavior_embeddings(
-    entities: List[_model.Entity],
+    entities: typing.List[_model.Entity],
     vectorstore: _vector_stores.BaseVectorStore,
 ) -> _vector_stores.BaseVectorStore:
     """Store entity behavior embeddings in a vectorstore."""
@@ -98,16 +98,16 @@ def store_entity_behavior_embeddings(
 def read_relationships(
     df: pd.DataFrame,
     id_col: str = "id",
-    short_id_col: Optional[str] = "short_id",
+    short_id_col: typing.Optional[str] = "short_id",
     source_col: str = "source",
     target_col: str = "target",
-    description_col: Optional[str] = "description",
-    description_embedding_col: Optional[str] = "description_embedding",
-    weight_col: Optional[str] = "weight",
-    text_unit_ids_col: Optional[str] = "text_unit_ids",
-    document_ids_col: Optional[str] = "document_ids",
-    attributes_cols: Optional[List[str]] = None,
-) -> List[_model.Relationship]:
+    description_col: typing.Optional[str] = "description",
+    description_embedding_col: typing.Optional[str] = "description_embedding",
+    weight_col: typing.Optional[str] = "weight",
+    text_unit_ids_col: typing.Optional[str] = "text_unit_ids",
+    document_ids_col: typing.Optional[str] = "document_ids",
+    attributes_cols: typing.Optional[typing.List[str]] = None,
+) -> typing.List[_model.Relationship]:
     """Read relationships from a dataframe."""
     relationships = []
     for idx, row in df.iterrows():
@@ -134,14 +134,14 @@ def read_relationships(
 def read_covariates(
     df: pd.DataFrame,
     id_col: str = "id",
-    short_id_col: Optional[str] = "short_id",
+    short_id_col: typing.Optional[str] = "short_id",
     subject_col: str = "subject_id",
-    subject_type_col: Optional[str] = "subject_type",
-    covariate_type_col: Optional[str] = "covariate_type",
-    text_unit_ids_col: Optional[str] = "text_unit_ids",
-    document_ids_col: Optional[str] = "document_ids",
-    attributes_cols: Optional[List[str]] = None,
-) -> List[_model.Covariate]:
+    subject_type_col: typing.Optional[str] = "subject_type",
+    covariate_type_col: typing.Optional[str] = "covariate_type",
+    text_unit_ids_col: typing.Optional[str] = "text_unit_ids",
+    document_ids_col: typing.Optional[str] = "document_ids",
+    attributes_cols: typing.Optional[typing.List[str]] = None,
+) -> typing.List[_model.Covariate]:
     """Read covariates from a dataframe."""
     covariates = []
     for idx, row in df.iterrows():
@@ -168,14 +168,14 @@ def read_covariates(
 def read_communities(
     df: pd.DataFrame,
     id_col: str = "id",
-    short_id_col: Optional[str] = "short_id",
+    short_id_col: typing.Optional[str] = "short_id",
     title_col: str = "title",
     level_col: str = "level",
-    entities_col: Optional[str] = "entity_ids",
-    relationships_col: Optional[str] = "relationship_ids",
-    covariates_col: Optional[str] = "covariate_ids",
-    attributes_cols: Optional[List[str]] = None,
-) -> List[_model.Community]:
+    entities_col: typing.Optional[str] = "entity_ids",
+    relationships_col: typing.Optional[str] = "relationship_ids",
+    covariates_col: typing.Optional[str] = "covariate_ids",
+    attributes_cols: typing.Optional[typing.List[str]] = None,
+) -> typing.List[_model.Community]:
     """Read communities from a dataframe."""
     communities = []
     for idx, row in df.iterrows():
@@ -200,16 +200,16 @@ def read_communities(
 def read_community_reports(
     df: pd.DataFrame,
     id_col: str = "id",
-    short_id_col: Optional[str] = "short_id",
+    short_id_col: typing.Optional[str] = "short_id",
     title_col: str = "title",
     community_col: str = "community",
     summary_col: str = "summary",
     content_col: str = "full_content",
-    rank_col: Optional[str] = "rank",
-    summary_embedding_col: Optional[str] = "summary_embedding",
-    content_embedding_col: Optional[str] = "full_content_embedding",
-    attributes_cols: Optional[List[str]] = None,
-) -> List[_model.CommunityReport]:
+    rank_col: typing.Optional[str] = "rank",
+    summary_embedding_col: typing.Optional[str] = "summary_embedding",
+    content_embedding_col: typing.Optional[str] = "full_content_embedding",
+    attributes_cols: typing.Optional[typing.List[str]] = None,
+) -> typing.List[_model.CommunityReport]:
     """Read community reports from a dataframe."""
     reports = []
     for idx, row in df.iterrows():
@@ -238,16 +238,16 @@ def read_community_reports(
 def read_text_units(
     df: pd.DataFrame,
     id_col: str = "id",
-    short_id_col: Optional[str] = "short_id",
+    short_id_col: typing.Optional[str] = "short_id",
     text_col: str = "text",
-    entities_col: Optional[str] = "entity_ids",
-    relationships_col: Optional[str] = "relationship_ids",
-    covariates_col: Optional[str] = "covariate_ids",
-    tokens_col: Optional[str] = "n_tokens",
-    document_ids_col: Optional[str] = "document_ids",
-    embedding_col: Optional[str] = "text_embedding",
-    attributes_cols: Optional[List[str]] = None,
-) -> List[_model.TextUnit]:
+    entities_col: typing.Optional[str] = "entity_ids",
+    relationships_col: typing.Optional[str] = "relationship_ids",
+    covariates_col: typing.Optional[str] = "covariate_ids",
+    tokens_col: typing.Optional[str] = "n_tokens",
+    document_ids_col: typing.Optional[str] = "document_ids",
+    embedding_col: typing.Optional[str] = "text_embedding",
+    attributes_cols: typing.Optional[typing.List[str]] = None,
+) -> typing.List[_model.TextUnit]:
     """Read text units from a dataframe."""
     text_units = []
     for idx, row in df.iterrows():
@@ -277,13 +277,13 @@ def read_documents(
     short_id_col: str = "short_id",
     title_col: str = "title",
     type_col: str = "type",
-    summary_col: Optional[str] = "entities",
-    raw_content_col: Optional[str] = "relationships",
-    summary_embedding_col: Optional[str] = "summary_embedding",
-    content_embedding_col: Optional[str] = "raw_content_embedding",
-    text_units_col: Optional[str] = "text_units",
-    attributes_cols: Optional[List[str]] = None,
-) -> List[_model.Document]:
+    summary_col: typing.Optional[str] = "entities",
+    raw_content_col: typing.Optional[str] = "relationships",
+    summary_embedding_col: typing.Optional[str] = "summary_embedding",
+    content_embedding_col: typing.Optional[str] = "raw_content_embedding",
+    text_units_col: typing.Optional[str] = "text_units",
+    attributes_cols: typing.Optional[typing.List[str]] = None,
+) -> typing.List[_model.Document]:
     """Read documents from a dataframe."""
     docs = []
     for idx, row in df.iterrows():

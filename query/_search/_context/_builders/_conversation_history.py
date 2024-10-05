@@ -3,15 +3,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from enum import Enum
-from typing import (
-    Dict,
-    List,
-    Literal,
-    Optional,
-    Self,
-)
+import dataclasses
+import enum
+import typing
 
 import pandas as pd
 import tiktoken
@@ -24,7 +18,7 @@ ROLE__USER = "user"
 ROLE__ASSISTANT = "assistant"
 
 
-class ConversationRole(str, Enum):
+class ConversationRole(str, enum.Enum):
     """Enum for conversation roles."""
 
     SYSTEM = ROLE__SYSTEM
@@ -34,21 +28,19 @@ class ConversationRole(str, Enum):
     @staticmethod
     def from_string(value: str) -> "ConversationRole":
         """Convert string to ConversationRole."""
-        match value:
-            case ConversationRole.SYSTEM.value:
-                return ConversationRole.SYSTEM
-            case ConversationRole.USER.value:
-                return ConversationRole.USER
-            case ConversationRole.ASSISTANT.value:
-                return ConversationRole.ASSISTANT
-
+        if value == ROLE__SYSTEM:
+            return ConversationRole.SYSTEM
+        if value == ROLE__USER:
+            return ConversationRole.USER
+        if value == ROLE__ASSISTANT:
+            return ConversationRole.ASSISTANT
         raise ValueError(f"Invalid Role: {value}")
 
     def __str__(self) -> str:
         return self.value
 
 
-@dataclass
+@dataclasses.dataclass
 class ConversationTurn:
     """Data class for storing a single conversation turn."""
 
@@ -60,7 +52,7 @@ class ConversationTurn:
         return f"{self.role}: {self.content}"
 
 
-@dataclass
+@dataclasses.dataclass
 class QATurn:
     """
     Data class for storing a QA turn.
@@ -69,9 +61,9 @@ class QATurn:
     """
 
     user_query: ConversationTurn
-    assistant_answers: Optional[List[ConversationTurn]] = None
+    assistant_answers: typing.Optional[typing.List[ConversationTurn]] = None
 
-    def get_answer_text(self) -> Optional[str]:
+    def get_answer_text(self) -> typing.Optional[str]:
         """Get the text of the assistant answers."""
         return (
             "\n".join([answer.content for answer in self.assistant_answers])
@@ -90,11 +82,11 @@ class QATurn:
 class ConversationHistory:
     """Class for storing a conversation history."""
 
-    _turns: List[ConversationTurn] = []
-    _max_length: Optional[int] = None
+    _turns: typing.List[ConversationTurn] = []
+    _max_length: typing.Optional[int] = None
 
     @property
-    def max_length(self) -> Optional[int]:
+    def max_length(self) -> typing.Optional[int]:
         """Get the maximum length of the conversation history."""
         return self._max_length
 
@@ -106,9 +98,9 @@ class ConversationHistory:
     @classmethod
     def from_list(
         cls,
-        conversation_turns: List[Dict[Literal["role", "content"], str]],
-        max_length: Optional[int] = None,
-    ) -> Self:
+        conversation_turns: typing.List[typing.Dict[typing.Literal["role", "content"], str]],
+        max_length: typing.Optional[int] = None,
+    ) -> typing.Self:
         """
         Create a conversation history from a list of conversation turns.
 
@@ -130,9 +122,9 @@ class ConversationHistory:
         """Add a new turn to the conversation history."""
         self._turns.append(ConversationTurn(role=role, content=content))
 
-    def to_qa_turns(self) -> List[QATurn]:
+    def to_qa_turns(self) -> typing.List[QATurn]:
         """Convert conversation history to a list of QA turns."""
-        qa_turns: List[QATurn] = []
+        qa_turns: typing.List[QATurn] = []
         current_qa_turn = None
         for turn in self._turns:
             if turn.role == ConversationRole.USER:
@@ -146,7 +138,7 @@ class ConversationHistory:
             qa_turns.append(current_qa_turn)
         return qa_turns
 
-    def get_user_turns(self, max_user_turns: int = 1) -> List[str]:
+    def get_user_turns(self, max_user_turns: int = 1) -> typing.List[str]:
         """Get the last user turns in the conversation history."""
         user_turns = []
         for turn in self._turns[::-1]:
@@ -158,7 +150,7 @@ class ConversationHistory:
 
     def build_context(
         self,
-        token_encoder: Optional[tiktoken.Encoding] = None,
+        token_encoder: typing.Optional[tiktoken.Encoding] = None,
         include_user_turns_only: bool = True,
         max_qa_turns: int = 5,
         max_tokens: int = 8000,
@@ -216,7 +208,7 @@ class ConversationHistory:
         )
         return context_text, {context_name.lower(): current_context_df}
 
-    def to_dict(self) -> List[Dict[str, str]]:
+    def to_dict(self) -> typing.List[typing.Dict[str, str]]:
         """Convert conversation history to a list of dictionaries."""
         return [{"role": turn.role.value, "content": turn.content}
                 for turn in self._turns][-(self._max_length or 0):]

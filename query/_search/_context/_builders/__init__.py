@@ -3,17 +3,16 @@
 
 from __future__ import annotations
 
-from ...._search._context._builders._context_builders import (
-    BaseContextBuilder,
-    GlobalContextBuilder,
-    LocalContextBuilder,
-)
-from ...._search._context._builders._conversation_history import (
-    ConversationHistory,
-    ConversationRole,
-    ConversationTurn,
-    QATurn,
-)
+from ...._search._context._builders import _context_builders
+from ...._search._context._builders import _conversation_history
+
+BaseContextBuilder = _context_builders.BaseContextBuilder
+GlobalContextBuilder = _context_builders.GlobalContextBuilder
+LocalContextBuilder = _context_builders.LocalContextBuilder
+ConversationHistory = _conversation_history.ConversationHistory
+ConversationRole = _conversation_history.ConversationRole
+ConversationTurn = _conversation_history.ConversationTurn
+QATurn = _conversation_history.QATurn
 
 __all__ = [
     "BaseContextBuilder",

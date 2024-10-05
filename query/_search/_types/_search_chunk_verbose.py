@@ -1,35 +1,29 @@
 from __future__ import annotations
 
-from typing import (
-    Any,
-    Dict,
-    List,
-    Optional,
-    Union,
-)
+import typing
 
-from .._types._search import SearchResult
-from .._types._search_chunk import SearchResultChunk
+from .._types import _search, _search_chunk
 
 
-class SearchResultChunkVerbose(SearchResultChunk):
-    context_data: Optional[Union[str, List[Any], Dict[str, Any]]] = None
+class SearchResultChunkVerbose(_search_chunk.SearchResultChunk):
+    context_data: typing.Optional[typing.Union[str, typing.List[typing.Any], typing.Dict[str, typing.Any]]] = None
     """TODO: Documentation"""
 
-    context_text: Optional[Union[str, List[str], Dict[str, str]]] = None
+    context_text: typing.Optional[typing.Union[str, typing.List[str], typing.Dict[str, str]]] = None
     """TODO: Documentation"""
 
-    completion_time: Optional[float] = None
+    completion_time: typing.Optional[float] = None
     """TODO: Documentation"""
 
-    llm_calls: Optional[int] = None
+    llm_calls: typing.Optional[int] = None
     """TODO: Documentation"""
 
-    map_result: Optional[List[SearchResult]] = None
+    map_result: typing.Optional[typing.List[_search.SearchResult]] = None
     """TODO: Documentation"""
 
-    reduce_context_data: Optional[Union[str, List[Any], Dict[str, Any]]] = None
+    reduce_context_data: typing.Optional[
+        typing.Union[str, typing.List[typing.Any], typing.Dict[str, typing.Any]]] = None
     """TODO: Documentation"""
 
-    reduce_context_text: Optional[Union[str, List[str], Dict[str, str]]] = None
+    reduce_context_text: typing.Optional[typing.Union[str, typing.List[str], typing.Dict[str, str]]] = None
     """TODO: Documentation"""

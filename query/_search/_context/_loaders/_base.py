@@ -1,21 +1,21 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from os import PathLike
-from pathlib import Path
-from typing import (
-    Any,
-    Self,
-    Union,
-)
+import abc
+import os
+import pathlib
+import typing
 
 from ...._search._context import _builders
 
 
-class BaseContextLoader(ABC):
+class BaseContextLoader(abc.ABC):
     @classmethod
-    @abstractmethod
-    def from_parquet_directory(cls, directory: Union[PathLike[str], Path], **kwargs: str) -> Self: ...
+    @abc.abstractmethod
+    def from_parquet_directory(
+        cls,
+        directory: typing.Union[os.PathLike[str], pathlib.Path],
+        **kwargs: str
+    ) -> typing.Self: ...
 
-    @abstractmethod
-    def to_context_builder(self, *args, **kwargs: Any) -> _builders.BaseContextBuilder: ...
+    @abc.abstractmethod
+    def to_context_builder(self, *args, **kwargs: typing.Any) -> _builders.BaseContextBuilder: ...

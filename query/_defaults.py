@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import warnings
-from typing import Any
+import typing
+
+from . import _types
 
 __all__ = [
     'get_default_logger',
 ]
 
-_default_logger: Any
-_loguru: Any
+_default_logger: _types.Logger
+_loguru: typing.Any  # for type hinting
+
 try:
     import loguru as _loguru
 
@@ -20,8 +23,9 @@ except ImportError:
 
     import logging as _logging
 
+    # noinspection PyTypeChecker
     _default_logger = _logging.getLogger(__name__)
 
 
-def get_default_logger() -> _default_logger.__class__:
+def get_default_logger() -> _types.Logger:
     return _default_logger

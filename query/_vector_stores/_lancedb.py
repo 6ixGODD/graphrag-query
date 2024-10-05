@@ -4,32 +4,30 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Callable, List, Optional
+import typing
+import typing_extensions
 
 import lancedb  # type: ignore
 import pyarrow as pa  # type: ignore
 
-from ._base import (
-    BaseVectorStore,
-    VectorStoreDocument,
-    VectorStoreSearchResult,
-)
+from . import _base_vector_store
 
 
-class LanceDBVectorStore(BaseVectorStore):
+class LanceDBVectorStore(_base_vector_store.BaseVectorStore):
     """The LanceDB vector storage implementation."""
     collection_name: str
     db_connection: lancedb.DBConnection
     document_collection: lancedb.table.Table
-    query_filter: Optional[str] = None
+    query_filter: typing.Optional[str] = None
 
-    def __init__(self, collection_name: str, uri: str = "./lancedb", **kwargs: Any) -> None:
+    def __init__(self, collection_name: str, uri: str = "./lancedb", **kwargs: typing.Any) -> None:
         """Initialize the LanceDB vector storage."""
         super().__init__(collection_name, **kwargs)
         self.db_connection = lancedb.connect(uri)
 
+    @typing_extensions.override
     def load_documents(
-        self, documents: List[VectorStoreDocument], overwrite: bool = True
+        self, documents: typing.List[_base_vector_store.VectorStoreDocument], overwrite: bool = True
     ) -> None:
         """Load documents into vector storage."""
         data = [
@@ -66,7 +64,8 @@ class LanceDBVectorStore(BaseVectorStore):
             if data.__len__():
                 self.document_collection.add(data)
 
-    def filter_by_id(self, include_ids: List[str] | List[int]) -> Optional[str]:
+    @typing_extensions.override
+    def filter_by_id(self, include_ids: typing.List[str] | typing.List[int]) -> typing.Optional[str]:
         """Build a query filter to filter documents by id."""
         if len(include_ids) == 0:
             self.query_filter = None
@@ -79,9 +78,10 @@ class LanceDBVectorStore(BaseVectorStore):
 
         return self.query_filter
 
+    @typing_extensions.override
     def similarity_search_by_vector(
-        self, query_embedding: List[float], k: int = 10, **kwargs: Any
-    ) -> List[VectorStoreSearchResult]:
+        self, query_embedding: typing.List[float], k: int = 10, **kwargs: typing.Any
+    ) -> typing.List[_base_vector_store.VectorStoreSearchResult]:
         """Perform a vector-based similarity search."""
         if self.query_filter:
             docs = (
@@ -91,8 +91,8 @@ class LanceDBVectorStore(BaseVectorStore):
         else:
             docs = self.document_collection.search(query=query_embedding).limit(k).to_list()
         return [
-            VectorStoreSearchResult(
-                document=VectorStoreDocument(
+            _base_vector_store.VectorStoreSearchResult(
+                document=_base_vector_store.VectorStoreDocument(
                     id=doc["id"],
                     text=doc["text"],
                     vector=doc["vector"],
@@ -102,13 +102,14 @@ class LanceDBVectorStore(BaseVectorStore):
             ) for doc in docs
         ]
 
+    @typing_extensions.override
     def similarity_search_by_text(
         self,
         text: str,
-        text_embedder: Callable[[str], List[float]],
+        text_embedder: typing.Callable[[str], typing.List[float]],
         k: int = 10,
-        **kwargs: Any
-    ) -> List[VectorStoreSearchResult]:
+        **kwargs: typing.Any
+    ) -> typing.List[_base_vector_store.VectorStoreSearchResult]:
         """Perform a similarity search using a given input text."""
         query_embedding = text_embedder(text)
         if query_embedding:

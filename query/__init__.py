@@ -3,8 +3,14 @@
 
 from __future__ import annotations
 
-from ._errors import GraphRAGError
-from ._version import __title__, __version__
+import typing
+
+from . import _errors
+from . import _version
+
+GraphRAGError: typing.Type[Exception] = _errors.GraphRAGError
+__title__ = _version.__title__
+__version__ = _version.__version__
 
 __all__ = [
     "GraphRAGError",

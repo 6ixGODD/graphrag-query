@@ -3,13 +3,13 @@
 
 from __future__ import annotations
 
-from typing import Optional
+import typing
 
 import numpy as np
 import pandas as pd
 
 
-def to_str(data: pd.Series, column_name: Optional[str]) -> str:
+def to_str(data: pd.Series, column_name: typing.Optional[str]) -> str:
     """Convert and validate a value to a string."""
     if column_name is None:
         raise ValueError("Column name is None")
@@ -19,7 +19,7 @@ def to_str(data: pd.Series, column_name: Optional[str]) -> str:
     raise ValueError(f"Column {column_name} not found in data")
 
 
-def to_optional_str(data: pd.Series, column_name: Optional[str]) -> Optional[str]:
+def to_optional_str(data: pd.Series, column_name: typing.Optional[str]) -> typing.Optional[str]:
     """Convert and validate a value to an optional string."""
     if column_name is None:
         raise ValueError("Column name is None")
@@ -33,7 +33,7 @@ def to_optional_str(data: pd.Series, column_name: Optional[str]) -> Optional[str
 
 
 def to_list(
-    data: pd.Series, column_name: Optional[str], item_type: Optional[type] = None
+    data: pd.Series, column_name: typing.Optional[str], item_type: typing.Optional[type] = None
 ) -> list:
     """Convert and validate a value to a list."""
     if column_name is None:
@@ -57,8 +57,8 @@ def to_list(
 
 
 def to_optional_list(
-    data: pd.Series, column_name: Optional[str], item_type: Optional[type] = None
-) -> Optional[list]:
+    data: pd.Series, column_name: typing.Optional[str], item_type: typing.Optional[type] = None
+) -> typing.Optional[list]:
     """Convert and validate a value to an optional list."""
     if column_name is None:
         return None
@@ -83,7 +83,7 @@ def to_optional_list(
     return None
 
 
-def to_int(data: pd.Series, column_name: Optional[str]) -> int:
+def to_int(data: pd.Series, column_name: typing.Optional[str]) -> int:
     """Convert and validate a value to an int."""
     if column_name is None:
         raise ValueError("Column name is None")
@@ -100,7 +100,7 @@ def to_int(data: pd.Series, column_name: Optional[str]) -> int:
     return int(value)
 
 
-def to_optional_int(data: pd.Series, column_name: Optional[str]) -> Optional[int]:
+def to_optional_int(data: pd.Series, column_name: typing.Optional[str]) -> typing.Optional[int]:
     """Convert and validate a value to an optional int."""
     if column_name is None:
         return None
@@ -121,7 +121,7 @@ def to_optional_int(data: pd.Series, column_name: Optional[str]) -> Optional[int
     return int(value)
 
 
-def to_float(data: pd.Series, column_name: Optional[str]) -> float:
+def to_float(data: pd.Series, column_name: typing.Optional[str]) -> float:
     """Convert and validate a value to a float."""
     if column_name is None:
         raise ValueError("Column name is None")
@@ -136,7 +136,7 @@ def to_float(data: pd.Series, column_name: Optional[str]) -> float:
     return float(value)
 
 
-def to_optional_float(data: pd.Series, column_name: Optional[str]) -> Optional[float]:
+def to_optional_float(data: pd.Series, column_name: typing.Optional[str]) -> typing.Optional[float]:
     """Convert and validate a value to an optional float."""
     if column_name is None:
         return None
@@ -155,9 +155,9 @@ def to_optional_float(data: pd.Series, column_name: Optional[str]) -> Optional[f
 
 def to_dict(
     data: pd.Series,
-    column_name: Optional[str],
-    key_type: Optional[type] = None,
-    value_type: Optional[type] = None,
+    column_name: typing.Optional[str],
+    key_type: typing.Optional[type] = None,
+    value_type: typing.Optional[type] = None,
 ) -> dict:
     """Convert and validate a value to a dict."""
     if column_name is None:
@@ -184,10 +184,10 @@ def to_dict(
 
 def to_optional_dict(
     data: pd.Series,
-    column_name: Optional[str],
-    key_type: Optional[type] = None,
-    value_type: Optional[type] = None,
-) -> Optional[dict]:
+    column_name: typing.Optional[str],
+    key_type: typing.Optional[type] = None,
+    value_type: typing.Optional[type] = None,
+) -> typing.Optional[dict]:
     """Convert and validate a value to an optional dict."""
     if column_name is None:
         return None

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+import typing
 
-from ..._search._model._named import Named
+from ..._search._model import _named
 
 
-class CommunityReport(Named):
+class CommunityReport(_named.Named):
     """Defines an LLM-generated summary report of a community."""
 
     community_id: str
@@ -20,11 +20,11 @@ class CommunityReport(Named):
     rank: float = 1.0
     """Rank of the report, used for sorting (optional). Higher means more important"""
 
-    summary_embedding: Optional[List[float]] = None
+    summary_embedding: typing.Optional[typing.List[float]] = None
     """The semantic (i.e. text) embedding of the report summary (optional)."""
 
-    full_content_embedding: Optional[List[float]] = None
+    full_content_embedding: typing.Optional[typing.List[float]] = None
     """The semantic (i.e. text) embedding of the full report content (optional)."""
 
-    attributes: Optional[Dict[str, Any]] = None
+    attributes: typing.Optional[typing.Dict[str, typing.Any]] = None
     """A dictionary of additional attributes associated with the report (optional)."""

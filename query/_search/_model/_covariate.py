@@ -3,12 +3,12 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+import typing
 
-from ..._search._model._identified import Identified
+from ..._search._model import _identified
 
 
-class Covariate(Identified):
+class Covariate(_identified.Identified):
     """
     A protocol for a covariate in the system.
 
@@ -25,10 +25,10 @@ class Covariate(Identified):
     covariate_type: str = "claim"
     """The covariate type."""
 
-    text_unit_ids: Optional[List[str]] = None
-    """List of text unit IDs in which the covariate info appears (optional)."""
+    text_unit_ids: typing.Optional[typing.List[str]] = None
+    """typing.List of text unit IDs in which the covariate info appears (optional)."""
 
-    document_ids: Optional[List[str]] = None
-    """List of document IDs in which the covariate info appears (optional)."""
+    document_ids: typing.Optional[typing.List[str]] = None
+    """typing.List of document IDs in which the covariate info appears (optional)."""
 
-    attributes: Optional[Dict[str, Any]] = None
+    attributes: typing.Optional[typing.Dict[str, typing.Any]] = None

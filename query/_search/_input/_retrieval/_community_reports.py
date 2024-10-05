@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import Any, cast, List
+import typing
 
 import pandas as pd
 
@@ -11,8 +11,8 @@ from ...._search import _model
 
 
 def get_candidate_communities(
-    selected_entities: List[_model.Entity],
-    community_reports: List[_model.CommunityReport],
+    selected_entities: typing.List[_model.Entity],
+    community_reports: typing.List[_model.CommunityReport],
     include_community_rank: bool = False,
     use_community_summary: bool = False,
 ) -> pd.DataFrame:
@@ -35,7 +35,7 @@ def get_candidate_communities(
 
 
 def to_community_report_dataframe(
-    reports: List[_model.CommunityReport],
+    reports: typing.List[_model.CommunityReport],
     include_community_rank: bool = False,
     use_community_summary: bool = False,
 ) -> pd.DataFrame:
@@ -63,4 +63,4 @@ def to_community_report_dataframe(
         if include_community_rank:
             new_record.append(str(report.rank))
         records.append(new_record)
-    return pd.DataFrame(records, columns=cast(Any, header))
+    return pd.DataFrame(records, columns=typing.cast(typing.Any, header))

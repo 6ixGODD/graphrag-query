@@ -3,36 +3,29 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Union,
-)
+import abc
+import dataclasses
+import typing
 
 
-@dataclass
+@dataclasses.dataclass
 class VectorStoreDocument:
     """A document that is stored in vector storage."""
 
-    id: Union[str, int]
+    id: typing.Union[str, int]
     """unique id for the document"""
 
-    text: Optional[str]
+    text: typing.Optional[str]
     """text content of the document"""
 
-    vector: Optional[List[float]]
+    vector: typing.Optional[typing.List[float]]
     """vector representation of the document"""
 
-    attributes: Dict[str, Any] = field(default_factory=dict)
+    attributes: typing.Dict[str, typing.Any] = dataclasses.field(default_factory=dict)
     """store any additional metadata, e.g. title, date ranges, etc"""
 
 
-@dataclass
+@dataclasses.dataclass
 class VectorStoreSearchResult:
     """A vector storage search result."""
 
@@ -43,50 +36,50 @@ class VectorStoreSearchResult:
     """Similarity score between -1 and 1. Higher is more similar."""
 
 
-class BaseVectorStore(ABC):
+class BaseVectorStore(abc.ABC):
     """The base class for vector storage data-access classes."""
     collection_name: str
-    kwargs: Dict[str, Any]
+    kwargs: typing.Dict[str, typing.Any]
 
     def __init__(
         self,
         collection_name: str,
-        **kwargs: Any,
+        **kwargs: typing.Any,
     ):
         self.collection_name = collection_name
         self.kwargs = kwargs
 
-    @abstractmethod
+    @abc.abstractmethod
     def load_documents(
         self,
-        documents: List[VectorStoreDocument],
+        documents: typing.List[VectorStoreDocument],
         overwrite: bool = True
     ) -> None:
         """Load documents into the vector-store."""
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def similarity_search_by_vector(
         self,
-        query_embedding: List[float],
+        query_embedding: typing.List[float],
         k: int = 10,
-        **kwargs: Any
-    ) -> List[VectorStoreSearchResult]:
+        **kwargs: typing.Any
+    ) -> typing.List[VectorStoreSearchResult]:
         """Perform ANN search by vector."""
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def similarity_search_by_text(
         self,
         text: str,
-        text_embedder: Callable[[str], List[float]],
+        text_embedder: typing.Callable[[str], typing.List[float]],
         k: int = 10,
-        **kwargs: Any
-    ) -> List[VectorStoreSearchResult]:
+        **kwargs: typing.Any
+    ) -> typing.List[VectorStoreSearchResult]:
         """Perform ANN search by text."""
         ...
 
-    @abstractmethod
-    def filter_by_id(self, include_ids: Union[List[str], List[int]]) -> Any:
+    @abc.abstractmethod
+    def filter_by_id(self, include_ids: typing.Union[typing.List[str], typing.List[int]]) -> typing.Any:
         """Build a query filter to filter documents by id."""
         ...

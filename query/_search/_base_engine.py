@@ -1,40 +1,27 @@
 from __future__ import annotations
 
+import abc
 import time
-from abc import ABC, abstractmethod
-from typing import (
-    Any,
-    Dict,
-    List,
-    Optional,
-    Protocol,
-    Union,
-)
+
+import typing
 
 import pandas as pd
 
+from .. import _types as _base_types
 from .._search import (
     _context,
     _llm,
     _types,
 )
 
-
-class Logger(Protocol):
-    def error(self, msg: str, *args, **kwargs: Any) -> None: ...
-
-    def warning(self, msg: str, *args, **kwargs: Any) -> None: ...
-
-    def info(self, msg: str, *args, **kwargs: Any) -> None: ...
-
-    def debug(self, msg: str, *args, **kwargs: Any) -> None: ...
+Logger: typing.TypeAlias = _base_types.Logger
 
 
-class QueryEngine(ABC):
+class QueryEngine(abc.ABC):
     _chat_llm: _llm.BaseChatLLM
     _embedding: _llm.BaseEmbedding
     _context_builder: _context.BaseContextBuilder
-    _logger: Optional[Logger]
+    _logger: typing.Optional[Logger]
     _sys_prompt: str
 
     def __init__(
@@ -43,14 +30,14 @@ class QueryEngine(ABC):
         chat_llm: _llm.BaseChatLLM,
         embedding: _llm.BaseEmbedding,
         context_builder: _context.BaseContextBuilder,
-        logger: Optional[Logger] = None,
+        logger: typing.Optional[Logger] = None,
     ):
         self._chat_llm = chat_llm
         self._embedding = embedding
         self._context_builder = context_builder
         self._logger = logger
 
-    @abstractmethod
+    @abc.abstractmethod
     def search(
         self,
         query: str,
@@ -58,8 +45,8 @@ class QueryEngine(ABC):
         conversation_history: _types.ConversationHistory_T = None,
         verbose: bool = True,
         stream: bool = False,
-        **kwargs: Any,
-    ) -> Union[_types.SearchResult_T, _types.StreamSearchResult_T]:
+        **kwargs: typing.Any,
+    ) -> typing.Union[_types.SearchResult_T, _types.StreamSearchResult_T]:
         ...
 
     def _parse_result(
@@ -68,11 +55,11 @@ class QueryEngine(ABC):
         *,
         verbose: bool,
         created: float,
-        context_data: Optional[Dict[str, pd.DataFrame]] = None,
-        context_text: Optional[Union[str, List[str]]] = None,
-        map_result: Optional[List[_types.SearchResult]] = None,
-        reduce_context_data: Optional[Dict[str, pd.DataFrame]] = None,
-        reduce_context_text: Optional[Union[str, List[str]]] = None,
+        context_data: typing.Optional[typing.Dict[str, pd.DataFrame]] = None,
+        context_text: typing.Optional[typing.Union[str, typing.List[str]]] = None,
+        map_result: typing.Optional[typing.List[_types.SearchResult]] = None,
+        reduce_context_data: typing.Optional[typing.Dict[str, pd.DataFrame]] = None,
+        reduce_context_text: typing.Optional[typing.Union[str, typing.List[str]]] = None,
     ) -> _types.SearchResult_T:
         usage = _types.Usage(
             completion_tokens=result.usage.completion_tokens,
@@ -121,11 +108,11 @@ class QueryEngine(ABC):
         *,
         verbose: bool,
         created: float,
-        context_data: Optional[Dict[str, pd.DataFrame]] = None,
-        context_text: Optional[Union[str, List[str]]] = None,
-        map_result: Optional[List[_types.SearchResult]] = None,
-        reduce_context_data: Optional[Dict[str, pd.DataFrame]] = None,
-        reduce_context_text: Optional[Union[str, List[str]]] = None,
+        context_data: typing.Optional[typing.Dict[str, pd.DataFrame]] = None,
+        context_text: typing.Optional[typing.Union[str, typing.List[str]]] = None,
+        map_result: typing.Optional[typing.List[_types.SearchResult]] = None,
+        reduce_context_data: typing.Optional[typing.Dict[str, pd.DataFrame]] = None,
+        reduce_context_text: typing.Optional[typing.Union[str, typing.List[str]]] = None,
     ) -> _types.StreamSearchResult_T:
         for chunk in result:
             usage = _types.Usage(
@@ -180,11 +167,11 @@ class QueryEngine(ABC):
                 )
 
 
-class AsyncQueryEngine(ABC):
+class AsyncQueryEngine(abc.ABC):
     _chat_llm: _llm.BaseAsyncChatLLM
     _embedding: _llm.BaseEmbedding
     _context_builder: _context.BaseContextBuilder
-    _logger: Optional[Logger]
+    _logger: typing.Optional[Logger]
     _sys_prompt: str
 
     def __init__(
@@ -193,14 +180,14 @@ class AsyncQueryEngine(ABC):
         chat_llm: _llm.BaseAsyncChatLLM,
         embedding: _llm.BaseEmbedding,
         context_builder: _context.BaseContextBuilder,
-        logger: Optional[Logger] = None,
+        logger: typing.Optional[Logger] = None,
     ):
         self._chat_llm = chat_llm
         self._embedding = embedding
         self._context_builder = context_builder
         self._logger = logger
 
-    @abstractmethod
+    @abc.abstractmethod
     async def asearch(
         self,
         query: str,
@@ -208,8 +195,8 @@ class AsyncQueryEngine(ABC):
         conversation_history: _types.ConversationHistory_T,
         verbose: bool = True,
         stream: bool = False,
-        **kwargs: Any,
-    ) -> Union[_types.SearchResult_T, _types.AsyncStreamSearchResult_T]:
+        **kwargs: typing.Any,
+    ) -> typing.Union[_types.SearchResult_T, _types.AsyncStreamSearchResult_T]:
         ...
 
     def _parse_result(
@@ -218,11 +205,11 @@ class AsyncQueryEngine(ABC):
         *,
         verbose: bool,
         created: float,
-        context_data: Optional[Dict[str, pd.DataFrame]] = None,
-        context_text: Optional[Union[str, List[str]]] = None,
-        map_result: Optional[List[_types.SearchResult]] = None,
-        reduce_context_data: Optional[Dict[str, pd.DataFrame]] = None,
-        reduce_context_text: Optional[Union[str, List[str]]] = None,
+        context_data: typing.Optional[typing.Dict[str, pd.DataFrame]] = None,
+        context_text: typing.Optional[typing.Union[str, typing.List[str]]] = None,
+        map_result: typing.Optional[typing.List[_types.SearchResult]] = None,
+        reduce_context_data: typing.Optional[typing.Dict[str, pd.DataFrame]] = None,
+        reduce_context_text: typing.Optional[typing.Union[str, typing.List[str]]] = None,
     ) -> _types.SearchResult_T:
         usage = _types.Usage(
             completion_tokens=result.usage.completion_tokens,
@@ -271,11 +258,11 @@ class AsyncQueryEngine(ABC):
         *,
         verbose: bool,
         created: float,
-        context_data: Optional[Dict[str, pd.DataFrame]] = None,
-        context_text: Optional[Union[str, List[str]]] = None,
-        map_result: Optional[List[_types.SearchResult]] = None,
-        reduce_context_data: Optional[Dict[str, pd.DataFrame]] = None,
-        reduce_context_text: Optional[Union[str, List[str]]] = None,
+        context_data: typing.Optional[typing.Dict[str, pd.DataFrame]] = None,
+        context_text: typing.Optional[typing.Union[str, typing.List[str]]] = None,
+        map_result: typing.Optional[typing.List[_types.SearchResult]] = None,
+        reduce_context_data: typing.Optional[typing.Dict[str, pd.DataFrame]] = None,
+        reduce_context_text: typing.Optional[typing.Union[str, typing.List[str]]] = None,
     ) -> _types.AsyncStreamSearchResult_T:
         async for chunk in result:
             usage = _types.Usage(

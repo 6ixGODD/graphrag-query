@@ -1,31 +1,27 @@
 from __future__ import annotations
 
-from typing import (
-    Any,
-    cast,
-    Optional,
-    Union,
-)
+import typing
+import typing_extensions
 
 import httpx
 import openai
 
 from ... import _utils
-from ..._search._llm import _base, _types
+from ..._search._llm import _base_llm, _types
 
 
-class ChatLLM(_base.BaseChatLLM):
+class ChatLLM(_base_llm.BaseChatLLM):
     def __init__(
         self,
         *,
         model: str,
         api_key: str,
-        organization: Optional[str] = None,
-        base_url: Optional[str] = None,
-        timeout: Optional[float] = None,
-        max_retries: Optional[int] = None,
-        http_client: Optional[httpx.Client] = None,
-        **kwargs: Any
+        organization: typing.Optional[str] = None,
+        base_url: typing.Optional[str] = None,
+        timeout: typing.Optional[float] = None,
+        max_retries: typing.Optional[int] = None,
+        http_client: typing.Optional[httpx.Client] = None,
+        **kwargs: typing.Any
     ) -> None:
         self._client = openai.OpenAI(
             api_key=api_key,
@@ -38,13 +34,14 @@ class ChatLLM(_base.BaseChatLLM):
         )
         self._model = model
 
+    @typing_extensions.override
     def chat(
         self,
         msg: _types.MessageParam_T,
         *,
         stream: bool = False,
-        **kwargs: Any
-    ) -> Union[_types.ChatResponse_T, _types.SyncChatStreamResponse_T]:
+        **kwargs: typing.Any
+    ) -> typing.Union[_types.ChatResponse_T, _types.SyncChatStreamResponse_T]:
         response = self._client.chat.completions.create(
             model=self._model,
             messages=msg,
@@ -52,30 +49,32 @@ class ChatLLM(_base.BaseChatLLM):
             **_utils.filter_kwargs(self._client.chat.completions.create, kwargs)
         )
 
-        return cast(_types.ChatCompletion, response) \
-            if not stream else (cast(_types.ChatCompletionChunk, c) for c in response)
+        return typing.cast(_types.ChatCompletion, response) \
+            if not stream else (typing.cast(_types.ChatCompletionChunk, c) for c in response)
 
     @property
+    @typing_extensions.override
     def model(self) -> str:
         return self._model
 
     @model.setter
+    @typing_extensions.override
     def model(self, value: str) -> None:
         self._model = value
 
 
-class AsyncChatLLM(_base.BaseAsyncChatLLM):
+class AsyncChatLLM(_base_llm.BaseAsyncChatLLM):
     def __init__(
         self,
         *,
         model: str,
         api_key: str,
-        organization: Optional[str] = None,
-        base_url: Optional[str] = None,
-        timeout: Optional[float] = None,
-        max_retries: Optional[int] = None,
-        http_client: Optional[httpx.AsyncClient] = None,
-        **kwargs: Any
+        organization: typing.Optional[str] = None,
+        base_url: typing.Optional[str] = None,
+        timeout: typing.Optional[float] = None,
+        max_retries: typing.Optional[int] = None,
+        http_client: typing.Optional[httpx.AsyncClient] = None,
+        **kwargs: typing.Any
     ) -> None:
         self._aclient = openai.AsyncOpenAI(
             api_key=api_key,
@@ -88,13 +87,14 @@ class AsyncChatLLM(_base.BaseAsyncChatLLM):
         )
         self._model = model
 
+    @typing_extensions.override
     async def achat(
         self,
         msg: _types.MessageParam_T,
         *,
         stream: bool = False,
-        **kwargs: Any
-    ) -> Union[_types.ChatResponse_T, _types.AsyncChatStreamResponse_T]:
+        **kwargs: typing.Any
+    ) -> typing.Union[_types.ChatResponse_T, _types.AsyncChatStreamResponse_T]:
         response = await self._aclient.chat.completions.create(
             model=self._model,
             messages=msg,
@@ -102,14 +102,16 @@ class AsyncChatLLM(_base.BaseAsyncChatLLM):
             **_utils.filter_kwargs(self._aclient.chat.completions.create, kwargs)
         )
 
-        return cast(_types.ChatCompletion, response) if not stream else (
-            c async for c in cast(_types.AsyncChatStreamResponse_T, response)
+        return typing.cast(_types.ChatCompletion, response) if not stream else (
+            c async for c in typing.cast(_types.AsyncChatStreamResponse_T, response)
         )
 
     @property
+    @typing_extensions.override
     def model(self) -> str:
         return self._model
 
     @model.setter
+    @typing_extensions.override
     def model(self, value: str) -> None:
         self._model = value

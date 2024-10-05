@@ -3,17 +3,17 @@
 
 from __future__ import annotations
 
-from enum import Enum
-from typing import List, Optional
+import enum
+import typing
 
 from .... import _vector_stores
 from ...._search import _llm, _model
 from ...._search._input._retrieval import (
-    _entities as _entities
+    _entities
 )
 
 
-class EntityVectorStoreKey(str, Enum):
+class EntityVectorStoreKey(str, enum.Enum):
     """Keys used as ids in the entity embedding vector-stores."""
 
     ID = "id"
@@ -22,12 +22,10 @@ class EntityVectorStoreKey(str, Enum):
     @staticmethod
     def from_string(value: str) -> "EntityVectorStoreKey":
         """Convert string to EntityVectorStoreKey."""
-        match value:
-            case EntityVectorStoreKey.ID.value:
-                return EntityVectorStoreKey.ID
-            case EntityVectorStoreKey.TITLE.value:
-                return EntityVectorStoreKey.TITLE
-
+        if value == EntityVectorStoreKey.ID.value:
+            return EntityVectorStoreKey.ID
+        if value == EntityVectorStoreKey.TITLE.value:
+            return EntityVectorStoreKey.TITLE
         raise ValueError(f"Invalid EntityVectorStoreKey: {value}")
 
 
@@ -35,13 +33,13 @@ def map_query_to_entities(
     query: str,
     text_embedding_vectorstore: _vector_stores.BaseVectorStore,
     text_embedder: _llm.BaseEmbedding,
-    all_entities: List[_model.Entity],
+    all_entities: typing.List[_model.Entity],
     embedding_vectorstore_key: str = EntityVectorStoreKey.ID,
-    include_entity_names: Optional[List[str]] = None,
-    exclude_entity_names: Optional[List[str]] = None,
+    include_entity_names: typing.Optional[typing.List[str]] = None,
+    exclude_entity_names: typing.Optional[typing.List[str]] = None,
     k: int = 10,
     oversample_scaler: int = 2,
-) -> List[_model.Entity]:
+) -> typing.List[_model.Entity]:
     """
     Extract entities that match a given query using semantic similarity of text embeddings of query and entity
     descriptions.
@@ -89,12 +87,12 @@ def map_query_to_entities(
 def find_nearest_neighbors_by_graph_embeddings(
     entity_id: str,
     graph_embedding_vectorstore: _vector_stores.BaseVectorStore,
-    all_entities: List[_model.Entity],
-    exclude_entity_names: Optional[List[str]] = None,
+    all_entities: typing.List[_model.Entity],
+    exclude_entity_names: typing.Optional[typing.List[str]] = None,
     embedding_vectorstore_key: str = EntityVectorStoreKey.ID,
     k: int = 10,
     oversample_scaler: int = 2,
-) -> List[_model.Entity]:
+) -> typing.List[_model.Entity]:
     """Retrieve related entities by graph embeddings."""
     if exclude_entity_names is None:
         exclude_entity_names = []
@@ -134,11 +132,11 @@ def find_nearest_neighbors_by_graph_embeddings(
 
 def find_nearest_neighbors_by_entity_rank(
     entity_name: str,
-    all_entities: List[_model.Entity],
-    all_relationships: List[_model.Relationship],
-    exclude_entity_names: Optional[List[str]] = None,
+    all_entities: typing.List[_model.Entity],
+    all_relationships: typing.List[_model.Relationship],
+    exclude_entity_names: typing.Optional[typing.List[str]] = None,
     k: int = 10,
-) -> List[_model.Entity]:
+) -> typing.List[_model.Entity]:
     """Retrieve entities that have direct connections with the target entity, sorted by entity rank."""
     if exclude_entity_names is None:
         exclude_entity_names = []

@@ -3,16 +3,16 @@ from __future__ import annotations
 import inspect
 import json
 import warnings
-from typing import Any, Callable, Dict
+import typing
 
 import json_repair
 
 
 def filter_kwargs(
-    func: Callable,
-    kwargs_: Dict[str, Any],
+    func: typing.Callable,
+    kwargs_: typing.Dict[str, typing.Any],
     prefix: str = ""
-) -> Dict[str, Any]:
+) -> typing.Dict[str, typing.Any]:
     """
     Filter out invalid keyword arguments for a given function by comparing the provided
     keyword arguments to the function's signature. Only valid keyword arguments are returned.
@@ -40,7 +40,7 @@ def filter_kwargs(
     }
 
 
-def deserialize_json(json_: str) -> Dict[str, Any]:
+def deserialize_json(json_: str) -> typing.Dict[str, typing.Any]:
     """
     Deserialize a JSON string, repairing it if necessary.
 

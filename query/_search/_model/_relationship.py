@@ -3,12 +3,12 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+import typing
 
-from ..._search._model._identified import Identified
+from ..._search._model import _identified
 
 
-class Relationship(Identified):
+class Relationship(_identified.Identified):
     """A relationship between two entities. This is a generic relationship, and can be used to represent any type of 
     relationship between any two entities."""
 
@@ -21,19 +21,19 @@ class Relationship(Identified):
     weight: float = 1.0
     """The edge weight."""
 
-    description: Optional[str] = None
+    description: typing.Optional[str] = None
     """A description of the relationship (optional)."""
 
-    description_embedding: Optional[List[float]] = None
+    description_embedding: typing.Optional[typing.List[float]] = None
     """The semantic embedding for the relationship description (optional)."""
 
-    text_unit_ids: Optional[List[str]] = None
+    text_unit_ids: typing.Optional[typing.List[str]] = None
     """List of text unit IDs in which the relationship appears (optional)."""
 
-    document_ids: Optional[List[str]] = None
+    document_ids: typing.Optional[typing.List[str]] = None
     """List of document IDs in which the relationship appears (optional)."""
 
-    attributes: Optional[Dict[str, Any]] = None
+    attributes: typing.Optional[typing.Dict[str, typing.Any]] = None
     """
     Additional attributes associated with the relationship (optional). To be included 
     in the search prompt

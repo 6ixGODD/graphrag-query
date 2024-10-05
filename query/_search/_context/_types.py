@@ -1,15 +1,9 @@
 from __future__ import annotations
 
-from typing import (
-    Dict,
-    List,
-    Tuple,
-    TypeAlias,
-    Union,
-)
+import typing
 
 import pandas as pd
 
-Context_T: TypeAlias = Tuple[Union[str, List[str]], Dict[str, pd.DataFrame]]
+Context_T: typing.TypeAlias = typing.Tuple[typing.Union[str, typing.List[str]], typing.Dict[str, pd.DataFrame]]
 
-SingleContext_T: TypeAlias = Tuple[str, Dict[str, pd.DataFrame]]
+SingleContext_T: typing.TypeAlias = typing.Tuple[str, typing.Dict[str, pd.DataFrame]]

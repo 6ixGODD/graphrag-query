@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import Any, cast, List
+import typing
 
 import pandas as pd
 
@@ -11,10 +11,10 @@ from ...._search import _model
 
 
 def get_in_network_relationships(
-    selected_entities: List[_model.Entity],
-    relationships: List[_model.Relationship],
+    selected_entities: typing.List[_model.Entity],
+    relationships: typing.List[_model.Relationship],
     ranking_attribute: str = "rank",
-) -> List[_model.Relationship]:
+) -> typing.List[_model.Relationship]:
     """Get all directed relationships between selected entities, sorted by ranking_attribute."""
     selected_entity_names = [entity.title for entity in selected_entities]
     selected_relationships = [
@@ -32,10 +32,10 @@ def get_in_network_relationships(
 
 
 def get_out_network_relationships(
-    selected_entities: List[_model.Entity],
-    relationships: List[_model.Relationship],
+    selected_entities: typing.List[_model.Entity],
+    relationships: typing.List[_model.Relationship],
     ranking_attribute: str = "rank",
-) -> List[_model.Relationship]:
+) -> typing.List[_model.Relationship]:
     """Get relationships from selected entities to other entities that are not within the selected entities,
     sorted by ranking_attribute."""
     selected_entity_names = [entity.title for entity in selected_entities]
@@ -56,9 +56,9 @@ def get_out_network_relationships(
 
 
 def get_candidate_relationships(
-    selected_entities: List[_model.Entity],
-    relationships: List[_model.Relationship],
-) -> List[_model.Relationship]:
+    selected_entities: typing.List[_model.Entity],
+    relationships: typing.List[_model.Relationship],
+) -> typing.List[_model.Relationship]:
     """Get all relationships that are associated with the selected entities."""
     selected_entity_names = [entity.title for entity in selected_entities]
     return [
@@ -69,8 +69,8 @@ def get_candidate_relationships(
 
 
 def get_entities_from_relationships(
-    relationships: List[_model.Relationship], entities: List[_model.Entity]
-) -> List[_model.Entity]:
+    relationships: typing.List[_model.Relationship], entities: typing.List[_model.Entity]
+) -> typing.List[_model.Entity]:
     """Get all entities that are associated with the selected relationships."""
     selected_entity_names = [relationship.source for relationship in relationships] + [
         relationship.target for relationship in relationships
@@ -79,10 +79,10 @@ def get_entities_from_relationships(
 
 
 def calculate_relationship_combined_rank(
-    relationships: List[_model.Relationship],
-    entities: List[_model.Entity],
+    relationships: typing.List[_model.Relationship],
+    entities: typing.List[_model.Entity],
     ranking_attribute: str = "rank",
-) -> List[_model.Relationship]:
+) -> typing.List[_model.Relationship]:
     """Calculate default rank for a relationship based on the combined rank of source and target entities."""
     entity_mappings = {entity.title: entity for entity in entities}
 
@@ -98,10 +98,10 @@ def calculate_relationship_combined_rank(
 
 
 def sort_relationships_by_ranking_attribute(
-    relationships: List[_model.Relationship],
-    entities: List[_model.Entity],
+    relationships: typing.List[_model.Relationship],
+    entities: typing.List[_model.Entity],
     ranking_attribute: str = "rank",
-) -> List[_model.Relationship]:
+) -> typing.List[_model.Relationship]:
     """
     Sort relationships by a ranking_attribute.
 
@@ -134,7 +134,7 @@ def sort_relationships_by_ranking_attribute(
 
 
 def to_relationship_dataframe(
-    relationships: List[_model.Relationship], include_relationship_weight: bool = True
+    relationships: typing.List[_model.Relationship], include_relationship_weight: bool = True
 ) -> pd.DataFrame:
     """Convert a list of relationships to a pandas dataframe."""
     if len(relationships) == 0:
@@ -166,4 +166,4 @@ def to_relationship_dataframe(
             )
             new_record.append(field_value)
         records.append(new_record)
-    return pd.DataFrame(records, columns=cast(Any, header))
+    return pd.DataFrame(records, columns=typing.cast(typing.Any, header))
