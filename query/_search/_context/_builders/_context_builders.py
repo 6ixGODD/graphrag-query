@@ -37,6 +37,10 @@ class BaseContextBuilder(abc.ABC):
     @abc.abstractmethod
     def build_context(self, *args: typing.Any, **kwargs: typing.Any) -> _types.Context_T: ...
 
+    @typing_extensions.override
+    def __str__(self) -> str:
+        return self.__class__.__name__
+
 
 class GlobalContextBuilder(BaseContextBuilder):
 

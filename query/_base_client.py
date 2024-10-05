@@ -69,15 +69,8 @@ class BaseClient(abc.ABC, typing.Generic[_Response_T]):
     @typing_extensions.override
     def __str__(self) -> str:
         return (
-            f"{self.__class__.__name__}(\n"
-            f"\tconfig={json.dumps(self._config.model_dump(), indent=4)},\n"
-            f"\tchat_llm={self._chat_llm},\n"
-            f"\tembedding={self._embedding},\n"
-            f"\tlocal_context_loader={self._local_context_loader},\n"
-            f"\tglobal_context_loader={self._global_context_loader},\n"
-            f"\tlocal_search_engine={self._local_search_engine},\n"
-            f"\tglobal_search_engine={self._global_search_engine},\n"
-            f"\tlogger={self._logger}\n"
+            f"{self.__class__.__name__}("
+            f"{json.dumps(self._config.model_dump(), indent=4)}"
             f")"
         )
 

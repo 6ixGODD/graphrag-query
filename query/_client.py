@@ -54,7 +54,15 @@ class GraphRAGClient(
         logger: typing.Optional[_types.Logger] = None,
     ) -> None:
         self._config = config
-        self._logger = logger or _defaults.get_default_logger() if self._config.logging.enabled else None
+        self._logger = logger or _defaults.get_default_logger(
+            level=self._config.logging.level,
+            fmt=self._config.logging.format,
+            out_file=self._config.logging.out_file,
+            err_file=self._config.logging.err_file,
+            rotation=self._config.logging.rotation,
+            retention=self._config.logging.retention,
+            serialize=self._config.logging.serialize,
+        ) if self._config.logging.enabled else None
 
         if self._logger:
             self._logger.info(f'Initializing the ChatLLM with model: {self._config.chat_llm.model}')
@@ -115,6 +123,7 @@ class GraphRAGClient(
             **(self._config.local_search.kwargs or {}),
         )
         if self._logger:
+            self._logger.debug(f'LocalSearchEngine initialized: {self._local_search_engine}')
             self._logger.info('Initializing the GlobalSearchEngine')
         self._global_search_engine = _search.GlobalSearchEngine(
             chat_llm=self._chat_llm,
@@ -132,6 +141,8 @@ class GraphRAGClient(
             logger=self._logger,
             **(self._config.global_search.kwargs or {}),
         )
+        if self._logger:
+            self._logger.debug(f'GlobalSearchEngine initialized: {self._global_search_engine}')
 
     @typing_extensions.override
     def chat(
@@ -206,7 +217,18 @@ class AsyncGraphRAGClient(
         logger: typing.Optional[_types.Logger] = None,
     ) -> None:
         self._config = config
-        self._logger = logger or _defaults.get_default_logger() if self._config.logging.enabled else None
+        self._logger = logger or _defaults.get_default_logger(
+            level=self._config.logging.level,
+            fmt=self._config.logging.format,
+            out_file=self._config.logging.out_file,
+            err_file=self._config.logging.err_file,
+            rotation=self._config.logging.rotation,
+            retention=self._config.logging.retention,
+            serialize=self._config.logging.serialize,
+        ) if self._config.logging.enabled else None
+
+        if self._logger:
+            self._logger.info(f'Initializing the AsyncChatLLM with model: {self._config.chat_llm.model}')
 
         self._chat_llm = _search.AsyncChatLLM(
             model=self._config.chat_llm.model,
@@ -217,6 +239,9 @@ class AsyncGraphRAGClient(
             max_retries=self._config.chat_llm.max_retries,
             **(self._config.chat_llm.kwargs or {}),
         )
+
+        if self._logger:
+            self._logger.info(f'Initializing the Embedding with model: {self._config.embedding.model}')
 
         self._embedding = _search.Embedding(
             model=self._config.embedding.model,
@@ -234,16 +259,22 @@ class AsyncGraphRAGClient(
             **(self._config.embedding.kwargs or {}),
         )
 
+        if self._logger:
+            self._logger.info(f'Initializing the LocalContextLoader with directory: {self._config.context.directory}')
         self._local_context_loader = _search.LocalContextLoader.from_parquet_directory(
             self._config.context.directory,
             **(self._config.context.kwargs or {}),
         )
 
+        if self._logger:
+            self._logger.info(f'Initializing the GlobalContextLoader with directory: {self._config.context.directory}')
         self._global_context_loader = _search.GlobalContextLoader.from_parquet_directory(
             self._config.context.directory,
             **(self._config.context.kwargs or {}),
         )
 
+        if self._logger:
+            self._logger.info('Initializing the LocalSearchEngine')
         self._local_search_engine = _search.AsyncLocalSearchEngine(
             chat_llm=self._chat_llm,
             embedding=self._embedding,
@@ -257,6 +288,9 @@ class AsyncGraphRAGClient(
             **(self._config.local_search.kwargs or {}),
         )
 
+        if self._logger:
+            self._logger.debug(f'LocalSearchEngine initialized: {self._local_search_engine}')
+            self._logger.info('Initializing the GlobalSearchEngine')
         self._global_search_engine = _search.AsyncGlobalSearchEngine(
             chat_llm=self._chat_llm,
             embedding=self._embedding,
@@ -273,6 +307,8 @@ class AsyncGraphRAGClient(
             logger=self._logger,
             **(self._config.global_search.kwargs or {}),
         )
+        if self._logger:
+            self._logger.debug(f'GlobalSearchEngine initialized: {self._global_search_engine}')
 
     @typing_extensions.override
     async def chat(

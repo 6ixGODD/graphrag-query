@@ -170,12 +170,14 @@ class QueryEngine(abc.ABC):
 
     @typing_extensions.override
     def __str__(self) -> str:
-        return (f"{self.__class__.__name__}(\n"
-                f"\tchat_llm={self._chat_llm},\n"
-                f"\tembedding={self._embedding},\n"
-                f"\tcontext_builder={self._context_builder},\n"
-                f"\tlogger={self._logger}\n"
-                f")")
+        return (
+            f"{self.__class__.__name__}(\n"
+            f"\tchat_llm={self._chat_llm},\n"
+            f"\tembedding={self._embedding},\n"
+            f"\tcontext_builder={self._context_builder},\n"
+            f"\tlogger={self._logger}\n"
+            f")"
+        )
 
     @typing_extensions.override
     def __repr__(self) -> str:
@@ -332,12 +334,14 @@ class AsyncQueryEngine(abc.ABC):
 
     @typing_extensions.override
     def __str__(self) -> str:
-        return (f"{self.__class__.__name__}(\n"
-                f"\tchat_llm={self._chat_llm},\n"
-                f"\tembedding={self._embedding},\n"
-                f"\tcontext_builder={self._context_builder},\n"
-                f"\tlogger={self._logger}\n"
-                f")")
+        return (
+            f"{self.__class__.__name__}(\n"
+            f"\tchat_llm={self._chat_llm},\n"
+            f"\tembedding={self._embedding},\n"
+            f"\tcontext_builder={self._context_builder},\n"
+            f"\tlogger={self._logger}\n"
+            f")"
+        )
 
     @typing_extensions.override
     def __repr__(self) -> str:

@@ -71,14 +71,14 @@ class InvalidParameterError(CLIError):
         self,
         *,
         params: typing.List[str],
-        reason: typing.List[typing.Optional[str]],
+        reason: typing.List[str],
         message: str = "Invalid parameter(s): \n"
     ) -> None:
         self.params = params
         self.reason = reason
         self.message = message
         for i in range(len(params)):
-            self.message += f"  - {params[i]}: {reason[i] or 'Invalid parameter'}\n"
+            self.message += f"  - {params[i]}: {reason[i]}\n"
         super().__init__(self.message)
 
     @classmethod
@@ -86,7 +86,7 @@ class InvalidParameterError(CLIError):
         params = []
         reason = []
         for error in validation_error.errors():
-            params.append(error["loc"][0])
+            params.append(str(error["loc"][0]))
             reason.append(error["msg"])
         return cls(params=params, reason=reason)
 

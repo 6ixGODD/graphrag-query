@@ -124,12 +124,12 @@ class LocalContextLoader(_base.BaseContextLoader):
     def __str__(self) -> str:
         return (
             f"{self.__class__.__name__}(\n"
-            f"\tnodes={self._nodes}, \n"
-            f"\tentities={self._entities}, \n"
-            f"\tcommunity_reports={self._community_reports}, \n"
-            f"\ttext_units={self._text_units}, \n"
-            f"\trelationships={self._relationships}, \n"
-            f"\tcovariates={self._covariates}\n"
+            f"\tnum_nodes={len(self._nodes)}, \n"
+            f"\tnum_entities={len(self._entities)}, \n"
+            f"\tnum_community_reports={len(self._community_reports)}, \n"
+            f"\tnum_text_units={len(self._text_units)}, \n"
+            f"\tnum_relationships={len(self._relationships)}, \n"
+            f"\tnum_covariates={self._covariates and len(self._covariates) or 0}\n"
             f")"
         )
 
@@ -210,9 +210,9 @@ class GlobalContextLoader(_base.BaseContextLoader):
     def __str__(self) -> str:
         return (
             f"{self.__class__.__name__}(\n"
-            f"\tnodes={self._nodes}, \n"
-            f"\tentities={self._entities}, \n"
-            f"\tcommunity_reports={self._community_reports}\n"
+            f"\tnum_nodes={len(self._nodes)}, \n"
+            f"\tnum_entities={len(self._entities)}, \n"
+            f"\tnum_community_reports={len(self._community_reports)}\n"
             f")"
         )
 

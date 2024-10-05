@@ -134,7 +134,8 @@ class LocalSearchEngine(_base_engine.QueryEngine):
             f"\tembedding={self._embedding}, \n"
             f"\tcontext_builder={self._context_builder}, \n"
             f"\tlogger={self._logger} \n"
-            f"\tsys_prompt={self._sys_prompt} \n"
+            f"\tsys_prompt={self._sys_prompt[:50].__repr__()}"
+            f"{'...' if len(self._sys_prompt) > 50 else ''} \n"
             f")"
         )
 
@@ -257,7 +258,8 @@ class AsyncLocalSearchEngine(_base_engine.AsyncQueryEngine):
             f"\tembedding={self._embedding}, \n"
             f"\tcontext_builder={self._context_builder}, \n"
             f"\tlogger={self._logger} \n"
-            f"\tsys_prompt={self._sys_prompt} \n"
+            f"\tsys_prompt={self._sys_prompt[:50].__repr__()}"
+            f"{'...' if len(self._sys_prompt) > 50 else ''} \n"
             f")"
         )
 

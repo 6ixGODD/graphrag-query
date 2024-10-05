@@ -1,0 +1,25 @@
+chat_llm:
+  model: glm-4-plus
+  api_key: Your API Key
+  base_url: null
+  organization: null
+  timeout: null
+  max_retries: null
+  kwargs: null
+
+embedding:
+  model: embedding-3
+  api_key: Your API Key
+  base_url: null
+  timeout: null
+  max_retries: null
+  max_tokens: null
+  token_encoder: null
+  kwargs: null
+
+logging:
+  enabled: true
+  level: INFO
+
+context:
+  directory: 'artifacts'

@@ -105,7 +105,6 @@ def _main() -> None:
     try:
         args = _parse_args()
     except pydantic.ValidationError as err:
-        err: pydantic.ValidationError
         raise _errors.InvalidParameterError.from_pydantic_validation_error(err)
 
     raise NotImplementedError("Not implemented yet")  # TODO: Implement the rest of the function
