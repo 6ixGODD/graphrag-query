@@ -1,9 +1,23 @@
 # Copyright (c) 2024 Microsoft Corporation.
-# Licensed under the MIT License
+# Licensed under the MIT License.
+#
+# Copyright (c) 2024 6ixGODD.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 from __future__ import annotations
 
 import collections
+import gc
 import time
 import typing
 import warnings
@@ -53,6 +67,7 @@ class LocalSearchEngine(_base_engine.QueryEngine):
             encoding_model=encoding_model or _defaults.DEFAULT__ENCODING_MODEL,
             **kwargs,
         )
+        gc.collect()  # Collect garbage to free up memory
 
         if logger:
             logger.debug(f"Created LocalSearchEngine with context_builder: {context_builder}")
@@ -166,7 +181,7 @@ class AsyncLocalSearchEngine(_base_engine.AsyncQueryEngine):
         **kwargs: typing.Any,
     ) -> None:
         if logger:
-            logger.debug(f"Creating LocalSearchEngine with context_loader: {context_loader}")
+            logger.debug(f"Creating AsyncLocalSearchEngine with context_loader: {context_loader}")
         context_builder = context_loader.to_context_builder(
             embedder=embedding,
             community_level=community_level or _defaults.DEFAULT__LOCAL_SEARCH__COMMUNITY_LEVEL,
@@ -175,9 +190,10 @@ class AsyncLocalSearchEngine(_base_engine.AsyncQueryEngine):
             encoding_model=encoding_model or _defaults.DEFAULT__ENCODING_MODEL,
             **kwargs,
         )
+        gc.collect()  # Collect garbage to free up memory
 
         if logger:
-            logger.debug(f"Created LocalSearchEngine with context_builder: {context_builder}")
+            logger.debug(f"Created AsyncLocalSearchEngine with context_builder: {context_builder}")
         super().__init__(
             chat_llm=chat_llm,
             embedding=embedding,

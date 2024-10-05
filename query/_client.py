@@ -1,3 +1,19 @@
+# Copyright (c) 2024 Microsoft Corporation.
+# Licensed under the MIT License.
+#
+# Copyright (c) 2024 6ixGODD.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from __future__ import annotations
 
 import os
@@ -36,7 +52,7 @@ class GraphRAGClient(
 
     @classmethod
     @typing_extensions.override
-    def from_config_file(cls, config_file: typing.Union[os.PathLike[str], pathlib.Path]) -> typing.Self:
+    def from_config_file(cls, config_file: typing.Union[os.PathLike[str], pathlib.Path, str]) -> typing.Self:
         return cls(config=_cfg.GraphRAGConfig.from_config_file(config_file))
 
     @classmethod
@@ -147,8 +163,8 @@ class GraphRAGClient(
 
         # Convert iterable objects to list
         msg_list = [typing.cast(typing.Dict[typing.Literal["role", "content"], str], msg) for msg in message]
+        conversation_history = _search.ConversationHistory.from_list(msg_list[:-1])  # exclude the last message
         if engine == 'local':
-            conversation_history = _search.ConversationHistory.from_list(msg_list[:-1])  # exclude the last message
             if self._logger:
                 self._logger.info(f'Local search with message: {msg_list[-1]["content"]}')
             response = self._local_search_engine.search(
@@ -163,6 +179,7 @@ class GraphRAGClient(
                 self._logger.info(f'Global search with message: {msg_list[-1]["content"]}')
             response = self._global_search_engine.search(
                 msg_list[-1]['content'],
+                conversation_history=conversation_history,
                 stream=stream,
                 verbose=verbose,
                 **kwargs
@@ -187,7 +204,7 @@ class AsyncGraphRAGClient(
 
     @classmethod
     @typing_extensions.override
-    def from_config_file(cls, config_file: typing.Union[os.PathLike[str], pathlib.Path]) -> typing.Self:
+    def from_config_file(cls, config_file: typing.Union[os.PathLike[str], pathlib.Path, str]) -> typing.Self:
         return cls(config=_cfg.GraphRAGConfig.from_config_file(config_file))
 
     @classmethod
@@ -285,9 +302,10 @@ class AsyncGraphRAGClient(
 
         # Convert iterable objects to list
         msg_list = [typing.cast(typing.Dict[typing.Literal["role", "content"], str], msg) for msg in message]
-
+        conversation_history = _search.ConversationHistory.from_list(msg_list[:-1])
         if engine == 'local':
-            conversation_history = _search.ConversationHistory.from_list(msg_list[:-1])
+            if self._logger:
+                self._logger.info(f'Local search with message: {msg_list[-1]["content"]}')
             response = await self._local_search_engine.asearch(
                 msg_list[-1]['content'],
                 conversation_history=conversation_history,
@@ -296,8 +314,11 @@ class AsyncGraphRAGClient(
                 **kwargs
             )
         elif engine == 'global':
+            if self._logger:
+                self._logger.info(f'Global search with message: {msg_list[-1]["content"]}')
             response = await self._global_search_engine.asearch(
                 msg_list[-1]['content'],
+                conversation_history=conversation_history,
                 stream=stream,
                 verbose=verbose,
                 **kwargs

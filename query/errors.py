@@ -1,5 +1,22 @@
+# Copyright (c) 2024 Microsoft Corporation.
+# Licensed under the MIT License.
+#
+# Copyright (c) 2024 6ixGODD.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import typing
 
+import pydantic
 import typing_extensions
 
 __all__ = [
@@ -76,6 +93,15 @@ class InvalidParameterError(CLIError):
         for i in range(len(params)):
             self.message += f"  - {params[i]}: {reason[i] or 'Invalid parameter'}\n"
         super().__init__(self.message)
+
+    @classmethod
+    def from_pydantic_validation_error(cls, validation_error: pydantic.ValidationError) -> typing.Self:
+        params = []
+        reason = []
+        for error in validation_error.errors():
+            params.append(error["loc"][0])
+            reason.append(error["msg"])
+        return cls(params=params, reason=reason)
 
     @typing_extensions.override
     def __str__(self):

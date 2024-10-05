@@ -1,8 +1,25 @@
+# Copyright (c) 2024 Microsoft Corporation.
+# Licensed under the MIT License.
+#
+# Copyright (c) 2024 6ixGODD.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from __future__ import annotations
 
 import os
 import pathlib
 import typing
+import warnings
 
 import pydantic
 import pydantic_settings
@@ -87,13 +104,13 @@ class LoggingConfig(pydantic.BaseModel):
         pydantic.Field(..., env="LOGGING_LEVEL", pattern=r"^(DEBUG|INFO|WARNING|ERROR|CRITICAL)$")
     ] = None
     format: typing.Annotated[
-        typing.Optional[str], pydantic.Field(..., env="LOGGING_FORMAT", min_length=1, max_length=50)
+        typing.Optional[str], pydantic.Field(..., env="LOGGING_FORMAT", min_length=1)
     ] = None
     out_file: typing.Annotated[
-        typing.Optional[str], pydantic.Field(..., env="LOGGING_OUT_FILE", min_length=1, max_length=50)
+        typing.Optional[str], pydantic.Field(..., env="LOGGING_OUT_FILE", min_length=1)
     ] = None
     err_file: typing.Annotated[
-        typing.Optional[str], pydantic.Field(..., env="LOGGING_ERR_FILE", min_length=1, max_length=50)
+        typing.Optional[str], pydantic.Field(..., env="LOGGING_ERR_FILE", min_length=1)
     ] = None
     rotation: typing.Annotated[
         typing.Optional[str],
@@ -112,7 +129,7 @@ class LoggingConfig(pydantic.BaseModel):
 
 
 class ContextConfig(pydantic.BaseModel):
-    directory: typing.Annotated[str, pydantic.Field(..., env="CONTEXT_DIRECTORY", min_length=1, max_length=50)]
+    directory: typing.Annotated[str, pydantic.Field(..., env="CONTEXT_DIRECTORY", min_length=1)]
 
     # typing.Optional fields
     kwargs: typing.Annotated[
@@ -122,7 +139,7 @@ class ContextConfig(pydantic.BaseModel):
 
 class LocalSearchConfig(pydantic.BaseModel):
     sys_prompt: typing.Annotated[
-        typing.Optional[str], pydantic.Field(..., env="LOCAL_SEARCH_SYS_PROMPT", min_length=1)
+        typing.Optional[str], pydantic.Field(..., env="LOCAL_SEARCH_SYS_PROMPT", min_length=1, repr=False)
     ] = None
     community_level: typing.Annotated[
         typing.Optional[int], pydantic.Field(..., env="LOCAL_SEARCH_COMMUNITY_LEVEL", ge=0)
@@ -132,12 +149,7 @@ class LocalSearchConfig(pydantic.BaseModel):
     ] = None
     store_uri: typing.Annotated[
         typing.Optional[str],
-        pydantic.Field(
-            ...,
-            env="LOCAL_SEARCH_STORE_URI",
-            min_length=1,
-            max_length=50
-        )
+        pydantic.Field(..., env="LOCAL_SEARCH_STORE_URI", min_length=1)
     ] = None
     encoding_model: typing.Annotated[
         typing.Optional[str], pydantic.Field(..., env="LOCAL_SEARCH_ENCODING_MODEL", min_length=1)
@@ -149,11 +161,11 @@ class LocalSearchConfig(pydantic.BaseModel):
 
 class GlobalSearchConfig(pydantic.BaseModel):
     map_sys_prompt: typing.Annotated[
-        typing.Optional[str], pydantic.Field(..., env="GLOBAL_SEARCH_MAP_SYS_PROMPT", min_length=1)
+        typing.Optional[str], pydantic.Field(..., env="GLOBAL_SEARCH_MAP_SYS_PROMPT", min_length=1, repr=False)
     ] = None
     reduce_sys_prompt: typing.Annotated[
         typing.Optional[str],
-        pydantic.Field(..., env="GLOBAL_SEARCH_REDUCE_SYS_PROMPT", min_length=1)
+        pydantic.Field(..., env="GLOBAL_SEARCH_REDUCE_SYS_PROMPT", min_length=1, repr=False)
     ] = None
     community_level: typing.Annotated[
         typing.Optional[int], pydantic.Field(..., env="GLOBAL_SEARCH_COMMUNITY_LEVEL", ge=0)
@@ -164,12 +176,13 @@ class GlobalSearchConfig(pydantic.BaseModel):
     ] = None
     general_knowledge_sys_prompt: typing.Annotated[
         typing.Optional[str],
-        pydantic.Field(..., env="GLOBAL_SEARCH_GENERAL_KNOWLEDGE_SYS_PROMPT", min_length=1)
+        pydantic.Field(..., env="GLOBAL_SEARCH_GENERAL_KNOWLEDGE_SYS_PROMPT", min_length=1, repr=False)
     ] = None
     no_data_answer: typing.Annotated[
         typing.Optional[str], pydantic.Field(..., env="GLOBAL_SEARCH_NO_DATA_ANSWER", min_length=1)
     ] = None
-    json_mode: typing.Annotated[typing.Optional[bool], pydantic.Field(..., env="GLOBAL_SEARCH_JSON_MODE")
+    json_mode: typing.Annotated[
+        typing.Optional[bool], pydantic.Field(..., env="GLOBAL_SEARCH_JSON_MODE")
     ] = None
     max_data_tokens: typing.Annotated[
         typing.Optional[int], pydantic.Field(..., env="GLOBAL_SEARCH_MAX_DATA_TOKENS", ge=1)
@@ -233,6 +246,10 @@ class GraphRAGConfig(pydantic_settings.BaseSettings):
     def __init__(self, **kwargs: typing.Any) -> None:
         # Ensure all fields are present
         for field in self.__fields__.keys():
-            if field not in kwargs:
+            if field not in kwargs or not isinstance(kwargs[field], dict):
+                warnings.warn(
+                    f"Missing or invalid field: {field}, initializing to empty dict",
+                    RuntimeWarning
+                )
                 kwargs[field] = {}
         super().__init__(**kwargs)

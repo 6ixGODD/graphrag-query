@@ -1,10 +1,24 @@
 # Copyright (c) 2024 Microsoft Corporation.
-# Licensed under the MIT License
+# Licensed under the MIT License.
+#
+# Copyright (c) 2024 6ixGODD.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 from __future__ import annotations
 
 import asyncio
 import collections
+import gc
 import time
 import typing
 import warnings
@@ -56,14 +70,22 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
         logger: typing.Optional[_base_engine.Logger] = None,
         **kwargs: typing.Any,
     ) -> None:
+        if logger:
+            logger.debug(f"Creating GlobalSearchEngine with context_loader: {context_loader}")
+        context_builder = context_loader.to_context_builder(
+            community_level=community_level or _defaults.DEFAULT__GLOBAL_SEARCH__COMMUNITY_LEVEL,
+            encoding_model=encoding_model or _defaults.DEFAULT__ENCODING_MODEL,
+            **kwargs,
+        )
+        gc.collect()  # Collect garbage to free up memory
+
+        if logger:
+            logger.debug(f"Created GlobalSearchEngine with context_builder: {context_builder}")
+
         super().__init__(
             chat_llm=chat_llm,
             embedding=embedding,
-            context_builder=context_loader.to_context_builder(
-                community_level=community_level or _defaults.DEFAULT__GLOBAL_SEARCH__COMMUNITY_LEVEL,
-                encoding_model=encoding_model or _defaults.DEFAULT__ENCODING_MODEL,
-                **kwargs,
-            ),
+            context_builder=context_builder,
             logger=logger
         )
         self._token_encoder = tiktoken.get_encoding(encoding_model or _defaults.DEFAULT__ENCODING_MODEL)
@@ -95,7 +117,9 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
         **kwargs: typing.Any,
     ) -> typing.Union[_types.SearchResult_T, _types.StreamSearchResult_T]:
         created = time.time()
-        self._logger.info(f"Starting search for query: {query} at {created}") if self._logger else None
+        if self._logger:
+            self._logger.info(f"Starting search for query: {query} at {created}")
+
         if conversation_history is None:
             conversation_history = _context.ConversationHistory()
         elif isinstance(conversation_history, list):
@@ -105,6 +129,7 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
             conversation_history=conversation_history,
             **kwargs,
         )
+        # TODO: Parallelize the map phase
         map_result = [self._map(query, context, verbose, **kwargs) for context in context_chunks]
         return self._reduce(map_result, query, verbose, stream, **kwargs)
 
@@ -198,6 +223,9 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
         **kwargs: typing.Any
     ) -> typing.Union[_types.SearchResult_T, _types.StreamSearchResult_T]:
         created = time.time()
+        if self._logger:
+            self._logger.info(f"Starting reduce for query: {query} at {created}")
+
         key_points: typing.List[typing.Dict[str, typing.Any]] = []
         for idx, map_ in enumerate(map_results):
             if not isinstance(map_.choice.message.content, list):
@@ -217,6 +245,8 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
 
         if not key_points.__len__() and not self._allow_general_knowledge:
             warnings.warn("No key points found from the map phase", RuntimeWarning)
+            if self._logger:
+                self._logger.warning("No key points found from the map phase")
             return _types.SearchResult(
                 created=created.__int__(),
                 model=self._chat_llm.model,
@@ -245,6 +275,8 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
             key=lambda kp: kp["score"] if isinstance(kp["score"], (int, float)) else 0,
             reverse=True
         )
+        if self._logger:
+            self._logger.info(f"Key points found: {key_points}")
 
         data: typing.List[str] = []
         total_tokens = 0
@@ -263,6 +295,9 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
         if self._allow_general_knowledge:
             prompt += f'\n{self._general_knowledge_sys_prompt}'
         msg = [{"role": "system", "content": prompt}, {"role": "user", "content": query}]
+
+        if self._logger:
+            self._logger.debug(f"Constructed messages: {msg}")
         result = self._chat_llm.chat(
             msg=typing.cast(_llm.MessageParam_T, msg),
             stream=stream,
@@ -321,7 +356,16 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
     _chat_llm: _llm.BaseAsyncChatLLM
     _embedding: _llm.BaseEmbedding
     _context_builder: _context.GlobalContextBuilder
-    _sys_prompt: str
+    _logger: typing.Optional[_base_engine.Logger]
+    _token_encoder: tiktoken.Encoding
+    _map_sys_prompt: str
+    _reduce_sys_prompt: str
+    _allow_general_knowledge: bool
+    _general_knowledge_sys_prompt: str
+    _no_data_answer: str
+    _json_mode: bool
+    _data_max_tokens: int
+    _semaphore: asyncio.Semaphore
 
     def __init__(
         self,
@@ -344,15 +388,24 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
         logger: typing.Optional[_base_engine.Logger] = None,
         **kwargs: typing.Any,
     ) -> None:
+        if logger:
+            logger.debug(f"Creating AsyncGlobalSearchEngine with context_loader: {context_loader}")
+        context_builder = context_loader.to_context_builder(
+            community_level=community_level or _defaults.DEFAULT__GLOBAL_SEARCH__COMMUNITY_LEVEL,
+            encoding_model=encoding_model or _defaults.DEFAULT__ENCODING_MODEL,
+            **kwargs,
+        )
+        gc.collect()  # Collect garbage to free up memory
+
+        if logger:
+            logger.debug(f"Created AsyncGlobalSearchEngine with context_builder: {context_builder}")
+
         super().__init__(
             chat_llm=chat_llm,
             embedding=embedding,
-            context_builder=context_loader.to_context_builder(
-                community_level=community_level or _defaults.DEFAULT__GLOBAL_SEARCH__COMMUNITY_LEVEL,
-                encoding_model=encoding_model or _defaults.DEFAULT__ENCODING_MODEL,
-                **kwargs,
-            ),
+            context_builder=context_builder,
         )
+
         self._map_sys_prompt = map_sys_prompt or _defaults.GLOBAL_SEARCH__MAP__SYS_PROMPT
         self._reduce_sys_prompt = reduce_sys_prompt or _defaults.GLOBAL_SEARCH__REDUCE__SYS_PROMPT
         self._allow_general_knowledge = allow_general_knowledge if allow_general_knowledge is not None else True
@@ -405,8 +458,15 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
         **kwargs: typing.Any
     ) -> _types.SearchResult_T:
         created = time.time()
+        if self._logger:
+            self._logger.info(f"Starting map for query: {query} at {created}")
+
         prompt = self._map_sys_prompt.format_map(collections.defaultdict(str, context_data=context, query=query))
         msg = [{"role": "system", "content": prompt}, {"role": "user", "content": query}]
+
+        if self._logger:
+            self._logger.debug(f"Constructed messages: {msg}")
+
         async with self._semaphore:
             response = typing.cast(
                 _llm.ChatResponse_T, (await self._chat_llm.achat(
@@ -482,6 +542,9 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
         **kwargs: typing.Any
     ) -> typing.Union[_types.SearchResult_T, _types.AsyncStreamSearchResult_T]:
         created = time.time()
+        if self._logger:
+            self._logger.info(f"Starting reduce for query: {query} at {created}")
+
         key_points: typing.List[typing.Dict[str, typing.Any]] = []
         for idx, map_ in enumerate(map_results):
             if not isinstance(map_.choice.message.content, list):
@@ -501,6 +564,8 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
 
         if not key_points.__len__() and not self._allow_general_knowledge:
             warnings.warn("No key points found from the map phase", RuntimeWarning)
+            if self._logger:
+                self._logger.warning("No key points found from the map phase")
             return _types.SearchResult(
                 created=created.__int__(),
                 model=self._chat_llm.model,
@@ -529,6 +594,8 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
             key=lambda kp: kp["score"] if isinstance(kp["score"], (int, float)) else 0,
             reverse=True
         )
+        if self._logger:
+            self._logger.info(f"Key points found: {key_points}")
 
         data: typing.List[str] = []
         total_tokens = 0
@@ -548,6 +615,9 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
             prompt += f'\n{self._general_knowledge_sys_prompt}'
 
         msg = [{"role": "system", "content": prompt}, {"role": "user", "content": query}]
+        if self._logger:
+            self._logger.debug(f"Constructed messages: {msg}")
+
         async with self._semaphore:
             response = await self._chat_llm.achat(
                 msg=typing.cast(_llm.MessageParam_T, msg),
