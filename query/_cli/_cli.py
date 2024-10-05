@@ -8,7 +8,7 @@ import sys
 
 import pydantic
 
-from .. import _errors
+from .. import errors as _errors
 
 
 class _Args(pydantic.BaseModel):

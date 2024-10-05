@@ -1,17 +1,20 @@
+# Copyright (c) 2024 Microsoft Corporation.
+# Licensed under the MIT License
+
 from __future__ import annotations
 
 import asyncio
 import collections
 import time
 import typing
-import typing_extensions
 import warnings
 
 import tiktoken
+import typing_extensions
 
-from .. import _utils
-from .._search import (
-    _base_engine,
+from . import _base_engine
+from ... import _utils
+from ..._search import (
     _context,
     _defaults,
     _llm,
@@ -19,194 +22,19 @@ from .._search import (
 )
 
 
-class LocalSearchEngine(_base_engine.QueryEngine):
-    _chat_llm: _llm.BaseChatLLM
-    _embedding: _llm.BaseEmbedding
-    _context_builder: _context.LocalContextBuilder
-    _logger: typing.Optional[_base_engine.Logger]
-    _sys_prompt: str
-
-    def __init__(
-        self,
-        *,
-        chat_llm: _llm.BaseChatLLM,
-        embedding: _llm.BaseEmbedding,
-        context_loader: _context.LocalContextLoader,
-
-        sys_prompt: typing.Optional[str] = None,
-        community_level: typing.Optional[int] = None,
-        store_coll_name: typing.Optional[str] = None,
-        store_uri: typing.Optional[str] = None,
-        encoding_model: typing.Optional[str] = None,
-
-        logger: typing.Optional[_base_engine.Logger] = None,
-
-        **kwargs: typing.Any,
-    ) -> None:
-        super().__init__(
-            chat_llm=chat_llm,
-            embedding=embedding,
-            context_builder=context_loader.to_context_builder(
-                embedder=embedding,
-                community_level=community_level or _defaults.DEFAULT__LOCAL_SEARCH__COMMUNITY_LEVEL,
-                store_coll_name=store_coll_name or _defaults.DEFAULT__VECTOR_STORE__COLLECTION_NAME,
-                store_uri=store_uri or _defaults.DEFAULT__VECTOR_STORE__URI,
-                encoding_model=encoding_model or _defaults.DEFAULT__ENCODING_MODEL,
-                **kwargs,
-            ),
-            logger=logger,
-        )
-        self._sys_prompt = sys_prompt or _defaults.LOCAL_SEARCH__SYS_PROMPT
-        if '{context_data}' not in self._sys_prompt:
-            warnings.warn('Local Search\'s System Prompt does not contain "{context_data}"', RuntimeWarning)
-
-    @typing_extensions.override
-    def search(
-        self,
-        query: str,
-        *,
-        conversation_history: _types.ConversationHistory_T = None,
-        verbose: bool = False,
-        stream: bool = False,
-        **kwargs: typing.Any,
-    ) -> typing.Union[_types.SearchResult_T, _types.StreamSearchResult_T]:
-        created = time.time()
-        self._logger.info(f"Starting search for query: {query} at {created}") if self._logger else None
-        if conversation_history is None:
-            conversation_history = _context.ConversationHistory()
-        elif isinstance(conversation_history, list):
-            conversation_history = _context.ConversationHistory.from_list(conversation_history)
-
-        context_text, context_records = self._context_builder.build_context(
-            query=query,
-            conversation_history=conversation_history,
-            **kwargs,
-        )
-        # TODO: Use Jinja2 template
-        prompt = self._sys_prompt.format_map(collections.defaultdict(str, context_data=context_text))
-        messages = ([{"role": "system", "content": prompt}] +
-                    conversation_history.to_dict() +
-                    [{"role": "user", "content": query}])
-        self._logger.info(f"Constructed messages: {messages}") if self._logger else None
-
-        result = self._chat_llm.chat(msg=typing.cast(_llm.MessageParam_T, messages), stream=stream, **kwargs)
-        self._logger.info(f"Received result: {result}") if self._logger else None
-
-        if stream:
-            result = typing.cast(_llm.SyncChatStreamResponse_T, result)
-            return self._parse_stream_result(
-                result,
-                verbose=verbose,
-                created=created,
-                context_data=context_records,
-                context_text=context_text
-            )
-        else:
-            result = typing.cast(_llm.ChatResponse_T, result)
-            return self._parse_result(
-                result,
-                verbose=verbose,
-                created=created,
-                context_data=context_records,
-                context_text=context_text
-            )
-
-
-class AsyncLocalSearchEngine(_base_engine.AsyncQueryEngine):
-    _chat_llm: _llm.BaseAsyncChatLLM
-    _embedding: _llm.BaseEmbedding
-    _context_builder: _context.LocalContextBuilder
-    _sys_prompt: str
-
-    def __init__(
-        self,
-        *,
-        chat_llm: _llm.BaseAsyncChatLLM,
-        embedding: _llm.BaseEmbedding,
-        context_loader: _context.LocalContextLoader,
-
-        sys_prompt: typing.Optional[str] = None,
-        community_level: typing.Optional[int] = None,
-        store_coll_name: typing.Optional[str] = None,
-        store_uri: typing.Optional[str] = None,
-        encoding_model: typing.Optional[str] = None,
-
-        logger: typing.Optional[_base_engine.Logger] = None,
-
-        **kwargs: typing.Any,
-    ) -> None:
-        super().__init__(
-            chat_llm=chat_llm,
-            embedding=embedding,
-            context_builder=context_loader.to_context_builder(
-                community_level=community_level or _defaults.DEFAULT__LOCAL_SEARCH__COMMUNITY_LEVEL,
-                embedder=embedding,
-                store_coll_name=store_coll_name or _defaults.DEFAULT__VECTOR_STORE__COLLECTION_NAME,
-                store_uri=store_uri or _defaults.DEFAULT__VECTOR_STORE__URI,
-                encoding_model=encoding_model or _defaults.DEFAULT__ENCODING_MODEL,
-                **kwargs,
-            ),
-            logger=logger,
-        )
-        self._sys_prompt = sys_prompt or _defaults.LOCAL_SEARCH__SYS_PROMPT
-        if '{context_data}' not in self._sys_prompt:
-            warnings.warn('Local Search\'s System Prompt does not contain "{context_data}"', RuntimeWarning)
-
-    @typing_extensions.override
-    async def asearch(
-        self,
-        query: str,
-        *,
-        conversation_history: _types.ConversationHistory_T,
-        verbose: bool = False,
-        stream: bool = False,
-        **kwargs: typing.Any,
-    ) -> typing.Union[_types.SearchResult_T, _types.AsyncStreamSearchResult_T]:
-        created = time.time()
-
-        # Convert conversation_history to ConversationHistory object
-        if conversation_history is None:
-            conversation_history = _context.ConversationHistory()
-        elif isinstance(conversation_history, list):
-            conversation_history = _context.ConversationHistory.from_list(conversation_history)
-
-        context_text, context_records = self._context_builder.build_context(
-            query=query,
-            conversation_history=conversation_history,
-            **kwargs,
-        )
-        prompt = self._sys_prompt.format_map(collections.defaultdict(str, context_data=context_text))
-        messages = ([{"role": "system", "content": prompt}] +
-                    conversation_history.to_dict() +
-                    [{"role": "user", "content": query}])
-
-        result = await self._chat_llm.achat(msg=typing.cast(_llm.MessageParam_T, messages), stream=stream, **kwargs)
-
-        if stream:
-            result = typing.cast(_llm.AsyncChatStreamResponse_T, result)
-            return self._parse_stream_result(
-                result,
-                verbose=verbose,
-                created=created,
-                context_data=context_records,
-                context_text=context_text
-            )
-        else:
-            result = typing.cast(_llm.ChatResponse_T, result)
-            return self._parse_result(
-                result,
-                verbose=verbose,
-                created=created,
-                context_data=context_records,
-                context_text=context_text
-            )
-
-
 class GlobalSearchEngine(_base_engine.QueryEngine):
     _chat_llm: _llm.BaseChatLLM
     _embedding: _llm.BaseEmbedding
     _context_builder: _context.GlobalContextBuilder
-    _sys_prompt: str
+    _logger: typing.Optional[_base_engine.Logger]
+    _token_encoder: tiktoken.Encoding
+    _map_sys_prompt: str
+    _reduce_sys_prompt: str
+    _allow_general_knowledge: bool
+    _general_knowledge_sys_prompt: str
+    _no_data_answer: str
+    _json_mode: bool
+    _data_max_tokens: int
 
     def __init__(
         self,
@@ -236,21 +64,25 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
                 encoding_model=encoding_model or _defaults.DEFAULT__ENCODING_MODEL,
                 **kwargs,
             ),
+            logger=logger
         )
         self._token_encoder = tiktoken.get_encoding(encoding_model or _defaults.DEFAULT__ENCODING_MODEL)
         self._map_sys_prompt = map_sys_prompt or _defaults.GLOBAL_SEARCH__MAP__SYS_PROMPT
         if '{context_data}' not in self._map_sys_prompt:
             warnings.warn('Global Search\'s Map System Prompt does not contain "{context_data}"', RuntimeWarning)
+            if self._logger:
+                self._logger.warning('Global Search\'s Map System Prompt does not contain "{context_data}"')
         self._reduce_sys_prompt = reduce_sys_prompt or _defaults.GLOBAL_SEARCH__REDUCE__SYS_PROMPT
         if '{report_data}' not in self._reduce_sys_prompt:
             warnings.warn('Global Search\'s Reduce System Prompt does not contain "{report_data}"', RuntimeWarning)
+            if self._logger:
+                self._logger.warning('Global Search\'s Reduce System Prompt does not contain "{report_data}"')
         self._allow_general_knowledge = allow_general_knowledge if allow_general_knowledge is not None else True
         self._general_knowledge_sys_prompt = (general_knowledge_sys_prompt or
                                               _defaults.GLOBAL_SEARCH__REDUCE__GENERAL_KNOWLEDGE_INSTRUCTION)
         self._no_data_answer = no_data_answer or _defaults.GLOBAL_SEARCH__REDUCE__NO_DATA_ANSWER
         self._json_mode = json_mode if json_mode is not None else True
         self._data_max_tokens = max_data_tokens or _defaults.DEFAULT__GLOBAL_SEARCH__DATA_MAX_TOKENS
-        self._logger = logger
 
     @typing_extensions.override
     def search(
@@ -284,8 +116,14 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
         **kwargs: typing.Any
     ) -> _types.SearchResult_T:
         created = time.time()
+        if self._logger:
+            self._logger.info(f"Starting map for query: {query} at {created}")
+
         prompt = self._map_sys_prompt.format_map(collections.defaultdict(str, context_data=context, query=query))
         msg = [{"role": "system", "content": prompt}, {"role": "user", "content": query}]
+        if self._logger:
+            self._logger.debug(f"Constructed messages: {msg}")
+
         response = typing.cast(
             _llm.ChatResponse_T, self._chat_llm.chat(
                 msg=typing.cast(_llm.MessageParam_T, msg),
@@ -455,6 +293,28 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
                 reduce_context_data=None,
                 reduce_context_text=report_data,
             )
+
+    @typing_extensions.override
+    def __str__(self) -> str:
+        return (
+            f"{self.__class__.__name__}("
+            f"\tchat_llm={self._chat_llm}, \n"
+            f"\tembedding={self._embedding}, \n"
+            f"\tcontext_builder={self._context_builder}, \n"
+            f"\tlogger={self._logger}\n"
+            f"\tmap_sys_prompt={self._map_sys_prompt}, \n"
+            f"\treduce_sys_prompt={self._reduce_sys_prompt}, \n"
+            f"\tallow_general_knowledge={self._allow_general_knowledge}, \n"
+            f"\tgeneral_knowledge_sys_prompt={self._general_knowledge_sys_prompt}, \n"
+            f"\tno_data_answer={self._no_data_answer}, \n"
+            f"\tjson_mode={self._json_mode}, \n"
+            f"\tdata_max_tokens={self._data_max_tokens} \n"
+            f")"
+        )
+
+    @typing_extensions.override
+    def __repr__(self) -> str:
+        return self.__str__()
 
 
 class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
@@ -719,3 +579,25 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
                 reduce_context_data=None,
                 reduce_context_text=report_data,
             )
+
+    @typing_extensions.override
+    def __str__(self) -> str:
+        return (
+            f"{self.__class__.__name__}("
+            f"\tchat_llm={self._chat_llm}, \n"
+            f"\tembedding={self._embedding}, \n"
+            f"\tcontext_builder={self._context_builder}, \n"
+            f"\tlogger={self._logger}\n"
+            f"\tmap_sys_prompt={self._map_sys_prompt}, \n"
+            f"\treduce_sys_prompt={self._reduce_sys_prompt}, \n"
+            f"\tallow_general_knowledge={self._allow_general_knowledge}, \n"
+            f"\tgeneral_knowledge_sys_prompt={self._general_knowledge_sys_prompt}, \n"
+            f"\tno_data_answer={self._no_data_answer}, \n"
+            f"\tjson_mode={self._json_mode}, \n"
+            f"\tdata_max_tokens={self._data_max_tokens} \n"
+            f")"
+        )
+
+    @typing_extensions.override
+    def __repr__(self) -> str:
+        return self.__str__()

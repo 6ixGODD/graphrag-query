@@ -4,6 +4,7 @@ import abc
 import typing
 
 import openai
+import typing_extensions
 
 from ..._search._llm import _types
 
@@ -28,6 +29,14 @@ class BaseChatLLM(abc.ABC):
     @abc.abstractmethod
     def model(self, value: str) -> None: ...
 
+    @typing_extensions.override
+    def __str__(self) -> str:
+        return f"ChatLLM(model={self.model})"
+
+    @typing_extensions.override
+    def __repr__(self) -> str:
+        return self.__str__()
+
 
 class BaseAsyncChatLLM(abc.ABC):
     _aclient: openai.AsyncOpenAI
@@ -49,6 +58,14 @@ class BaseAsyncChatLLM(abc.ABC):
     @abc.abstractmethod
     def model(self, value: str) -> None: ...
 
+    @typing_extensions.override
+    def __str__(self) -> str:
+        return f"AsyncChatLLM(model={self.model})"
+
+    @typing_extensions.override
+    def __repr__(self) -> str:
+        return self.__str__()
+
 
 class BaseEmbedding(abc.ABC):
     _client: openai.OpenAI
@@ -64,6 +81,14 @@ class BaseEmbedding(abc.ABC):
     @abc.abstractmethod
     def model(self, value: str) -> None: ...
 
+    @typing_extensions.override
+    def __str__(self) -> str:
+        return f"Embedding(model={self.model})"
+
+    @typing_extensions.override
+    def __repr__(self) -> str:
+        return self.__str__()
+
 
 class BaseAsyncEmbedding(abc.ABC):
     _aclient: openai.AsyncOpenAI
@@ -78,3 +103,11 @@ class BaseAsyncEmbedding(abc.ABC):
     @model.setter
     @abc.abstractmethod
     def model(self, value: str) -> None: ...
+
+    @typing_extensions.override
+    def __str__(self) -> str:
+        return f"AsyncEmbedding(model={self.model})"
+
+    @typing_extensions.override
+    def __repr__(self) -> str:
+        return self.__str__()

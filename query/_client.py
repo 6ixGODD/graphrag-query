@@ -11,9 +11,9 @@ from . import (
     _base_client,
     _config as _cfg,  # alias for _config attribute of Client class
     _defaults,
-    _errors,
     _search,
-    _types,
+    errors as _errors,
+    types as _types,
 )
 
 __all__ = [
@@ -53,6 +53,8 @@ class GraphRAGClient(
         self._config = config
         self._logger = logger or _defaults.get_default_logger() if self._config.logging.enabled else None
 
+        if self._logger:
+            self._logger.info(f'Initializing the ChatLLM with model: {self._config.chat_llm.model}')
         self._chat_llm = _search.ChatLLM(
             model=self._config.chat_llm.model,
             api_key=self._config.chat_llm.api_key,
@@ -63,6 +65,8 @@ class GraphRAGClient(
             **(self._config.chat_llm.kwargs or {}),
         )
 
+        if self._logger:
+            self._logger.info(f'Initializing the Embedding with model: {self._config.embedding.model}')
         self._embedding = _search.Embedding(
             model=self._config.embedding.model,
             api_key=self._config.embedding.api_key,
@@ -79,16 +83,22 @@ class GraphRAGClient(
             **(self._config.embedding.kwargs or {}),
         )
 
+        if self._logger:
+            self._logger.info(f'Initializing the LocalContextLoader with directory: {self._config.context.directory}')
         self._local_context_loader = _search.LocalContextLoader.from_parquet_directory(
             self._config.context.directory,
             **(self._config.context.kwargs or {}),
         )
 
+        if self._logger:
+            self._logger.info(f'Initializing the GlobalContextLoader with directory: {self._config.context.directory}')
         self._global_context_loader = _search.GlobalContextLoader.from_parquet_directory(
             self._config.context.directory,
             **(self._config.context.kwargs or {}),
         )
 
+        if self._logger:
+            self._logger.info('Initializing the LocalSearchEngine')
         self._local_search_engine = _search.LocalSearchEngine(
             chat_llm=self._chat_llm,
             embedding=self._embedding,
@@ -101,6 +111,8 @@ class GraphRAGClient(
             logger=self._logger,
             **(self._config.local_search.kwargs or {}),
         )
+        if self._logger:
+            self._logger.info('Initializing the GlobalSearchEngine')
         self._global_search_engine = _search.GlobalSearchEngine(
             chat_llm=self._chat_llm,
             embedding=self._embedding,
@@ -129,12 +141,16 @@ class GraphRAGClient(
         **kwargs: typing.Any
     ) -> typing.Union[_types.Response_T, _types.StreamResponse_T]:
         if not self._verify_message(message):
+            if self._logger:
+                self._logger.error(f'Invalid message: {message}')
             raise _errors.InvalidMessageError()
 
         # Convert iterable objects to list
         msg_list = [typing.cast(typing.Dict[typing.Literal["role", "content"], str], msg) for msg in message]
         if engine == 'local':
             conversation_history = _search.ConversationHistory.from_list(msg_list[:-1])  # exclude the last message
+            if self._logger:
+                self._logger.info(f'Local search with message: {msg_list[-1]["content"]}')
             response = self._local_search_engine.search(
                 msg_list[-1]['content'],
                 conversation_history=conversation_history,
@@ -143,6 +159,8 @@ class GraphRAGClient(
                 **kwargs
             )
         elif engine == 'global':
+            if self._logger:
+                self._logger.info(f'Global search with message: {msg_list[-1]["content"]}')
             response = self._global_search_engine.search(
                 msg_list[-1]['content'],
                 stream=stream,
@@ -163,8 +181,8 @@ class AsyncGraphRAGClient(
     _embedding: _search.Embedding
     _local_context_loader: _search.LocalContextLoader
     _global_context_loader: _search.GlobalContextLoader
-    _local_search_engine: _search.Async_search.LocalSearchEngine
-    _global_search_engine: _search.Async_search.GlobalSearchEngine
+    _local_search_engine: _search.AsyncLocalSearchEngine
+    _global_search_engine: _search.AsyncGlobalSearchEngine
     _logger: typing.Optional[_types.Logger]
 
     @classmethod

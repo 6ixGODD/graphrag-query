@@ -2,6 +2,15 @@ import typing
 
 import typing_extensions
 
+__all__ = [
+    'GraphRAGError',
+    'ClientError',
+    'CLIError',
+    'InvalidMessageError',
+    'InvalidEngineError',
+    'InvalidParameterError',
+]
+
 
 class GraphRAGError(Exception):
     ...

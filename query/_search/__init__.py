@@ -6,15 +6,12 @@ from __future__ import annotations
 import importlib
 import typing
 
-from .._search import _base_engine
 from .._search import _context
 from .._search import _engine
 from .._search import _llm
 from .._search import _model
 from .._search import _types
 
-AsyncQueryEngine = _base_engine.AsyncQueryEngine
-QueryEngine = _base_engine.QueryEngine
 BaseContextBuilder = _context.BaseContextBuilder
 GlobalContextBuilder = _context.GlobalContextBuilder
 LocalContextBuilder = _context.LocalContextBuilder
@@ -24,10 +21,14 @@ ConversationTurn = _context.ConversationTurn
 BaseContextLoader = _context.BaseContextLoader
 GlobalContextLoader = _context.GlobalContextLoader
 LocalContextLoader = _context.LocalContextLoader
+
+AsyncQueryEngine = _engine.AsyncQueryEngine
+QueryEngine = _engine.QueryEngine
 AsyncGlobalSearchEngine = _engine.AsyncGlobalSearchEngine
 AsyncLocalSearchEngine = _engine.AsyncLocalSearchEngine
 GlobalSearchEngine = _engine.GlobalSearchEngine
 LocalSearchEngine = _engine.LocalSearchEngine
+
 AsyncChatLLM = _llm.AsyncChatLLM
 AsyncEmbedding = _llm.AsyncEmbedding
 BaseAsyncChatLLM = _llm.BaseAsyncChatLLM
@@ -36,6 +37,7 @@ BaseChatLLM = _llm.BaseChatLLM
 BaseEmbedding = _llm.BaseEmbedding
 ChatLLM = _llm.ChatLLM
 Embedding = _llm.Embedding
+
 Community = _model.Community
 CommunityReport = _model.CommunityReport
 Covariate = _model.Covariate
@@ -45,6 +47,7 @@ Identified = _model.Identified
 Named = _model.Named
 Relationship = _model.Relationship
 TextUnit = _model.TextUnit
+
 SearchResult = _types.SearchResult
 SearchResultChunk = _types.SearchResultChunk
 SearchResultChunkVerbose = _types.SearchResultChunkVerbose

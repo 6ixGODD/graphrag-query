@@ -16,14 +16,14 @@ from . import _base_vector_store
 class LanceDBVectorStore(_base_vector_store.BaseVectorStore):
     """The LanceDB vector storage implementation."""
     collection_name: str
-    db_connection: lancedb.DBConnection
-    document_collection: lancedb.table.Table
+    db_connection: lancedb.DBConnection  # type: ignore
+    document_collection: lancedb.table.Table  # type: ignore
     query_filter: typing.Optional[str] = None
 
     def __init__(self, collection_name: str, uri: str = "./lancedb", **kwargs: typing.Any) -> None:
         """Initialize the LanceDB vector storage."""
         super().__init__(collection_name, **kwargs)
-        self.db_connection = lancedb.connect(uri)
+        self.db_connection = lancedb.connect(uri)  # type: ignore
 
     @typing_extensions.override
     def load_documents(

@@ -1,12 +1,15 @@
+# Copyright (c) 2024 Microsoft Corporation.
+# Licensed under the MIT License
+
 from __future__ import annotations
 
 import os
 import pathlib
 import typing
-import typing_extensions
 
 import pandas as pd
 import tiktoken
+import typing_extensions
 
 from .... import _utils as _common_utils
 from ...._search import _llm
@@ -117,6 +120,23 @@ class LocalContextLoader(_base.BaseContextLoader):
             token_encoder=tiktoken.get_encoding(encoding_model),
         )
 
+    @typing_extensions.override
+    def __str__(self) -> str:
+        return (
+            f"{self.__class__.__name__}(\n"
+            f"\tnodes={self._nodes}, \n"
+            f"\tentities={self._entities}, \n"
+            f"\tcommunity_reports={self._community_reports}, \n"
+            f"\ttext_units={self._text_units}, \n"
+            f"\trelationships={self._relationships}, \n"
+            f"\tcovariates={self._covariates}\n"
+            f")"
+        )
+
+    @typing_extensions.override
+    def __repr__(self) -> str:
+        return self.__str__()
+
 
 class GlobalContextLoader(_base.BaseContextLoader):
     _nodes: pd.DataFrame
@@ -185,3 +205,17 @@ class GlobalContextLoader(_base.BaseContextLoader):
             entities=entities_list,
             token_encoder=tiktoken.get_encoding(encoding_model),
         )
+
+    @typing_extensions.override
+    def __str__(self) -> str:
+        return (
+            f"{self.__class__.__name__}(\n"
+            f"\tnodes={self._nodes}, \n"
+            f"\tentities={self._entities}, \n"
+            f"\tcommunity_reports={self._community_reports}\n"
+            f")"
+        )
+
+    @typing_extensions.override
+    def __repr__(self) -> str:
+        return self.__str__()

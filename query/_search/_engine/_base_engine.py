@@ -1,14 +1,17 @@
+# Copyright (c) 2024 Microsoft Corporation.
+# Licensed under the MIT License
+
 from __future__ import annotations
 
 import abc
 import time
-
 import typing
 
 import pandas as pd
+import typing_extensions
 
-from .. import _types as _base_types
-from .._search import (
+from ... import types as _base_types
+from ..._search import (
     _context,
     _llm,
     _types,
@@ -22,7 +25,6 @@ class QueryEngine(abc.ABC):
     _embedding: _llm.BaseEmbedding
     _context_builder: _context.BaseContextBuilder
     _logger: typing.Optional[Logger]
-    _sys_prompt: str
 
     def __init__(
         self,
@@ -166,13 +168,25 @@ class QueryEngine(abc.ABC):
                     reduce_context_text=reduce_context_text,
                 )
 
+    @typing_extensions.override
+    def __str__(self) -> str:
+        return (f"{self.__class__.__name__}(\n"
+                f"\tchat_llm={self._chat_llm},\n"
+                f"\tembedding={self._embedding},\n"
+                f"\tcontext_builder={self._context_builder},\n"
+                f"\tlogger={self._logger}\n"
+                f")")
+
+    @typing_extensions.override
+    def __repr__(self) -> str:
+        return self.__str__()
+
 
 class AsyncQueryEngine(abc.ABC):
     _chat_llm: _llm.BaseAsyncChatLLM
     _embedding: _llm.BaseEmbedding
     _context_builder: _context.BaseContextBuilder
     _logger: typing.Optional[Logger]
-    _sys_prompt: str
 
     def __init__(
         self,
@@ -315,3 +329,16 @@ class AsyncQueryEngine(abc.ABC):
                     reduce_context_data=reduce_context_data,
                     reduce_context_text=reduce_context_text,
                 )
+
+    @typing_extensions.override
+    def __str__(self) -> str:
+        return (f"{self.__class__.__name__}(\n"
+                f"\tchat_llm={self._chat_llm},\n"
+                f"\tembedding={self._embedding},\n"
+                f"\tcontext_builder={self._context_builder},\n"
+                f"\tlogger={self._logger}\n"
+                f")")
+
+    @typing_extensions.override
+    def __repr__(self) -> str:
+        return self.__str__()
