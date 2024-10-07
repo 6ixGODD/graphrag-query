@@ -8,7 +8,7 @@ import os
 import pathlib
 import typing
 
-from ...._search._context import _builders
+from .. import _builders
 
 
 class BaseContextLoader(abc.ABC):

@@ -4,13 +4,13 @@
 from __future__ import annotations
 
 import typing
-import typing_extensions
 
 import httpx
 import openai
+import typing_extensions
 
 from ... import _utils
-from ..._search._llm import _base_llm, _types
+from . import _base_llm, _types
 
 
 class ChatLLM(_base_llm.BaseChatLLM):
@@ -65,6 +65,10 @@ class ChatLLM(_base_llm.BaseChatLLM):
     def model(self, value: str) -> None:
         self._model = value
 
+    @typing_extensions.override
+    def close(self) -> None:
+        self._client.close()
+
 
 class AsyncChatLLM(_base_llm.BaseAsyncChatLLM):
     def __init__(
@@ -118,3 +122,7 @@ class AsyncChatLLM(_base_llm.BaseAsyncChatLLM):
     @typing_extensions.override
     def model(self, value: str) -> None:
         self._model = value
+
+    @typing_extensions.override
+    async def aclose(self) -> None:
+        await self._aclient.close()

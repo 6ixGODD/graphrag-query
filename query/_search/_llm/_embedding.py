@@ -4,14 +4,14 @@
 from __future__ import annotations
 
 import typing
-import typing_extensions
 
 import httpx
 import openai
 import tiktoken
+import typing_extensions
 
 from ... import _utils
-from ..._search._llm import _base_llm, _types
+from . import _base_llm, _types
 
 
 class Embedding(_base_llm.BaseEmbedding):
@@ -67,6 +67,10 @@ class Embedding(_base_llm.BaseEmbedding):
     def model(self, value: str) -> None:
         self._model = value
 
+    @typing_extensions.override
+    def close(self) -> None:
+        self._client.close()
+
 
 class AsyncEmbedding(_base_llm.BaseAsyncEmbedding):
     def __init__(
@@ -119,3 +123,7 @@ class AsyncEmbedding(_base_llm.BaseAsyncEmbedding):
     @typing_extensions.override
     def model(self, value: str) -> None:
         self._model = value
+
+    @typing_extensions.override
+    async def aclose(self) -> None:
+        await self._aclient.close()

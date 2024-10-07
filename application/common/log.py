@@ -1,15 +1,23 @@
-import sys
+# Copyright (c) 2024 Microsoft Corporation.
+# Licensed under the MIT License
 
-from loguru import logger as _logger
+from __future__ import annotations
+
+import sys
+import typing
+
+import loguru
+
+_logger = loguru.logger
 
 
 def init_logger(
     level: str = 'INFO',
     *,
-    out_file: str | None = None,
-    err_file: str | None = None,
-    rotation: str | None = None,
-    retention: str | None = None,
+    out_file: typing.Optional[str] = None,
+    err_file: typing.Optional[str] = None,
+    rotation: typing.Optional[str] = None,
+    retention: typing.Optional[str] = None,
     serialize: bool = True
 ) -> None:
     _logger.remove()  # remove the default logger

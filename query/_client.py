@@ -148,7 +148,7 @@ class GraphRAGClient(
     def chat(
         self,
         *,
-        engine: typing.Literal['local', 'global'],
+        engine: typing.Literal['local', 'global'] = 'local',
         message: _types.MessageParam_T,
         stream: bool = False,
         verbose: bool = False,
@@ -186,6 +186,11 @@ class GraphRAGClient(
             raise _errors.InvalidEngineError(engine)
 
         return response
+
+    @typing_extensions.override
+    def close(self) -> None:
+        self._local_search_engine.close()
+        self._global_search_engine.close()
 
 
 class AsyncGraphRAGClient(
@@ -314,7 +319,7 @@ class AsyncGraphRAGClient(
     async def chat(
         self,
         *,
-        engine: typing.Literal['local', 'global'],
+        engine: typing.Literal['local', 'global'] = 'local',
         message: _types.MessageParam_T,
         stream: bool = False,
         verbose: bool = False,
@@ -350,3 +355,8 @@ class AsyncGraphRAGClient(
             raise _errors.InvalidEngineError(engine)
 
         return response
+
+    @typing_extensions.override
+    async def close(self) -> None:
+        await self._local_search_engine.aclose()
+        await self._global_search_engine.aclose()

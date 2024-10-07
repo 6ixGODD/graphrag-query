@@ -6,11 +6,9 @@ from __future__ import annotations
 import enum
 import typing
 
+from ... import _llm, _model
+from ..._input._retrieval import _entities
 from .... import _vector_stores
-from ...._search import _llm, _model
-from ...._search._input._retrieval import (
-    _entities
-)
 
 
 class EntityVectorStoreKey(str, enum.Enum):

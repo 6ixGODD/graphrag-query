@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import typing
 
-from ..._search._model import _identified
+from . import _identified
 
 
 class TextUnit(_identified.Identified):

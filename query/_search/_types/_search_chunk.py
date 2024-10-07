@@ -19,7 +19,7 @@ class Delta(pydantic.BaseModel):
 
 
 class ChunkChoice(pydantic.BaseModel):
-    finish_reason: typing.Optional[typing.Literal["stop", "length", "tool_calls", "content_filter", "function_call"]] = None
+    finish_reason: typing.Optional[str] = None
     """
     The reason the model stopped generating tokens.
 

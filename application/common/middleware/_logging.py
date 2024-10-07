@@ -1,15 +1,20 @@
-from http import HTTPStatus
+# Copyright (c) 2024 Microsoft Corporation.
+# Licensed under the MIT License
 
-from starlette.types import ASGIApp, Receive, Scope, Send
+from __future__ import annotations
+
+import http
+
+from starlette import types
 
 from application.common import const, ctx, errors
 
 
 class LoggingMiddleware:
-    def __init__(self, app: ASGIApp):
+    def __init__(self, app: types.ASGIApp):
         self.app = app
 
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+    async def __call__(self, scope: types.Scope, receive: types.Receive, send: types.Send) -> None:
         if scope[const.Constants.TYPE_SCOPE_KEY] != "http":  # pragma: no cover
             # Skip non-HTTP requests
             await self.app(scope, receive, send)
@@ -27,7 +32,7 @@ class LoggingMiddleware:
                     headers=message[const.Constants.HEADERS_MESSAGE_KEY]
                 ).info(
                     f"Response: {message[const.Constants.STATUS_MESSAGE_KEY]} "
-                    f"{HTTPStatus(message[const.Constants.STATUS_MESSAGE_KEY]).phrase}"
+                    f"{http.HTTPStatus(message[const.Constants.STATUS_MESSAGE_KEY]).phrase}"
                 )
             await send(message)
 

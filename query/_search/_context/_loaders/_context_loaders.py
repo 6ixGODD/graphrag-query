@@ -11,10 +11,10 @@ import pandas as pd
 import tiktoken
 import typing_extensions
 
+from . import _base, _defaults, _utils
+from .. import _builders
+from ... import _llm
 from .... import _utils as _common_utils
-from ...._search import _llm
-from ...._search._context import _builders
-from ...._search._context._loaders import _base, _defaults, _utils
 
 
 class LocalContextLoader(_base.BaseContextLoader):

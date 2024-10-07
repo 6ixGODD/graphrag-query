@@ -5,11 +5,12 @@ from __future__ import annotations
 
 import random
 import typing
+
 import pandas as pd
 import tiktoken
 
+from ... import _model
 from .... import _utils
-from ...._search import _model
 
 
 def build_text_unit_context(

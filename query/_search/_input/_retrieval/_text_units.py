@@ -7,7 +7,7 @@ import typing
 
 import pandas as pd
 
-from ...._search import _model
+from ... import _model
 
 
 def get_candidate_text_units(

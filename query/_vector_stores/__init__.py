@@ -3,13 +3,13 @@
 
 from __future__ import annotations
 
-from . import _base_vector_store
-from . import _lancedb
+from ._base_vector_store import (
+    BaseVectorStore,
+    VectorStoreDocument,
+    VectorStoreSearchResult,
+)
+from ._lancedb import LanceDBVectorStore
 
-BaseVectorStore = _base_vector_store.BaseVectorStore
-VectorStoreDocument = _base_vector_store.VectorStoreDocument
-VectorStoreSearchResult = _base_vector_store.VectorStoreSearchResult
-LanceDBVectorStore = _lancedb.LanceDBVectorStore
 
 __all__ = [
     "BaseVectorStore",

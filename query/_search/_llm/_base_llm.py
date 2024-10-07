@@ -9,7 +9,7 @@ import typing
 import openai
 import typing_extensions
 
-from ..._search._llm import _types
+from . import _types
 
 
 class BaseChatLLM(abc.ABC):
@@ -31,6 +31,9 @@ class BaseChatLLM(abc.ABC):
     @model.setter
     @abc.abstractmethod
     def model(self, value: str) -> None: ...
+
+    @abc.abstractmethod
+    def close(self) -> None: ...
 
     @typing_extensions.override
     def __str__(self) -> str:
@@ -61,6 +64,9 @@ class BaseAsyncChatLLM(abc.ABC):
     @abc.abstractmethod
     def model(self, value: str) -> None: ...
 
+    @abc.abstractmethod
+    async def aclose(self) -> None: ...
+
     @typing_extensions.override
     def __str__(self) -> str:
         return f"AsyncChatLLM(model={self.model})"
@@ -84,6 +90,9 @@ class BaseEmbedding(abc.ABC):
     @abc.abstractmethod
     def model(self, value: str) -> None: ...
 
+    @abc.abstractmethod
+    def close(self) -> None: ...
+
     @typing_extensions.override
     def __str__(self) -> str:
         return f"Embedding(model={self.model})"
@@ -106,6 +115,9 @@ class BaseAsyncEmbedding(abc.ABC):
     @model.setter
     @abc.abstractmethod
     def model(self, value: str) -> None: ...
+
+    @abc.abstractmethod
+    async def aclose(self) -> None: ...
 
     @typing_extensions.override
     def __str__(self) -> str:

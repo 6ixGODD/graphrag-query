@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from ..._search._model import _identified
+from . import _identified
 
 
 class Named(_identified.Identified):

@@ -1,13 +1,18 @@
-import typing
+# Copyright (c) 2024 Microsoft Corporation.
+# Licensed under the MIT License
+
+from __future__ import annotations
 
 import fastapi
-import pydantic
+
+from . import dto
 
 _root = fastapi.APIRouter()
-_Response_T: typing.TypeAlias = typing.TypeVar('_Response_T', bound=pydantic.BaseModel)
-_StreamResponse_T: typing.TypeAlias = typing.TypeVar('_StreamResponse_T', bound=pydantic.BaseModel)
+
+
 @_root.post('chat/completions')
-async def chat_completions() -> typing.Union[pydantic]:
-    pass
-
-
+async def chat_completions(request: dto.CompletionCreateParams):
+    if isinstance(request, dto.CompletionCreateParamsNonStreaming):
+        pass
+    else:
+        pass

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import typing
 
-from ..._search._types import _search
+from . import _search
 
 
 class SearchResultVerbose(_search.SearchResult):

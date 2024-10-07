@@ -51,7 +51,7 @@ class BaseClient(abc.ABC, typing.Generic[_Response_T]):
     def chat(
         self,
         *,
-        engine: typing.Literal['local', 'global'],
+        engine: typing.Literal['local', 'global'] = 'local',
         message: _types.MessageParam_T,
         stream: bool = False,
         verbose: bool = False,
@@ -65,6 +65,9 @@ class BaseClient(abc.ABC, typing.Generic[_Response_T]):
             (msg_list[i]['role'] != msg_list[i + 1]['role'] and msg_list[i]['role'] != 'system')
             for i in range(len(msg_list) - 1)  # check if the roles are alternating and not system
         ) and msg_list[-1]['role'] == 'user')  # check if the last role is user
+
+    @abc.abstractmethod
+    def close(self) -> typing.Union[None, typing.Awaitable[None]]: ...
 
     @typing_extensions.override
     def __str__(self) -> str:

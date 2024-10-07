@@ -4,11 +4,12 @@
 from __future__ import annotations
 
 import typing
+
 import pandas as pd
 
-from ...._search import _model
-from ...._search._context._loaders import _defaults
-from ...._search._input._loaders import _dfs
+from . import _defaults
+from ... import _model
+from ..._input._loaders import _dfs
 from ...._vector_stores import LanceDBVectorStore
 
 

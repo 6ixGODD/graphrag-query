@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import typing
 
-from ..._search._model import _named
+from . import _named
 
 
 class Entity(_named.Named):

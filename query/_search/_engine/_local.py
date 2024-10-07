@@ -12,7 +12,7 @@ import warnings
 import typing_extensions
 
 from . import _base_engine
-from ..._search import (
+from .. import (
     _context,
     _defaults,
     _llm,
@@ -54,7 +54,6 @@ class LocalSearchEngine(_base_engine.QueryEngine):
             encoding_model=encoding_model or _defaults.DEFAULT__ENCODING_MODEL,
             **kwargs,
         )
-        gc.collect()  # Collect garbage to free up memory
 
         if logger:
             logger.debug(f"Created LocalSearchEngine with context_builder: {context_builder}")

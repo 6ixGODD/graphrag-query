@@ -15,19 +15,19 @@ from .... import (
     _utils,
     _vector_stores,
 )
-from ...._search import (
+from ... import (
     _llm,
     _model,
 )
-from ...._search._context import _types
-from ...._search._context._builders import (
+from .. import _types
+from .._builders import (
     _community_context,
     _conversation_history,
     _entity_extraction,
     _local_context,
     _source_context,
 )
-from ...._search._input._retrieval import (
+from ..._input._retrieval import (
     _community_reports,
     _text_units,
 )

@@ -9,9 +9,9 @@ import typing
 import pandas as pd
 import tiktoken
 
+from .. import _types
+from ... import _model
 from .... import _utils
-from ...._search import _model
-from ...._search._context import _types
 
 
 def build_community_context(

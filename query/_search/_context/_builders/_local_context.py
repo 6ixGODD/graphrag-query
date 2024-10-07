@@ -9,13 +9,13 @@ import typing
 import pandas as pd
 import tiktoken
 
-from .... import _utils
-from ...._search import _model
-from ...._search._input._retrieval import (
+from ... import _model
+from ..._input._retrieval import (
     _covariates,
     _entities,
     _relationships,
 )
+from .... import _utils
 
 
 def build_entity_context(

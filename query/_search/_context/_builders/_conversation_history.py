@@ -10,8 +10,8 @@ import typing
 import pandas as pd
 import tiktoken
 
+from .. import _types
 from .... import _utils
-from ...._search._context import _types
 
 ROLE__SYSTEM = "system"
 ROLE__USER = "user"

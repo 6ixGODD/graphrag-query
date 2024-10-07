@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import typing
 
-from .._types import _search, _search_chunk
+from . import _search, _search_chunk
 
 
 class SearchResultChunkVerbose(_search_chunk.SearchResultChunk):

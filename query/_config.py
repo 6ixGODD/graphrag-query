@@ -251,7 +251,8 @@ class GraphRAGConfig(pydantic_settings.BaseSettings):
     def __init__(self, **kwargs: typing.Any) -> None:
         # Ensure all fields are present
         for field in self.__fields__.keys():
-            if field not in kwargs or not isinstance(kwargs[field], dict):
+            if (field not in kwargs or not isinstance(kwargs[field], dict)
+                    and not isinstance(kwargs[field], pydantic.BaseModel)):
                 _warnings.warn(
                     f"Missing or invalid field: {field}, initializing to empty dict",
                     RuntimeWarning

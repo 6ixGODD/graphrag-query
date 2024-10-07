@@ -14,13 +14,13 @@ import tiktoken
 import typing_extensions
 
 from . import _base_engine
-from ... import _utils
-from ..._search import (
+from .. import (
     _context,
     _defaults,
     _llm,
     _types,
 )
+from ... import _utils
 
 
 class GlobalSearchEngine(_base_engine.QueryEngine):
@@ -64,7 +64,6 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
             encoding_model=encoding_model or _defaults.DEFAULT__ENCODING_MODEL,
             **kwargs,
         )
-        gc.collect()  # Collect garbage to free up memory
 
         if logger:
             logger.debug(f"Created GlobalSearchEngine with context_builder: {context_builder}")

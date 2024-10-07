@@ -10,12 +10,12 @@ import typing
 import pandas as pd
 import typing_extensions
 
-from ... import types as _base_types
-from ..._search import (
+from .. import (
     _context,
     _llm,
     _types,
 )
+from ... import types as _base_types
 
 Logger: typing.TypeAlias = _base_types.Logger
 
@@ -167,6 +167,10 @@ class QueryEngine(abc.ABC):
                     reduce_context_data=reduce_context_data,
                     reduce_context_text=reduce_context_text,
                 )
+
+    def close(self) -> None:
+        self._chat_llm.close()
+        self._embedding.close()
 
     @typing_extensions.override
     def __str__(self) -> str:
@@ -331,6 +335,10 @@ class AsyncQueryEngine(abc.ABC):
                     reduce_context_data=reduce_context_data,
                     reduce_context_text=reduce_context_text,
                 )
+
+    async def aclose(self) -> None:
+        await self._chat_llm.aclose()
+        self._embedding.close()
 
     @typing_extensions.override
     def __str__(self) -> str:

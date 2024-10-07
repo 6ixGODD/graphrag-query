@@ -3,18 +3,18 @@
 
 from __future__ import annotations
 
-from . import _base_engine
-from . import _local
-from . import _global
-
-QueryEngine = _base_engine.QueryEngine
-AsyncQueryEngine = _base_engine.AsyncQueryEngine
-
-LocalSearchEngine = _local.LocalSearchEngine
-AsyncLocalSearchEngine = _local.AsyncLocalSearchEngine
-
-GlobalSearchEngine = _global.GlobalSearchEngine
-AsyncGlobalSearchEngine = _global.AsyncGlobalSearchEngine
+from ._base_engine import (
+    AsyncQueryEngine,
+    QueryEngine,
+)
+from ._global import (
+    AsyncGlobalSearchEngine,
+    GlobalSearchEngine,
+)
+from ._local import (
+    AsyncLocalSearchEngine,
+    LocalSearchEngine,
+)
 
 __all__ = [
     "QueryEngine",

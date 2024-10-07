@@ -28,7 +28,7 @@ class Message(pydantic.BaseModel):
 
 
 class Choice(pydantic.BaseModel):
-    finish_reason: typing.Literal["stop", "length", "tool_calls", "content_filter", "function_call"]
+    finish_reason: typing.Optional[str]
     """
     The reason the model stopped generating tokens.
 

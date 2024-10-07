@@ -1,13 +1,18 @@
-from starlette.types import ASGIApp, Receive, Scope, Send
+# Copyright (c) 2024 Microsoft Corporation.
+# Licensed under the MIT License
+
+from __future__ import annotations
+
+from starlette import types
 
 from application.common import const, ctx, utils
 
 
 class RequestIDMiddleware:
-    def __init__(self, app: ASGIApp):
+    def __init__(self, app: types.ASGIApp):
         self.app = app
 
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+    async def __call__(self, scope: types.Scope, receive: types.Receive, send: types.Send) -> None:
         if scope[const.Constants.TYPE_SCOPE_KEY] != "http":  # pragma: no cover
             # Skip non-HTTP requests
             await self.app(scope, receive, send)
@@ -21,7 +26,7 @@ class RequestIDMiddleware:
             ctx.set_request_id(request_id)
         else:
             ctx.clear_request_id()
-            request_id = utils.gen_id(prefix=const.Constants.REQUEST_ID_PREFIX, __split='_')
+            request_id = utils.gen_id(prefix=const.Constants.REQUEST_ID_PREFIX, split='_')
             ctx.set_request_id(request_id)
 
         async def send_wrapper(message) -> None:

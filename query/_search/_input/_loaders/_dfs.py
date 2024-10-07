@@ -7,9 +7,9 @@ import typing
 
 import pandas as pd
 
+from . import _utils
+from ... import _model
 from .... import _vector_stores
-from ...._search import _model
-from ...._search._input._loaders import _utils
 
 
 def read_entities(
