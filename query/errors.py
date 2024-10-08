@@ -16,16 +16,20 @@ __all__ = [
 ]
 
 
+class GraphRAGWarning(Warning):
+    pass
+
+
 class GraphRAGError(Exception):
-    ...
+    pass
 
 
 class ClientError(GraphRAGError):
-    ...
+    pass
 
 
 class CLIError(GraphRAGError):
-    ...
+    pass
 
 
 # Client Errors
@@ -97,4 +101,3 @@ class InvalidParameterError(CLIError):
     @typing_extensions.override
     def __repr__(self):
         return f"{self.__class__.__name__}(params={self.params!r}, message={self.message!r})"
-

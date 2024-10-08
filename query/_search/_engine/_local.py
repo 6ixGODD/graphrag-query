@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import collections
-import gc
 import time
 import typing
 import warnings
@@ -18,6 +17,7 @@ from .. import (
     _llm,
     _types,
 )
+from ... import errors as _errors
 
 
 class LocalSearchEngine(_base_engine.QueryEngine):
@@ -27,12 +27,19 @@ class LocalSearchEngine(_base_engine.QueryEngine):
     _logger: typing.Optional[_base_engine.Logger]
     _sys_prompt: str
 
+    @typing_extensions.override
+    @property
+    def context_builder(self) -> _context.LocalContextBuilder:
+        return self._context_builder
+
     def __init__(
         self,
         *,
         chat_llm: _llm.BaseChatLLM,
         embedding: _llm.BaseEmbedding,
-        context_loader: _context.LocalContextLoader,
+
+        context_loader: typing.Optional[_context.LocalContextLoader] = None,
+        context_builder: typing.Optional[_context.LocalContextBuilder] = None,
 
         sys_prompt: typing.Optional[str] = None,
         community_level: typing.Optional[int] = None,
@@ -46,14 +53,18 @@ class LocalSearchEngine(_base_engine.QueryEngine):
     ) -> None:
         if logger:
             logger.debug(f"Creating LocalSearchEngine with context_loader: {context_loader}")
-        context_builder = context_loader.to_context_builder(
-            embedder=embedding,
-            community_level=community_level or _defaults.DEFAULT__LOCAL_SEARCH__COMMUNITY_LEVEL,
-            store_coll_name=store_coll_name or _defaults.DEFAULT__VECTOR_STORE__COLLECTION_NAME,
-            store_uri=store_uri or _defaults.DEFAULT__VECTOR_STORE__URI,
-            encoding_model=encoding_model or _defaults.DEFAULT__ENCODING_MODEL,
-            **kwargs,
-        )
+        if not context_builder and not context_loader:
+            raise ValueError("Either context_loader or context_builder must be provided")
+
+        if not context_builder:
+            context_builder = context_loader.to_context_builder(
+                embedder=embedding,
+                community_level=community_level or _defaults.DEFAULT__LOCAL_SEARCH__COMMUNITY_LEVEL,
+                store_coll_name=store_coll_name or _defaults.DEFAULT__VECTOR_STORE__COLLECTION_NAME,
+                store_uri=store_uri or _defaults.DEFAULT__VECTOR_STORE__URI,
+                encoding_model=encoding_model or _defaults.DEFAULT__ENCODING_MODEL,
+                **kwargs,
+            )
 
         if logger:
             logger.debug(f"Created LocalSearchEngine with context_builder: {context_builder}")
@@ -65,7 +76,7 @@ class LocalSearchEngine(_base_engine.QueryEngine):
         )
         self._sys_prompt = sys_prompt or _defaults.LOCAL_SEARCH__SYS_PROMPT
         if '{context_data}' not in self._sys_prompt:
-            warnings.warn('Local Search\'s System Prompt does not contain "{context_data}"', RuntimeWarning)
+            warnings.warn('Local Search\'s System Prompt does not contain "{context_data}"', _errors.GraphRAGWarning)
             if self._logger:
                 self._logger.warning('Local Search\'s System Prompt does not contain "{context_data}"')
 
@@ -77,7 +88,8 @@ class LocalSearchEngine(_base_engine.QueryEngine):
         conversation_history: _types.ConversationHistory_T = None,
         verbose: bool = False,
         stream: bool = False,
-        **kwargs: typing.Any,
+        sys_prompt: typing.Optional[str] = None,
+        **kwargs: typing.Dict[str, typing.Any],
     ) -> typing.Union[_types.SearchResult_T, _types.StreamSearchResult_T]:
         created = time.time()
         if self._logger:
@@ -94,7 +106,7 @@ class LocalSearchEngine(_base_engine.QueryEngine):
             **kwargs,
         )
         # TODO: Add Jinja2 template support for sys_prompt (same for GlobalSearchEngine)
-        prompt = self._sys_prompt.format_map(collections.defaultdict(str, context_data=context_text))
+        prompt = (sys_prompt or self._sys_prompt).format_map(collections.defaultdict(str, context_data=context_text))
         messages = ([{"role": "system", "content": prompt}] +
                     conversation_history.to_dict() +
                     [{"role": "user", "content": query}])
@@ -150,12 +162,19 @@ class AsyncLocalSearchEngine(_base_engine.AsyncQueryEngine):
     _logger: typing.Optional[_base_engine.Logger]
     _sys_prompt: str
 
+    @typing_extensions.override
+    @property
+    def context_builder(self) -> _context.LocalContextBuilder:
+        return self._context_builder
+
     def __init__(
         self,
         *,
         chat_llm: _llm.BaseAsyncChatLLM,
         embedding: _llm.BaseEmbedding,
-        context_loader: _context.LocalContextLoader,
+
+        context_loader: typing.Optional[_context.LocalContextLoader] = None,
+        context_builder: typing.Optional[_context.LocalContextBuilder] = None,
 
         sys_prompt: typing.Optional[str] = None,
         community_level: typing.Optional[int] = None,
@@ -169,15 +188,18 @@ class AsyncLocalSearchEngine(_base_engine.AsyncQueryEngine):
     ) -> None:
         if logger:
             logger.debug(f"Creating AsyncLocalSearchEngine with context_loader: {context_loader}")
-        context_builder = context_loader.to_context_builder(
-            embedder=embedding,
-            community_level=community_level or _defaults.DEFAULT__LOCAL_SEARCH__COMMUNITY_LEVEL,
-            store_coll_name=store_coll_name or _defaults.DEFAULT__VECTOR_STORE__COLLECTION_NAME,
-            store_uri=store_uri or _defaults.DEFAULT__VECTOR_STORE__URI,
-            encoding_model=encoding_model or _defaults.DEFAULT__ENCODING_MODEL,
-            **kwargs,
-        )
-        gc.collect()  # Collect garbage to free up memory
+        if context_loader is None and context_builder is None:
+            raise ValueError("Either context_loader or context_builder must be provided")
+
+        if not context_builder:
+            context_builder = context_loader.to_context_builder(
+                embedder=embedding,
+                community_level=community_level or _defaults.DEFAULT__LOCAL_SEARCH__COMMUNITY_LEVEL,
+                store_coll_name=store_coll_name or _defaults.DEFAULT__VECTOR_STORE__COLLECTION_NAME,
+                store_uri=store_uri or _defaults.DEFAULT__VECTOR_STORE__URI,
+                encoding_model=encoding_model or _defaults.DEFAULT__ENCODING_MODEL,
+                **kwargs,
+            )
 
         if logger:
             logger.debug(f"Created AsyncLocalSearchEngine with context_builder: {context_builder}")
@@ -189,7 +211,7 @@ class AsyncLocalSearchEngine(_base_engine.AsyncQueryEngine):
         )
         self._sys_prompt = sys_prompt or _defaults.LOCAL_SEARCH__SYS_PROMPT
         if '{context_data}' not in self._sys_prompt:
-            warnings.warn('Local Search\'s System Prompt does not contain "{context_data}"', RuntimeWarning)
+            warnings.warn('Local Search\'s System Prompt does not contain "{context_data}"', _errors.GraphRAGWarning)
             if self._logger:
                 self._logger.warning('Local Search\'s System Prompt does not contain "{context_data}"')
 
@@ -201,6 +223,7 @@ class AsyncLocalSearchEngine(_base_engine.AsyncQueryEngine):
         conversation_history: _types.ConversationHistory_T,
         verbose: bool = False,
         stream: bool = False,
+        sys_prompt: typing.Optional[str] = None,
         **kwargs: typing.Any,
     ) -> typing.Union[_types.SearchResult_T, _types.AsyncStreamSearchResult_T]:
         created = time.time()
@@ -218,7 +241,7 @@ class AsyncLocalSearchEngine(_base_engine.AsyncQueryEngine):
             conversation_history=conversation_history,
             **kwargs,
         )
-        prompt = self._sys_prompt.format_map(collections.defaultdict(str, context_data=context_text))
+        prompt = (sys_prompt or self._sys_prompt).format_map(collections.defaultdict(str, context_data=context_text))
         messages = ([{"role": "system", "content": prompt}] +
                     conversation_history.to_dict() +
                     [{"role": "user", "content": query}])

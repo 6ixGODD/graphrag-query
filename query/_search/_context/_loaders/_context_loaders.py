@@ -25,21 +25,55 @@ class LocalContextLoader(_base.BaseContextLoader):
     _relationships: pd.DataFrame
     _covariates: typing.Optional[pd.DataFrame] = None
 
+    @property
+    def nodes(self) -> pd.DataFrame:
+        return self._nodes
+
+    @property
+    def entities(self) -> pd.DataFrame:
+        return self._entities
+
+    @property
+    def community_reports(self) -> pd.DataFrame:
+        return self._community_reports
+
+    @property
+    def text_units(self) -> pd.DataFrame:
+        return self._text_units
+
+    @property
+    def relationships(self) -> pd.DataFrame:
+        return self._relationships
+
+    @property
+    def covariates(self) -> typing.Optional[pd.DataFrame]:
+        return self._covariates
+
     @classmethod
     @typing_extensions.override
     def from_parquet_directory(
         cls,
-        directory: typing.Union[str, os.PathLike[str], pathlib.Path],
+        directory: typing.Optional[typing.Union[str, os.PathLike[str], pathlib.Path]],
+        global_context_loader: typing.Optional[GlobalContextLoader] = None,
         **kwargs: str
     ) -> typing.Self:
+        if not directory:
+            raise ValueError("Directory not provided")
         directory = pathlib.Path(directory)
         if not directory.exists() or not directory.is_dir():
             raise FileNotFoundError(f"Directory not found: {directory}")
-        nodes = pd.read_parquet(directory / kwargs.get("nodes", _defaults.PARQUET_FILE_NAME__NODES))
-        entities = pd.read_parquet(directory / kwargs.get("entities", _defaults.PARQUET_FILE_NAME__ENTITIES))
-        community_reports = pd.read_parquet(
-            directory / kwargs.get("community_reports", _defaults.PARQUET_FILE_NAME__COMMUNITY_REPORTS)
-        )
+
+        if global_context_loader:
+            nodes = global_context_loader.nodes
+            entities = global_context_loader.entities
+            community_reports = global_context_loader.community_reports
+        else:
+            nodes = pd.read_parquet(directory / kwargs.get("nodes", _defaults.PARQUET_FILE_NAME__NODES))
+            entities = pd.read_parquet(directory / kwargs.get("entities", _defaults.PARQUET_FILE_NAME__ENTITIES))
+            community_reports = pd.read_parquet(
+                directory / kwargs.get("community_reports", _defaults.PARQUET_FILE_NAME__COMMUNITY_REPORTS)
+            )
+
         text_units = pd.read_parquet(directory / kwargs.get("text_units", _defaults.PARQUET_FILE_NAME__TEXT_UNITS))
         relationships = pd.read_parquet(
             directory / kwargs.get("relationships", _defaults.PARQUET_FILE_NAME__RELATIONSHIPS)
@@ -143,6 +177,18 @@ class GlobalContextLoader(_base.BaseContextLoader):
     _entities: pd.DataFrame
     _community_reports: pd.DataFrame
 
+    @property
+    def nodes(self) -> pd.DataFrame:
+        return self._nodes
+
+    @property
+    def entities(self) -> pd.DataFrame:
+        return self._entities
+
+    @property
+    def community_reports(self) -> pd.DataFrame:
+        return self._community_reports
+
     @classmethod
     @typing_extensions.override
     def from_parquet_directory(
@@ -168,6 +214,17 @@ class GlobalContextLoader(_base.BaseContextLoader):
             nodes=nodes,
             entities=entities,
             community_reports=community_reports,
+        )
+
+    @classmethod
+    def from_local_context_loader(
+        cls,
+        local_context_loader: LocalContextLoader,
+    ) -> GlobalContextLoader:
+        return cls(
+            nodes=local_context_loader.nodes,
+            entities=local_context_loader.entities,
+            community_reports=local_context_loader.community_reports,
         )
 
     def __init__(

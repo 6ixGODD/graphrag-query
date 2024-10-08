@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import os
 import pathlib
+import types
 import typing
 
 import tiktoken
@@ -26,7 +27,8 @@ __all__ = [
 
 
 class GraphRAGClient(
-    _base_client.BaseClient[typing.Union[_types.Response_T, _types.StreamResponse_T]]
+    _base_client.BaseClient[typing.Union[_types.Response_T, _types.StreamResponse_T]],
+    _base_client.ContextManager,
 ):
     _config: _cfg.GraphRAGConfig
     _chat_llm: _search.ChatLLM
@@ -192,9 +194,24 @@ class GraphRAGClient(
         self._local_search_engine.close()
         self._global_search_engine.close()
 
+    @typing_extensions.override
+    def __enter__(self) -> typing.Self:
+        return self
+
+    @typing_extensions.override
+    def __exit__(
+        self,
+        exc_type: typing.Optional[typing.Type[BaseException]],
+        exc_value: typing.Optional[BaseException],
+        traceback: typing.Optional[types.TracebackType],
+    ) -> typing.Literal[False]:
+        self.close()
+        return False
+
 
 class AsyncGraphRAGClient(
-    _base_client.BaseClient[typing.Awaitable[typing.Union[_types.Response_T, _types.AsyncStreamResponse_T]]]
+    _base_client.BaseClient[typing.Awaitable[typing.Union[_types.Response_T, _types.AsyncStreamResponse_T]]],
+    _base_client.AsyncContextManager,
 ):
     _config: _cfg.GraphRAGConfig
     _chat_llm: _search.AsyncChatLLM
@@ -272,13 +289,6 @@ class AsyncGraphRAGClient(
         )
 
         if self._logger:
-            self._logger.info(f'Initializing the GlobalContextLoader with directory: {self._config.context.directory}')
-        self._global_context_loader = _search.GlobalContextLoader.from_parquet_directory(
-            self._config.context.directory,
-            **(self._config.context.kwargs or {}),
-        )
-
-        if self._logger:
             self._logger.info('Initializing the LocalSearchEngine')
         self._local_search_engine = _search.AsyncLocalSearchEngine(
             chat_llm=self._chat_llm,
@@ -299,7 +309,9 @@ class AsyncGraphRAGClient(
         self._global_search_engine = _search.AsyncGlobalSearchEngine(
             chat_llm=self._chat_llm,
             embedding=self._embedding,
-            context_loader=self._global_context_loader,
+            context_builder=_search.GlobalContextBuilder.from_local_context_builder(
+                self._local_search_engine.context_builder
+            ),
             map_sys_prompt=self._config.global_search.map_sys_prompt,
             reduce_sys_prompt=self._config.global_search.reduce_sys_prompt,
             allow_general_knowledge=self._config.global_search.allow_general_knowledge,
@@ -360,3 +372,17 @@ class AsyncGraphRAGClient(
     async def close(self) -> None:
         await self._local_search_engine.aclose()
         await self._global_search_engine.aclose()
+
+    @typing_extensions.override
+    async def __aenter__(self) -> typing.Self:
+        return self
+
+    @typing_extensions.override
+    async def __aexit__(
+        self,
+        exc_type: typing.Optional[typing.Type[BaseException]],
+        exc_value: typing.Optional[BaseException],
+        traceback: typing.Optional[types.TracebackType],
+    ) -> typing.Literal[False]:
+        await self.close()
+        return False

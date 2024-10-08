@@ -11,14 +11,6 @@ import pandas as pd
 import tiktoken
 import typing_extensions
 
-from .... import (
-    _utils,
-    _vector_stores,
-)
-from ... import (
-    _llm,
-    _model,
-)
 from .. import _types
 from .._builders import (
     _community_context,
@@ -27,9 +19,17 @@ from .._builders import (
     _local_context,
     _source_context,
 )
+from ... import (
+    _llm,
+    _model,
+)
 from ..._input._retrieval import (
     _community_reports,
     _text_units,
+)
+from .... import (
+    _utils,
+    _vector_stores,
 )
 
 
@@ -43,6 +43,35 @@ class BaseContextBuilder(abc.ABC):
 
 
 class GlobalContextBuilder(BaseContextBuilder):
+    _community_reports: typing.List[_model.CommunityReport]
+    _entities: typing.Optional[typing.List[_model.Entity]]
+    _token_encoder: typing.Optional[tiktoken.Encoding]
+    _random_state: int
+
+    @classmethod
+    def from_local_context_builder(
+        cls,
+        local_context_builder: LocalContextBuilder,
+        random_state: int = 42,
+    ) -> GlobalContextBuilder:
+        return cls(
+            community_reports=list(local_context_builder.community_reports.values()),
+            entities=list(local_context_builder.entities.values()),
+            token_encoder=local_context_builder.token_encoder,
+            random_state=random_state,
+        )
+
+    @property
+    def community_reports(self) -> typing.List[_model.CommunityReport]:
+        return self._community_reports
+
+    @property
+    def entities(self) -> typing.Optional[typing.List[_model.Entity]]:
+        return self._entities
+
+    @property
+    def token_encoder(self) -> typing.Optional[tiktoken.Encoding]:
+        return self._token_encoder
 
     def __init__(
         self,
@@ -124,6 +153,39 @@ class GlobalContextBuilder(BaseContextBuilder):
 
 
 class LocalContextBuilder(BaseContextBuilder):
+    _entities: typing.Dict[str, _model.Entity]
+    _community_reports: typing.Dict[str, _model.CommunityReport]
+    _text_units: typing.Dict[str, _model.TextUnit]
+    _relationships: typing.Dict[str, _model.Relationship]
+    _covariates: typing.Dict[str, typing.List[_model.Covariate]]
+    _entity_text_embeddings: _vector_stores.BaseVectorStore
+    _text_embedder: _llm.BaseEmbedding
+    _token_encoder: typing.Optional[tiktoken.Encoding]
+    _embedding_vectorstore_key: str
+
+    @property
+    def entities(self) -> typing.Dict[str, _model.Entity]:
+        return self._entities
+
+    @property
+    def community_reports(self) -> typing.Dict[str, _model.CommunityReport]:
+        return self._community_reports
+
+    @property
+    def text_units(self) -> typing.Dict[str, _model.TextUnit]:
+        return self._text_units
+
+    @property
+    def relationships(self) -> typing.Dict[str, _model.Relationship]:
+        return self._relationships
+
+    @property
+    def covariates(self) -> typing.Dict[str, typing.List[_model.Covariate]]:
+        return self._covariates
+
+    @property
+    def token_encoder(self) -> typing.Optional[tiktoken.Encoding]:
+        return self._token_encoder
 
     def __init__(
         self,
@@ -143,28 +205,28 @@ class LocalContextBuilder(BaseContextBuilder):
         covariates = covariates or {}
         text_units = text_units or []
 
-        self.entities = {
+        self._entities = {
             entity.id: entity for entity in entities
         }
-        self.community_reports = {
+        self._community_reports = {
             community.id: community for community in community_reports
         }
-        self.text_units = {
+        self._text_units = {
             unit.id: unit for unit in text_units
         }
-        self.relationships = {
+        self._relationships = {
             relationship.id: relationship for relationship in relationships
         }
 
-        self.covariates = covariates
-        self.entity_text_embeddings = entity_text_embeddings
-        self.text_embedder = text_embedder
-        self.token_encoder = token_encoder
-        self.embedding_vectorstore_key = embedding_vectorstore_key
+        self._covariates = covariates
+        self._entity_text_embeddings = entity_text_embeddings
+        self._text_embedder = text_embedder
+        self._token_encoder = token_encoder
+        self._embedding_vectorstore_key = embedding_vectorstore_key
 
     def filter_by_entity_keys(self, entity_keys: typing.Union[typing.List[int], typing.List[str]]) -> None:
         """Filter entity text embeddings by entity keys."""
-        self.entity_text_embeddings.filter_by_id(entity_keys)
+        self._entity_text_embeddings.filter_by_id(entity_keys)
 
     @typing_extensions.override
     def build_context(
@@ -214,10 +276,10 @@ class LocalContextBuilder(BaseContextBuilder):
 
         selected_entities = _entity_extraction.map_query_to_entities(
             query=query,
-            text_embedding_vectorstore=self.entity_text_embeddings,
-            text_embedder=self.text_embedder,
-            all_entities=list(self.entities.values()),
-            embedding_vectorstore_key=self.embedding_vectorstore_key,
+            text_embedding_vectorstore=self._entity_text_embeddings,
+            text_embedder=self._text_embedder,
+            all_entities=list(self._entities.values()),
+            embedding_vectorstore_key=self._embedding_vectorstore_key,
             include_entity_names=include_entity_names,
             exclude_entity_names=exclude_entity_names,
             k=top_k_mapped_entities,
@@ -288,7 +350,7 @@ class LocalContextBuilder(BaseContextBuilder):
         context_name: str = "Reports",
     ) -> _types.SingleContext_T:
         """Add community data to the context window until it hits the max_tokens limit."""
-        if len(selected_entities) == 0 or len(self.community_reports) == 0:
+        if len(selected_entities) == 0 or len(self._community_reports) == 0:
             return "", {context_name.lower(): pd.DataFrame()}
 
         community_matches: typing.Dict[str, int] = {}
@@ -300,8 +362,8 @@ class LocalContextBuilder(BaseContextBuilder):
 
         # sort communities by number of matched entities and rank
         selected_communities = [
-            self.community_reports[community_id]
-            for community_id in community_matches if community_id in self.community_reports
+            self._community_reports[community_id]
+            for community_id in community_matches if community_id in self._community_reports
         ]
         for community in selected_communities:
             if community.attributes is None:
@@ -316,7 +378,7 @@ class LocalContextBuilder(BaseContextBuilder):
 
         context_text, context_data = _community_context.build_community_context(
             community_reports=selected_communities,
-            token_encoder=self.token_encoder,
+            token_encoder=self._token_encoder,
             use_community_summary=use_community_summary,
             column_delimiter=column_delimiter,
             shuffle_data=False,
@@ -332,7 +394,7 @@ class LocalContextBuilder(BaseContextBuilder):
         if return_candidate_context:
             candidate_context_data = _community_reports.get_candidate_communities(
                 selected_entities=selected_entities,
-                community_reports=list(self.community_reports.values()),
+                community_reports=list(self._community_reports.values()),
                 use_community_summary=use_community_summary,
                 include_community_rank=include_community_rank,
             )
@@ -363,7 +425,7 @@ class LocalContextBuilder(BaseContextBuilder):
         context_name: str = "Sources",
     ) -> _types.SingleContext_T:
         """Rank matching text units and add them to the context window until it hits the max_tokens limit."""
-        if not selected_entities or not self.text_units:
+        if not selected_entities or not self._text_units:
             return "", {context_name.lower(): pd.DataFrame()}
 
         selected_text_units = []
@@ -371,11 +433,11 @@ class LocalContextBuilder(BaseContextBuilder):
 
         for index, entity in enumerate(selected_entities):
             for text_id in entity.text_unit_ids or []:
-                if text_id not in text_unit_ids_set and text_id in self.text_units:
+                if text_id not in text_unit_ids_set and text_id in self._text_units:
                     text_unit_ids_set.add(text_id)
-                    selected_unit = self.text_units[text_id]
+                    selected_unit = self._text_units[text_id]
                     num_relationships = _source_context.count_relationships(
-                        selected_unit, entity, self.relationships
+                        selected_unit, entity, self._relationships
                     )
                     if selected_unit.attributes is None:
                         selected_unit.attributes = {}
@@ -395,7 +457,7 @@ class LocalContextBuilder(BaseContextBuilder):
 
         context_text, context_data = _source_context.build_text_unit_context(
             text_units=selected_text_units,
-            token_encoder=self.token_encoder,
+            token_encoder=self._token_encoder,
             max_tokens=max_tokens,
             shuffle_data=False,
             context_name=context_name,
@@ -405,7 +467,7 @@ class LocalContextBuilder(BaseContextBuilder):
         if return_candidate_context:
             candidate_context_data = _text_units.get_candidate_text_units(
                 selected_entities=selected_entities,
-                text_units=list(self.text_units.values()),
+                text_units=list(self._text_units.values()),
             )
             context_key = context_name.lower()
             if context_key not in context_data:
@@ -441,14 +503,14 @@ class LocalContextBuilder(BaseContextBuilder):
         # build entity context
         entity_context, entity_context_data = _local_context.build_entity_context(
             selected_entities=selected_entities,
-            token_encoder=self.token_encoder,
+            token_encoder=self._token_encoder,
             max_tokens=max_tokens,
             column_delimiter=column_delimiter,
             include_entity_rank=include_entity_rank,
             rank_description=rank_description,
             context_name="Entities",
         )
-        entity_tokens = _utils.num_tokens(entity_context, self.token_encoder)
+        entity_tokens = _utils.num_tokens(entity_context, self._token_encoder)
 
         # build relationship-covariate context
         added_entities = []
@@ -467,8 +529,8 @@ class LocalContextBuilder(BaseContextBuilder):
                 relationship_context_data,
             ) = _local_context.build_relationship_context(
                 selected_entities=added_entities,
-                relationships=list(self.relationships.values()),
-                token_encoder=self.token_encoder,
+                relationships=list(self._relationships.values()),
+                token_encoder=self._token_encoder,
                 max_tokens=max_tokens,
                 column_delimiter=column_delimiter,
                 top_k_relationships=top_k_relationships,
@@ -478,19 +540,19 @@ class LocalContextBuilder(BaseContextBuilder):
             )
             current_context.append(relationship_context)
             current_context_data["relationships"] = relationship_context_data
-            total_tokens = entity_tokens + _utils.num_tokens(relationship_context, self.token_encoder)
+            total_tokens = entity_tokens + _utils.num_tokens(relationship_context, self._token_encoder)
 
             # build covariate context
-            for covariate in self.covariates:
+            for covariate in self._covariates:
                 covariate_context, covariate_context_data = _local_context.build_covariates_context(
                     selected_entities=added_entities,
-                    covariates=self.covariates[covariate],
-                    token_encoder=self.token_encoder,
+                    covariates=self._covariates[covariate],
+                    token_encoder=self._token_encoder,
                     max_tokens=max_tokens,
                     column_delimiter=column_delimiter,
                     context_name=covariate,
                 )
-                total_tokens += _utils.num_tokens(covariate_context, self.token_encoder)
+                total_tokens += _utils.num_tokens(covariate_context, self._token_encoder)
                 current_context.append(covariate_context)
                 current_context_data[covariate.lower()] = covariate_context_data
 
@@ -511,9 +573,9 @@ class LocalContextBuilder(BaseContextBuilder):
             # and add a tag to indicate which records were included in the context window
             candidate_context_data = _local_context.get_candidate_context(
                 selected_entities=selected_entities,
-                entities=list(self.entities.values()),
-                relationships=list(self.relationships.values()),
-                covariates=self.covariates,
+                entities=list(self._entities.values()),
+                relationships=list(self._relationships.values()),
+                covariates=self._covariates,
                 include_entity_rank=include_entity_rank,
                 entity_rank_description=rank_description,
                 include_relationship_weight=include_relationship_weight,

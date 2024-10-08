@@ -6,10 +6,12 @@ from __future__ import annotations
 import os
 import pathlib
 import typing
-import warnings as _warnings
+import warnings
 
 import pydantic
 import pydantic_settings
+
+from . import errors as _errors
 
 __all__ = [
     'ChatLLMConfig',
@@ -30,22 +32,24 @@ class ChatLLMConfig(pydantic.BaseModel):
     base_url: typing.Annotated[
         typing.Optional[str],
         pydantic.Field(
-            ...,
-            env="BASE_URL",
-            pattern=r"https?://([a-zA-Z0-9\-.]+\.[a-zA-Z]{2,})(:[0-9]{1,5})?(/\s*)?"
+            ..., env="BASE_URL", pattern=r"https?://([a-zA-Z0-9\-.]+\.[a-zA-Z]{2,})(:[0-9]{1,5})?(/\s*)?"
         )
     ] = None
     organization: typing.Annotated[
-        typing.Optional[str], pydantic.Field(..., env="ORGANIZATION")
+        typing.Optional[str],
+        pydantic.Field(..., env="ORGANIZATION")
     ] = None
     timeout: typing.Annotated[
-        typing.Optional[float], pydantic.Field(..., env="TIMEOUT", gt=0, lt=60)
+        typing.Optional[float],
+        pydantic.Field(..., env="TIMEOUT", gt=0, lt=60)
     ] = None
     max_retries: typing.Annotated[
-        typing.Optional[int], pydantic.Field(..., env="MAX_RETRIES", ge=0, le=10)
+        typing.Optional[int],
+        pydantic.Field(..., env="MAX_RETRIES", ge=0, le=10)
     ] = None
     kwargs: typing.Annotated[
-        typing.Optional[typing.Dict[str, typing.Any]], pydantic.Field(..., env="KWARGS")
+        typing.Optional[typing.Dict[str, typing.Any]],
+        pydantic.Field(..., env="KWARGS")
     ] = None
 
     @pydantic.field_serializer('api_key')
@@ -60,28 +64,32 @@ class EmbeddingConfig(pydantic.BaseModel):
     base_url: typing.Annotated[
         typing.Optional[str],
         pydantic.Field(
-            ...,
-            env="BASE_URL",
-            pattern=r"https?://([a-zA-Z0-9\-.]+\.[a-zA-Z]{2,})(:[0-9]{1,5})?(/\s*)?"
+            ..., env="BASE_URL", pattern=r"https?://([a-zA-Z0-9\-.]+\.[a-zA-Z]{2,})(:[0-9]{1,5})?(/\s*)?"
         )
     ] = None
     organization: typing.Annotated[
-        typing.Optional[str], pydantic.Field(..., env="ORGANIZATION")
+        typing.Optional[str],
+        pydantic.Field(..., env="ORGANIZATION")
     ] = None
     timeout: typing.Annotated[
-        typing.Optional[float], pydantic.Field(..., env="TIMEOUT", gt=0, lt=60)
+        typing.Optional[float],
+        pydantic.Field(..., env="TIMEOUT", gt=0, lt=60)
     ] = None
     max_retries: typing.Annotated[
-        typing.Optional[int], pydantic.Field(..., env="MAX_RETRIES", ge=0, le=10)
+        typing.Optional[int],
+        pydantic.Field(..., env="MAX_RETRIES", ge=0, le=10)
     ] = None
     max_tokens: typing.Annotated[
-        typing.Optional[int], pydantic.Field(..., env="MAX_TOKENS", ge=1)
+        typing.Optional[int],
+        pydantic.Field(..., env="MAX_TOKENS", ge=1)
     ] = None
     token_encoder: typing.Annotated[
-        typing.Optional[str], pydantic.Field(..., env="TOKEN_ENCODER", pattern=r"^[a-zA-Z0-9_]+$")
+        typing.Optional[str],
+        pydantic.Field(..., env="TOKEN_ENCODER", pattern=r"^[a-zA-Z0-9_]+$")
     ] = None
     kwargs: typing.Annotated[
-        typing.Optional[typing.Dict[str, typing.Any]], pydantic.Field(..., env="KWARGS")
+        typing.Optional[typing.Dict[str, typing.Any]],
+        pydantic.Field(..., env="KWARGS")
     ] = None
 
     @pydantic.field_serializer('api_key')
@@ -97,13 +105,16 @@ class LoggingConfig(pydantic.BaseModel):
         pydantic.Field(..., env="LEVEL", pattern=r"^(DEBUG|INFO|WARNING|ERROR|CRITICAL)$")
     ] = None
     format: typing.Annotated[
-        typing.Optional[str], pydantic.Field(..., env="FORMAT", min_length=1)
+        typing.Optional[str],
+        pydantic.Field(..., env="FORMAT", min_length=1)
     ] = None
     out_file: typing.Annotated[
-        typing.Optional[str], pydantic.Field(..., env="OUT_FILE", min_length=1)
+        typing.Optional[str],
+        pydantic.Field(..., env="OUT_FILE", min_length=1)
     ] = None
     err_file: typing.Annotated[
-        typing.Optional[str], pydantic.Field(..., env="ERR_FILE", min_length=1)
+        typing.Optional[str],
+        pydantic.Field(..., env="ERR_FILE", min_length=1)
     ] = None
     rotation: typing.Annotated[
         typing.Optional[str],
@@ -114,10 +125,12 @@ class LoggingConfig(pydantic.BaseModel):
         pydantic.Field(..., env="RETENTION", pattern=r"^\d+ (second|minute|hour|day|week|month|year)s?$")
     ] = None
     serialize: typing.Annotated[
-        typing.Optional[bool], pydantic.Field(..., env="SERIALIZE")
+        typing.Optional[bool],
+        pydantic.Field(..., env="SERIALIZE")
     ] = None
     kwargs: typing.Annotated[
-        typing.Optional[typing.Dict[str, typing.Any]], pydantic.Field(..., env="KWARGS")
+        typing.Optional[typing.Dict[str, typing.Any]],
+        pydantic.Field(..., env="KWARGS")
     ] = None
 
 
@@ -126,29 +139,35 @@ class ContextConfig(pydantic.BaseModel):
 
     # Optional fields
     kwargs: typing.Annotated[
-        typing.Optional[typing.Dict[str, typing.Any]], pydantic.Field(..., env="KWARGS")
+        typing.Optional[typing.Dict[str, typing.Any]],
+        pydantic.Field(..., env="KWARGS")
     ] = None
 
 
 class LocalSearchConfig(pydantic.BaseModel):
     sys_prompt: typing.Annotated[
-        typing.Optional[str], pydantic.Field(..., env="SYS_PROMPT", min_length=1, repr=False)
+        typing.Optional[str],
+        pydantic.Field(..., env="SYS_PROMPT", min_length=1, repr=False)
     ] = None
     community_level: typing.Annotated[
-        typing.Optional[int], pydantic.Field(..., env="COMMUNITY_LEVEL", ge=0)
+        typing.Optional[int],
+        pydantic.Field(..., env="COMMUNITY_LEVEL", ge=0)
     ] = None
     store_coll_name: typing.Annotated[
-        typing.Optional[str], pydantic.Field(..., env="STORE_COLL_NAME", min_length=1)
+        typing.Optional[str],
+        pydantic.Field(..., env="STORE_COLL_NAME", min_length=1)
     ] = None
     store_uri: typing.Annotated[
         typing.Optional[str],
         pydantic.Field(..., env="STORE_URI", min_length=1)
     ] = None
     encoding_model: typing.Annotated[
-        typing.Optional[str], pydantic.Field(..., env="ENCODING_MODEL", min_length=1)
+        typing.Optional[str],
+        pydantic.Field(..., env="ENCODING_MODEL", min_length=1)
     ] = None
     kwargs: typing.Annotated[
-        typing.Optional[typing.Dict[str, typing.Any]], pydantic.Field(..., env="KWARGS")
+        typing.Optional[typing.Dict[str, typing.Any]],
+        pydantic.Field(..., env="KWARGS")
     ] = None
 
     @pydantic.field_serializer('sys_prompt')
@@ -161,14 +180,16 @@ class LocalSearchConfig(pydantic.BaseModel):
 
 class GlobalSearchConfig(pydantic.BaseModel):
     map_sys_prompt: typing.Annotated[
-        typing.Optional[str], pydantic.Field(..., env="MAP_SYS_PROMPT", min_length=1, repr=False)
+        typing.Optional[str],
+        pydantic.Field(..., env="MAP_SYS_PROMPT", min_length=1, repr=False)
     ] = None
     reduce_sys_prompt: typing.Annotated[
         typing.Optional[str],
         pydantic.Field(..., env="REDUCE_SYS_PROMPT", min_length=1, repr=False)
     ] = None
     community_level: typing.Annotated[
-        typing.Optional[int], pydantic.Field(..., env="COMMUNITY_LEVEL", ge=0)
+        typing.Optional[int],
+        pydantic.Field(..., env="COMMUNITY_LEVEL", ge=0)
     ] = None
     allow_general_knowledge: typing.Annotated[
         typing.Optional[bool],
@@ -179,19 +200,24 @@ class GlobalSearchConfig(pydantic.BaseModel):
         pydantic.Field(..., env="GENERAL_KNOWLEDGE_SYS_PROMPT", min_length=1, repr=False)
     ] = None
     no_data_answer: typing.Annotated[
-        typing.Optional[str], pydantic.Field(..., env="NO_DATA_ANSWER", min_length=1)
+        typing.Optional[str],
+        pydantic.Field(..., env="NO_DATA_ANSWER", min_length=1)
     ] = None
     json_mode: typing.Annotated[
-        typing.Optional[bool], pydantic.Field(..., env="JSON_MODE")
+        typing.Optional[bool],
+        pydantic.Field(..., env="JSON_MODE")
     ] = None
     max_data_tokens: typing.Annotated[
-        typing.Optional[int], pydantic.Field(..., env="MAX_DATA_TOKENS", ge=1)
+        typing.Optional[int],
+        pydantic.Field(..., env="MAX_DATA_TOKENS", ge=1)
     ] = None
     encoding_model: typing.Annotated[
-        typing.Optional[str], pydantic.Field(..., env="ENCODING_MODEL", min_length=1)
+        typing.Optional[str],
+        pydantic.Field(..., env="ENCODING_MODEL", min_length=1)
     ] = None
     kwargs: typing.Annotated[
-        typing.Optional[typing.Dict[str, typing.Any]], pydantic.Field(..., env="KWARGS")
+        typing.Optional[typing.Dict[str, typing.Any]],
+        pydantic.Field(..., env="KWARGS")
     ] = None
 
     @pydantic.field_serializer('map_sys_prompt', 'reduce_sys_prompt', 'general_knowledge_sys_prompt')
@@ -253,9 +279,9 @@ class GraphRAGConfig(pydantic_settings.BaseSettings):
         for field in self.__fields__.keys():
             if (field not in kwargs or not isinstance(kwargs[field], dict)
                     and not isinstance(kwargs[field], pydantic.BaseModel)):
-                _warnings.warn(
+                warnings.warn(
                     f"Missing or invalid field: {field}, initializing to empty dict",
-                    RuntimeWarning
+                    _errors.GraphRAGWarning,
                 )
                 kwargs[field] = {}
         super().__init__(**kwargs)

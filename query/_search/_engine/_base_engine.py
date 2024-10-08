@@ -26,6 +26,11 @@ class QueryEngine(abc.ABC):
     _context_builder: _context.BaseContextBuilder
     _logger: typing.Optional[Logger]
 
+    @property
+    @abc.abstractmethod
+    def context_builder(self) -> _context.BaseContextBuilder:
+        ...
+
     def __init__(
         self,
         *,
@@ -47,7 +52,7 @@ class QueryEngine(abc.ABC):
         conversation_history: _types.ConversationHistory_T = None,
         verbose: bool = True,
         stream: bool = False,
-        **kwargs: typing.Any,
+        **kwargs: typing.Dict[str, typing.Any],
     ) -> typing.Union[_types.SearchResult_T, _types.StreamSearchResult_T]:
         ...
 
@@ -193,6 +198,11 @@ class AsyncQueryEngine(abc.ABC):
     _embedding: _llm.BaseEmbedding
     _context_builder: _context.BaseContextBuilder
     _logger: typing.Optional[Logger]
+
+    @property
+    @abc.abstractmethod
+    def context_builder(self) -> _context.BaseContextBuilder:
+        ...
 
     def __init__(
         self,

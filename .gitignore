@@ -3,9 +3,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# C extensions
-*.so
-
 # Distribution / packaging
 .Python
 build/
@@ -25,12 +22,6 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
 
 # Installer logs
 pip-log.txt
@@ -107,20 +98,15 @@ poetry.toml
 # LSP config files
 pyrightconfig.json
 
-# Model weight files
-weights/
-*.pt
-*.pth
-*.torchscript
-*.onnx
-*.h5
-*.hdf5
-*.ckpt
-*.ckpt.*
-*.ckpt-*.data-*
-*.ckpt-*.index
-*.ckpt-*.meta
-*.ckpt-*.data-*.pb
-*.ckpt-*.data-*.pbtxt
-*.ckpt-*.data-*.pbtxt.*
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+# .mypy_cache is not ignored because it can cause errors with mypy
+# if you try to type check a Python project that uses mypy_cache
+# as a package namespace.
+
+# cProfile
+*.prof
+
 

@@ -5,8 +5,8 @@ from __future__ import annotations
 
 import typing
 
-from ._search._llm import _types as _llm_types
 from ._search import _types
+from ._search._llm import _types as _llm_types
 
 MessageParam_T: typing.TypeAlias = _llm_types.MessageParam_T
 

@@ -7,9 +7,8 @@ import abc
 import json
 import os
 import pathlib
+import types
 import typing
-
-import typing_extensions
 
 from . import (
     _config as _cfg,  # alias for _config attribute of Client class
@@ -18,6 +17,34 @@ from . import (
 )
 
 _Response_T = typing.TypeVar('_Response_T')
+
+
+class ContextManager(abc.ABC):
+
+    @abc.abstractmethod
+    def __enter__(self) -> typing.Self: ...
+
+    @abc.abstractmethod
+    def __exit__(
+        self,
+        exc_type: typing.Optional[typing.Type[BaseException]],
+        exc_value: typing.Optional[BaseException],
+        traceback: typing.Optional[types.TracebackType],
+    ) -> typing.Literal[False]: ...
+
+
+class AsyncContextManager(abc.ABC):
+
+    @abc.abstractmethod
+    async def __aenter__(self) -> typing.Self: ...
+
+    @abc.abstractmethod
+    async def __aexit__(
+        self,
+        exc_type: typing.Optional[typing.Type[BaseException]],
+        exc_value: typing.Optional[BaseException],
+        traceback: typing.Optional[types.TracebackType],
+    ) -> typing.Literal[False]: ...
 
 
 class BaseClient(abc.ABC, typing.Generic[_Response_T]):
@@ -69,7 +96,6 @@ class BaseClient(abc.ABC, typing.Generic[_Response_T]):
     @abc.abstractmethod
     def close(self) -> typing.Union[None, typing.Awaitable[None]]: ...
 
-    @typing_extensions.override
     def __str__(self) -> str:
         return (
             f"{self.__class__.__name__}("
@@ -77,6 +103,5 @@ class BaseClient(abc.ABC, typing.Generic[_Response_T]):
             f")"
         )
 
-    @typing_extensions.override
     def __repr__(self) -> str:
         return self.__str__()

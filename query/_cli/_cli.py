@@ -123,7 +123,7 @@ def _parse_args() -> _Args:
 
 
 def main() -> int:
-    warnings.filterwarnings("ignore", category=RuntimeWarning)
+    warnings.filterwarnings("ignore", category=_errors.GraphRAGWarning)
     try:
         _main()
     except _errors.CLIError as err:

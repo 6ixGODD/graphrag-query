@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import asyncio
 import collections
-import gc
 import time
 import typing
 import warnings
@@ -20,7 +19,10 @@ from .. import (
     _llm,
     _types,
 )
-from ... import _utils
+from ... import (
+    _utils,
+    errors as _errors,
+)
 
 
 class GlobalSearchEngine(_base_engine.QueryEngine):
@@ -37,12 +39,19 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
     _json_mode: bool
     _data_max_tokens: int
 
+    @typing_extensions.override
+    @property
+    def context_builder(self) -> _context.GlobalContextBuilder:
+        return self._context_builder
+
     def __init__(
         self,
         *,
         chat_llm: _llm.BaseChatLLM,
         embedding: _llm.BaseEmbedding,
-        context_loader: _context.GlobalContextLoader,
+
+        context_loader: typing.Optional[_context.GlobalContextLoader] = None,
+        context_builder: typing.Optional[_context.GlobalContextBuilder] = None,
 
         community_level: typing.Optional[int] = None,
         map_sys_prompt: typing.Optional[str] = None,
@@ -59,11 +68,15 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
     ) -> None:
         if logger:
             logger.debug(f"Creating GlobalSearchEngine with context_loader: {context_loader}")
-        context_builder = context_loader.to_context_builder(
-            community_level=community_level or _defaults.DEFAULT__GLOBAL_SEARCH__COMMUNITY_LEVEL,
-            encoding_model=encoding_model or _defaults.DEFAULT__ENCODING_MODEL,
-            **kwargs,
-        )
+        if not context_builder and not context_loader:
+            raise ValueError("Either context_builder or context_loader must be provided")
+
+        if not context_builder:
+            context_builder = context_loader.to_context_builder(
+                community_level=community_level or _defaults.DEFAULT__GLOBAL_SEARCH__COMMUNITY_LEVEL,
+                encoding_model=encoding_model or _defaults.DEFAULT__ENCODING_MODEL,
+                **kwargs,
+            )
 
         if logger:
             logger.debug(f"Created GlobalSearchEngine with context_builder: {context_builder}")
@@ -77,12 +90,16 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
         self._token_encoder = tiktoken.get_encoding(encoding_model or _defaults.DEFAULT__ENCODING_MODEL)
         self._map_sys_prompt = map_sys_prompt or _defaults.GLOBAL_SEARCH__MAP__SYS_PROMPT
         if '{context_data}' not in self._map_sys_prompt:
-            warnings.warn('Global Search\'s Map System Prompt does not contain "{context_data}"', RuntimeWarning)
+            warnings.warn(
+                'Global Search\'s Map System Prompt does not contain "{context_data}"', _errors.GraphRAGWarning
+            )
             if self._logger:
                 self._logger.warning('Global Search\'s Map System Prompt does not contain "{context_data}"')
         self._reduce_sys_prompt = reduce_sys_prompt or _defaults.GLOBAL_SEARCH__REDUCE__SYS_PROMPT
         if '{report_data}' not in self._reduce_sys_prompt:
-            warnings.warn('Global Search\'s Reduce System Prompt does not contain "{report_data}"', RuntimeWarning)
+            warnings.warn(
+                'Global Search\'s Reduce System Prompt does not contain "{report_data}"', _errors.GraphRAGWarning
+            )
             if self._logger:
                 self._logger.warning('Global Search\'s Reduce System Prompt does not contain "{report_data}"')
         self._allow_general_knowledge = allow_general_knowledge if allow_general_knowledge is not None else True
@@ -100,7 +117,10 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
         conversation_history: _types.ConversationHistory_T = None,
         verbose: bool = False,
         stream: bool = False,
-        **kwargs: typing.Any,
+        map_sys_prompt: typing.Optional[str] = None,
+        reduce_sys_prompt: typing.Optional[str] = None,
+        general_knowledge_sys_prompt: typing.Optional[str] = None,
+        **kwargs: typing.Dict[str, typing.Any],
     ) -> typing.Union[_types.SearchResult_T, _types.StreamSearchResult_T]:
         created = time.time()
         if self._logger:
@@ -116,21 +136,41 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
             **kwargs,
         )
         # TODO: Parallelize the map phase
-        map_result = [self._map(query, context, verbose, **kwargs) for context in context_chunks]
-        return self._reduce(map_result, query, verbose, stream, **kwargs)
+        map_result = [self._map(
+            query=query,
+            context=context,
+            verbose=verbose,
+            sys_prompt=map_sys_prompt,
+            **kwargs
+        ) for context in context_chunks]
+        return self._reduce(
+            map_results=map_result,
+            query=query,
+            verbose=verbose,
+            stream=stream,
+            reduce_sys_prompt=reduce_sys_prompt,
+            general_knowledge_sys_prompt=general_knowledge_sys_prompt,
+            **kwargs
+        )
 
     def _map(
         self,
         query: str,
         context: str,
         verbose: bool,
+        sys_prompt: typing.Optional[str] = None,
         **kwargs: typing.Any
     ) -> _types.SearchResult_T:
         created = time.time()
         if self._logger:
             self._logger.info(f"Starting map for query: {query} at {created}")
 
-        prompt = self._map_sys_prompt.format_map(collections.defaultdict(str, context_data=context, query=query))
+        prompt = (sys_prompt or self._map_sys_prompt).format_map(
+            collections.defaultdict(
+                str, context_data=context,
+                query=query
+            )
+        )
         msg = [{"role": "system", "content": prompt}, {"role": "user", "content": query}]
         if self._logger:
             self._logger.debug(f"Constructed messages: {msg}")
@@ -206,6 +246,8 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
         query: str,
         verbose: bool,
         stream: bool,
+        reduce_sys_prompt: typing.Optional[str] = None,
+        general_knowledge_sys_prompt: typing.Optional[str] = None,
         **kwargs: typing.Any
     ) -> typing.Union[_types.SearchResult_T, _types.StreamSearchResult_T]:
         created = time.time()
@@ -230,7 +272,7 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
         key_points = [kp for kp in key_points if isinstance(kp["score"], (int, float)) and kp["score"] > 0]
 
         if not key_points.__len__() and not self._allow_general_knowledge:
-            warnings.warn("No key points found from the map phase", RuntimeWarning)
+            warnings.warn("No key points found from the map phase", _errors.GraphRAGWarning)
             if self._logger:
                 self._logger.warning("No key points found from the map phase")
             return _types.SearchResult(
@@ -272,14 +314,16 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
             )
             total_tokens += _utils.num_tokens(formatted_response, self._token_encoder)
             if total_tokens > self._data_max_tokens:
-                warnings.warn("Data exceeds maximum token limit", RuntimeWarning)
+                warnings.warn("Data exceeds maximum token limit", _errors.GraphRAGWarning)
                 break
             data.append(formatted_response)
 
         report_data = '\n\n'.join(data)
-        prompt = self._reduce_sys_prompt.format_map(collections.defaultdict(str, report_data=report_data))
+        prompt = (reduce_sys_prompt or self._reduce_sys_prompt).format_map(
+            collections.defaultdict(str, report_data=report_data)
+        )
         if self._allow_general_knowledge:
-            prompt += f'\n{self._general_knowledge_sys_prompt}'
+            prompt += f'\n{general_knowledge_sys_prompt or self._general_knowledge_sys_prompt}'
         msg = [{"role": "system", "content": prompt}, {"role": "user", "content": query}]
 
         if self._logger:
@@ -356,12 +400,19 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
     _data_max_tokens: int
     _semaphore: asyncio.Semaphore
 
+    @typing_extensions.override
+    @property
+    def context_builder(self) -> _context.GlobalContextBuilder:
+        return self._context_builder
+
     def __init__(
         self,
         *,
         chat_llm: _llm.BaseAsyncChatLLM,
         embedding: _llm.BaseEmbedding,
-        context_loader: _context.GlobalContextLoader,
+
+        context_builder: typing.Optional[_context.GlobalContextBuilder] = None,
+        context_loader: typing.Optional[_context.GlobalContextLoader] = None,
 
         community_level: typing.Optional[int] = None,
         map_sys_prompt: typing.Optional[str] = None,
@@ -379,12 +430,15 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
     ) -> None:
         if logger:
             logger.debug(f"Creating AsyncGlobalSearchEngine with context_loader: {context_loader}")
-        context_builder = context_loader.to_context_builder(
-            community_level=community_level or _defaults.DEFAULT__GLOBAL_SEARCH__COMMUNITY_LEVEL,
-            encoding_model=encoding_model or _defaults.DEFAULT__ENCODING_MODEL,
-            **kwargs,
-        )
-        gc.collect()  # Collect garbage to free up memory
+        if not context_builder and not context_loader:
+            raise ValueError("Either context_builder or context_loader must be provided")
+
+        if not context_builder:
+            context_builder = context_loader.to_context_builder(
+                community_level=community_level or _defaults.DEFAULT__GLOBAL_SEARCH__COMMUNITY_LEVEL,
+                encoding_model=encoding_model or _defaults.DEFAULT__ENCODING_MODEL,
+                **kwargs,
+            )
 
         if logger:
             logger.debug(f"Created AsyncGlobalSearchEngine with context_builder: {context_builder}")
@@ -415,6 +469,9 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
         conversation_history: _types.ConversationHistory_T,
         verbose: bool = False,
         stream: bool = False,
+        map_sys_prompt: typing.Optional[str] = None,
+        reduce_sys_prompt: typing.Optional[str] = None,
+        general_knowledge_sys_prompt: typing.Optional[str] = None,
         **kwargs: typing.Any,
     ) -> typing.Union[_types.SearchResult_T, _types.AsyncStreamSearchResult_T]:
         created = time.time()
@@ -431,26 +488,40 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
         )
         map_results = list(
             await asyncio.gather(
-                *[
-                    self._map(query, context, verbose, **kwargs)
-                    for context in context_chunks
-                ]
+                *[self._map(
+                    query=query,
+                    context=context,
+                    verbose=verbose,
+                    map_sys_prompt=map_sys_prompt,
+                    **kwargs
+                ) for context in context_chunks]
             )
         )
-        return await self._reduce(map_results, query, verbose, stream, **kwargs)
+        return await self._reduce(
+            map_results=map_results,
+            query=query,
+            verbose=verbose,
+            stream=stream,
+            reduce_sys_prompt=reduce_sys_prompt,
+            general_knowledge_sys_prompt=general_knowledge_sys_prompt,
+            **kwargs
+        )
 
     async def _map(
         self,
         query: str,
         context: str,
         verbose: bool,
+        sys_prompt: typing.Optional[str] = None,
         **kwargs: typing.Any
     ) -> _types.SearchResult_T:
         created = time.time()
         if self._logger:
             self._logger.info(f"Starting map for query: {query} at {created}")
 
-        prompt = self._map_sys_prompt.format_map(collections.defaultdict(str, context_data=context, query=query))
+        prompt = (sys_prompt or self._map_sys_prompt).format_map(
+            collections.defaultdict(str, context_data=context, query=query)
+        )
         msg = [{"role": "system", "content": prompt}, {"role": "user", "content": query}]
 
         if self._logger:
@@ -528,6 +599,8 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
         query: str,
         verbose: bool,
         stream: bool,
+        reduce_sys_prompt: typing.Optional[str] = None,
+        general_knowledge_sys_prompt: typing.Optional[str] = None,
         **kwargs: typing.Any
     ) -> typing.Union[_types.SearchResult_T, _types.AsyncStreamSearchResult_T]:
         created = time.time()
@@ -552,7 +625,7 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
         key_points = [kp for kp in key_points if isinstance(kp["score"], (int, float)) and kp["score"] > 0]
 
         if not key_points.__len__() and not self._allow_general_knowledge:
-            warnings.warn("No key points found from the map phase", RuntimeWarning)
+            warnings.warn("No key points found from the map phase", _errors.GraphRAGWarning)
             if self._logger:
                 self._logger.warning("No key points found from the map phase")
             return _types.SearchResult(
@@ -594,14 +667,16 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
             )
             total_tokens += _utils.num_tokens(formatted_response, self._token_encoder)
             if total_tokens > self._data_max_tokens:
-                warnings.warn("Data exceeds maximum token limit", RuntimeWarning)
+                warnings.warn("Data exceeds maximum token limit", _errors.GraphRAGWarning)
                 break
             data.append(formatted_response)
 
         report_data = '\n\n'.join(data)
-        prompt = self._reduce_sys_prompt.format_map(collections.defaultdict(str, report_data=report_data))
+        prompt = (reduce_sys_prompt or self._reduce_sys_prompt).format_map(
+            collections.defaultdict(str, report_data=report_data)
+        )
         if self._allow_general_knowledge:
-            prompt += f'\n{self._general_knowledge_sys_prompt}'
+            prompt += f'\n{general_knowledge_sys_prompt or self._general_knowledge_sys_prompt}'
 
         msg = [{"role": "system", "content": prompt}, {"role": "user", "content": query}]
         if self._logger:
