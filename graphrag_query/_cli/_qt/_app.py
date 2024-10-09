@@ -11,7 +11,6 @@ from PyQt6.QtCore import (
 from PyQt6.QtGui import (
     QCloseEvent,
     QColor,
-    QFont,
     QPalette,
 )
 from PyQt6.QtWidgets import (
@@ -37,30 +36,60 @@ QScrollArea {
     background-color: transparent; 
     border: none;
 }
+QScrollBar:vertical {
+    background-color: #2F2F2F;
+    width: 12px;
+    margin: 0px 0px 0px 0px;
+    border-radius: 5px;
+}
+QScrollBar::handle:vertical {
+    background-color: #808080;
+    min-height: 20px;
+    border-radius: 5px;
+}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    border: none;
+    background: none;
+}
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: none;
+}
+QScrollBar:horizontal {
+    background-color: #2F2F2F;
+    height: 12px;
+    margin: 0px 0px 0px 0px;
+    border-radius: 5px;
+}
+QScrollBar::handle:horizontal {
+    background-color: #808080;
+    min-width: 20px;
+    border-radius: 5px;
+}
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+    border: none;
+    background: none;
+}
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+    background: none;
+}
 QTextEdit {
     background-color: #2F2F2F; 
-    color: #FFFFFF;  /* White font color */
+    color: #FFFFFF;
     border: none;
-    border-top-left-radius: 8px;
-    border-bottom-left-radius: 8px;
-    border-bottom-right-radius: 8px;
-    border-top-right-radius: 8px;
+    border-radius: 8px;
 }
 QTextEdit:focus {
-    border: 1px solid #FFFFFF;  /* White border */
+    border: 1px solid #FFFFFF;
 }
 QPushButton {
-    background-color: #808080;  /* Gray background */
-    color: #FFFFFF;  /* White font color */
+    background-color: #808080;
+    color: #FFFFFF;
     border: none;
     padding: 5px;
-    border-top-left-radius: 8px;
-    border-bottom-left-radius: 8px;
-    border-bottom-right-radius: 8px;
-    border-top-right-radius: 8px;
+    border-radius: 8px;
 }
 QPushButton:hover {
-    background-color: #696969;  /* Dark gray hover effect */
+    background-color: #696969;
 }
 """
 
