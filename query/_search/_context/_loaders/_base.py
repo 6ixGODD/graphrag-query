@@ -16,7 +16,7 @@ class BaseContextLoader(abc.ABC):
     @abc.abstractmethod
     def from_parquet_directory(
         cls,
-        directory: typing.Union[os.PathLike[str], pathlib.Path],
+        directory: typing.Union[str, os.PathLike[str], pathlib.Path],
         **kwargs: str
     ) -> typing.Self: ...
 

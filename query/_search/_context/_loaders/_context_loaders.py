@@ -53,8 +53,7 @@ class LocalContextLoader(_base.BaseContextLoader):
     @typing_extensions.override
     def from_parquet_directory(
         cls,
-        directory: typing.Optional[typing.Union[str, os.PathLike[str], pathlib.Path]],
-        global_context_loader: typing.Optional[GlobalContextLoader] = None,
+        directory: typing.Union[str, os.PathLike[str], pathlib.Path],
         **kwargs: str
     ) -> typing.Self:
         if not directory:
@@ -63,16 +62,11 @@ class LocalContextLoader(_base.BaseContextLoader):
         if not directory.exists() or not directory.is_dir():
             raise FileNotFoundError(f"Directory not found: {directory}")
 
-        if global_context_loader:
-            nodes = global_context_loader.nodes
-            entities = global_context_loader.entities
-            community_reports = global_context_loader.community_reports
-        else:
-            nodes = pd.read_parquet(directory / kwargs.get("nodes", _defaults.PARQUET_FILE_NAME__NODES))
-            entities = pd.read_parquet(directory / kwargs.get("entities", _defaults.PARQUET_FILE_NAME__ENTITIES))
-            community_reports = pd.read_parquet(
-                directory / kwargs.get("community_reports", _defaults.PARQUET_FILE_NAME__COMMUNITY_REPORTS)
-            )
+        nodes = pd.read_parquet(directory / kwargs.get("nodes", _defaults.PARQUET_FILE_NAME__NODES))
+        entities = pd.read_parquet(directory / kwargs.get("entities", _defaults.PARQUET_FILE_NAME__ENTITIES))
+        community_reports = pd.read_parquet(
+            directory / kwargs.get("community_reports", _defaults.PARQUET_FILE_NAME__COMMUNITY_REPORTS)
+        )
 
         text_units = pd.read_parquet(directory / kwargs.get("text_units", _defaults.PARQUET_FILE_NAME__TEXT_UNITS))
         relationships = pd.read_parquet(

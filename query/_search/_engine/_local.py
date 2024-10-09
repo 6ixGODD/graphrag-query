@@ -56,7 +56,7 @@ class LocalSearchEngine(_base_engine.QueryEngine):
         if not context_builder and not context_loader:
             raise ValueError("Either context_loader or context_builder must be provided")
 
-        if not context_builder:
+        if context_loader:
             context_builder = context_loader.to_context_builder(
                 embedder=embedding,
                 community_level=community_level or _defaults.DEFAULT__LOCAL_SEARCH__COMMUNITY_LEVEL,
@@ -68,6 +68,7 @@ class LocalSearchEngine(_base_engine.QueryEngine):
 
         if logger:
             logger.debug(f"Created LocalSearchEngine with context_builder: {context_builder}")
+        context_builder = typing.cast(_context.LocalContextBuilder, context_builder)
         super().__init__(
             chat_llm=chat_llm,
             embedding=embedding,
@@ -89,7 +90,7 @@ class LocalSearchEngine(_base_engine.QueryEngine):
         verbose: bool = False,
         stream: bool = False,
         sys_prompt: typing.Optional[str] = None,
-        **kwargs: typing.Dict[str, typing.Any],
+        **kwargs: typing.Any,
     ) -> typing.Union[_types.SearchResult_T, _types.StreamSearchResult_T]:
         created = time.time()
         if self._logger:
@@ -191,7 +192,7 @@ class AsyncLocalSearchEngine(_base_engine.AsyncQueryEngine):
         if context_loader is None and context_builder is None:
             raise ValueError("Either context_loader or context_builder must be provided")
 
-        if not context_builder:
+        if context_loader:
             context_builder = context_loader.to_context_builder(
                 embedder=embedding,
                 community_level=community_level or _defaults.DEFAULT__LOCAL_SEARCH__COMMUNITY_LEVEL,
@@ -203,6 +204,7 @@ class AsyncLocalSearchEngine(_base_engine.AsyncQueryEngine):
 
         if logger:
             logger.debug(f"Created AsyncLocalSearchEngine with context_builder: {context_builder}")
+        context_builder = typing.cast(_context.LocalContextBuilder, context_builder)
         super().__init__(
             chat_llm=chat_llm,
             embedding=embedding,

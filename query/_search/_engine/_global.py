@@ -71,7 +71,7 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
         if not context_builder and not context_loader:
             raise ValueError("Either context_builder or context_loader must be provided")
 
-        if not context_builder:
+        if context_loader:
             context_builder = context_loader.to_context_builder(
                 community_level=community_level or _defaults.DEFAULT__GLOBAL_SEARCH__COMMUNITY_LEVEL,
                 encoding_model=encoding_model or _defaults.DEFAULT__ENCODING_MODEL,
@@ -80,7 +80,7 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
 
         if logger:
             logger.debug(f"Created GlobalSearchEngine with context_builder: {context_builder}")
-
+        context_builder = typing.cast(_context.GlobalContextBuilder, context_builder)
         super().__init__(
             chat_llm=chat_llm,
             embedding=embedding,
@@ -120,7 +120,7 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
         map_sys_prompt: typing.Optional[str] = None,
         reduce_sys_prompt: typing.Optional[str] = None,
         general_knowledge_sys_prompt: typing.Optional[str] = None,
-        **kwargs: typing.Dict[str, typing.Any],
+        **kwargs: typing.Any,
     ) -> typing.Union[_types.SearchResult_T, _types.StreamSearchResult_T]:
         created = time.time()
         if self._logger:
@@ -155,6 +155,7 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
 
     def _map(
         self,
+        *,
         query: str,
         context: str,
         verbose: bool,
@@ -166,10 +167,7 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
             self._logger.info(f"Starting map for query: {query} at {created}")
 
         prompt = (sys_prompt or self._map_sys_prompt).format_map(
-            collections.defaultdict(
-                str, context_data=context,
-                query=query
-            )
+            collections.defaultdict(str, context_data=context, query=query)
         )
         msg = [{"role": "system", "content": prompt}, {"role": "user", "content": query}]
         if self._logger:
@@ -242,6 +240,7 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
 
     def _reduce(
         self,
+        *,
         map_results: typing.List[_types.SearchResult_T],
         query: str,
         verbose: bool,
@@ -433,7 +432,7 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
         if not context_builder and not context_loader:
             raise ValueError("Either context_builder or context_loader must be provided")
 
-        if not context_builder:
+        if context_loader:
             context_builder = context_loader.to_context_builder(
                 community_level=community_level or _defaults.DEFAULT__GLOBAL_SEARCH__COMMUNITY_LEVEL,
                 encoding_model=encoding_model or _defaults.DEFAULT__ENCODING_MODEL,
@@ -442,7 +441,7 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
 
         if logger:
             logger.debug(f"Created AsyncGlobalSearchEngine with context_builder: {context_builder}")
-
+        context_builder = typing.cast(_context.GlobalContextBuilder, context_builder)
         super().__init__(
             chat_llm=chat_llm,
             embedding=embedding,
@@ -509,6 +508,7 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
 
     async def _map(
         self,
+        *,
         query: str,
         context: str,
         verbose: bool,
@@ -595,6 +595,7 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
 
     async def _reduce(
         self,
+        *,
         map_results: typing.List[_types.SearchResult_T],
         query: str,
         verbose: bool,

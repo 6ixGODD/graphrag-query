@@ -52,7 +52,7 @@ class QueryEngine(abc.ABC):
         conversation_history: _types.ConversationHistory_T = None,
         verbose: bool = True,
         stream: bool = False,
-        **kwargs: typing.Dict[str, typing.Any],
+        **kwargs: typing.Any,
     ) -> typing.Union[_types.SearchResult_T, _types.StreamSearchResult_T]:
         ...
 

@@ -9,8 +9,8 @@ import httpx
 import openai
 import typing_extensions
 
-from ... import _utils
 from . import _base_llm, _types
+from ... import _utils, errors as _errors
 
 
 class ChatLLM(_base_llm.BaseChatLLM):
@@ -45,13 +45,15 @@ class ChatLLM(_base_llm.BaseChatLLM):
         stream: bool = False,
         **kwargs: typing.Any
     ) -> typing.Union[_types.ChatResponse_T, _types.SyncChatStreamResponse_T]:
-        response = self._client.chat.completions.create(
-            model=self._model,
-            messages=msg,
-            stream=stream,
-            **_utils.filter_kwargs(self._client.chat.completions.create, kwargs)
-        )
-
+        try:
+            response = self._client.chat.completions.create(
+                model=self._model,
+                messages=msg,
+                stream=stream,
+                **_utils.filter_kwargs(self._client.chat.completions.create, kwargs)
+            )
+        except openai.APIError as e:
+            raise _errors.OpenAIAPIError(e) from e
         return typing.cast(_types.ChatCompletion, response) \
             if not stream else (typing.cast(_types.ChatCompletionChunk, c) for c in response)
 
@@ -102,12 +104,15 @@ class AsyncChatLLM(_base_llm.BaseAsyncChatLLM):
         stream: bool = False,
         **kwargs: typing.Any
     ) -> typing.Union[_types.ChatResponse_T, _types.AsyncChatStreamResponse_T]:
-        response = await self._aclient.chat.completions.create(
-            model=self._model,
-            messages=msg,
-            stream=stream,
-            **_utils.filter_kwargs(self._aclient.chat.completions.create, kwargs)
-        )
+        try:
+            response = await self._aclient.chat.completions.create(
+                model=self._model,
+                messages=msg,
+                stream=stream,
+                **_utils.filter_kwargs(self._aclient.chat.completions.create, kwargs)
+            )
+        except openai.APIError as e:
+            raise _errors.OpenAIAPIError(e) from e
 
         return typing.cast(_types.ChatCompletion, response) if not stream else (
             c async for c in typing.cast(_types.AsyncChatStreamResponse_T, response)

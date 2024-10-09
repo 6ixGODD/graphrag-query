@@ -10,12 +10,11 @@ import openai
 import tiktoken
 import typing_extensions
 
-from ... import _utils
 from . import _base_llm, _types
+from ... import _utils, errors as _errors
 
 
 class Embedding(_base_llm.BaseEmbedding):
-
     def __init__(
         self,
         *,
@@ -48,11 +47,14 @@ class Embedding(_base_llm.BaseEmbedding):
         chunk_embeddings: typing.List[typing.List[float]] = []
         chunk_lens: typing.List[int] = []
         for chunk in _utils.chunk_text(text, self._max_tokens):
-            embedding = self._client.embeddings.create(
-                input=chunk,
-                model=self._model,
-                **_utils.filter_kwargs(self._client.embeddings.create, kwargs)
-            ).data[0].embedding or []
+            try:
+                embedding = self._client.embeddings.create(
+                    input=chunk,
+                    model=self._model,
+                    **_utils.filter_kwargs(self._client.embeddings.create, kwargs)
+                ).data[0].embedding or []
+            except openai.APIError as e:
+                raise _errors.OpenAIAPIError(e) from e
             chunk_embeddings.append(embedding)
             chunk_lens.append(chunk.__len__() or 0)
         return _utils.combine_embeddings(chunk_embeddings, chunk_lens)
@@ -105,11 +107,14 @@ class AsyncEmbedding(_base_llm.BaseAsyncEmbedding):
         chunk_embeddings: typing.List[typing.List[float]] = []
         chunk_lens: typing.List[int] = []
         for chunk in _utils.chunk_text(text, self._max_tokens):
-            embedding = (await self._aclient.embeddings.create(
-                input=chunk,
-                model=self._model,
-                **_utils.filter_kwargs(self._aclient.embeddings.create, kwargs)
-            )).data[0].embedding or []
+            try:
+                embedding = (await self._aclient.embeddings.create(
+                    input=chunk,
+                    model=self._model,
+                    **_utils.filter_kwargs(self._aclient.embeddings.create, kwargs)
+                )).data[0].embedding or []
+            except openai.APIError as e:
+                raise _errors.OpenAIAPIError(e) from e
             chunk_embeddings.append(embedding)
             chunk_lens.append(chunk.__len__() or 0)
         return _utils.combine_embeddings(chunk_embeddings, chunk_lens)

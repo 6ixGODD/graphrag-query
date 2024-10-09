@@ -36,15 +36,41 @@ class ANSIFormatter:
 
 class SaveFormatter(string.Formatter):
     @typing_extensions.override
+    def format(self, __format_string: str, /, *args: typing.Any, **kwargs: typing.Any) -> str:
+        result = ''
+        for literal_text, field_name, format_spec, conversion in self.parse(__format_string):
+            # Append the literal text
+            result += literal_text
+
+            # If there's a field, process it
+            if field_name is not None:
+                try:
+                    # Get the value
+                    obj = self.get_value(field_name, args, kwargs)
+                    # Convert and format the field
+                    obj = self.convert_field(obj, conversion)
+                    formatted = self.format_field(obj, format_spec or '')
+                    result += formatted
+                except (KeyError, IndexError):
+                    # Reconstruct the placeholder and leave it as is
+                    placeholder = '{' + field_name
+                    if conversion:
+                        placeholder += '!' + conversion
+                    if format_spec:
+                        placeholder += ':' + format_spec
+                    placeholder += '}'
+                    result += placeholder
+        return result
+
+    @typing_extensions.override
     def get_value(self, key: typing.Union[int, str], args: typing.Any, kwargs: typing.Any) -> typing.Any:
         if isinstance(key, int):
             if key < len(args):
                 return args[key]
             else:
-                return "<missing>"
-        # Handle keyword arguments
+                raise IndexError(key)
         else:
-            return kwargs.get(key, "<missing>")
+            return kwargs[key]
 
     @typing_extensions.override
     def format_field(self, value: typing.Any, format_spec: str) -> str:
@@ -82,6 +108,6 @@ class CLILogger(_types.Logger):
 
 
 def parse_cli_err(err: _errors.CLIError) -> str:
-    if isinstance(err, _errors.InvalidParameterError):
+    if isinstance(err, _errors.InvalidParameterError) or isinstance(err, _errors.MissingPackageError):
         return err.message
     return "An error occurred. Please try again later."

@@ -130,7 +130,9 @@ class GraphRAGClient(
         self._global_search_engine = _search.GlobalSearchEngine(
             chat_llm=self._chat_llm,
             embedding=self._embedding,
-            context_loader=self._global_context_loader,
+            context_builder=_search.GlobalContextBuilder.from_local_context_builder(
+                self._local_search_engine.context_builder
+            ),
             map_sys_prompt=self._config.global_search.map_sys_prompt,
             reduce_sys_prompt=self._config.global_search.reduce_sys_prompt,
             allow_general_knowledge=self._config.global_search.allow_general_knowledge,

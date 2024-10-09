@@ -3,6 +3,7 @@
 
 import typing
 
+import openai
 import pydantic
 import typing_extensions
 
@@ -50,15 +51,15 @@ class InvalidMessageError(ClientError):
         return f"{self.__class__.__name__}(message={self.message!r})"
 
 
-class InvalidEngineError(ClientError):
+class OpenAIAPIError(ClientError):
     def __init__(
         self,
-        engine: str,
-        message: str = "Invalid engine. Must be either 'local' or 'global'"
+        error: openai.APIError,
+        message: str = "An error occurred while making a request to the OpenAI API",
     ):
-        self.engine = engine
-        self.message = message
-        super().__init__(message)
+        self.message = message + f": {error.message}"
+        self.error = error
+        super().__init__(self.message)
 
     @typing_extensions.override
     def __str__(self):
@@ -66,7 +67,7 @@ class InvalidEngineError(ClientError):
 
     @typing_extensions.override
     def __repr__(self):
-        return f"{self.__class__.__name__}(engine={self.engine!r}, message={self.message!r})"
+        return f"{self.__class__.__name__}(message={self.message!r})"
 
 
 # CLI Errors
@@ -101,3 +102,24 @@ class InvalidParameterError(CLIError):
     @typing_extensions.override
     def __repr__(self):
         return f"{self.__class__.__name__}(params={self.params!r}, message={self.message!r})"
+
+
+class MissingPackageError(CLIError):
+    def __init__(
+        self,
+        packages: typing.List[str],
+        message: str = "The package is required for this operation: \n"
+    ):
+        self.packages = packages
+        self.message = message
+        for package in packages:
+            self.message += f"  - {package}\n"
+        super().__init__(self.message)
+
+    @typing_extensions.override
+    def __str__(self):
+        return self.message
+
+    @typing_extensions.override
+    def __repr__(self):
+        return f"{self.__class__.__name__}(packages={self.packages!r}, message={self.message!r})"

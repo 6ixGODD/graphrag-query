@@ -23,7 +23,10 @@ from .. import (
 
 class _Args(pydantic.BaseModel):
     verbose: bool
-    engine: typing.Annotated[typing.Literal['local', 'global'], pydantic.Field(..., pattern=r"local|global")]
+    engine: typing.Annotated[
+        typing.Literal['local', 'global'],
+        pydantic.Field(..., pattern=r"local|global")
+    ]
     stream: bool
     chat_api_key: str
     chat_base_url: typing.Annotated[
@@ -38,6 +41,10 @@ class _Args(pydantic.BaseModel):
     ]
     embedding_model: str
     context_dir: str
+    mode: typing.Annotated[
+        typing.Literal['console', 'gui'],
+        pydantic.Field(..., pattern=r"console|gui")
+    ]
 
 
 def _parse_args() -> _Args:
@@ -106,6 +113,13 @@ def _parse_args() -> _Args:
         required=True,
         help="directory containing the context data",
     )
+    parser.add_argument(
+        "--mode", "-o",
+        type=str,
+        help="mode to execute the GraphRAG engine",
+        choices=["console", "gui"],
+        default="console",
+    )
 
     parser.add_argument(
         "-V", "--version",
@@ -144,26 +158,44 @@ def _main() -> None:
     except pydantic.ValidationError as err:
         raise _errors.InvalidParameterError.from_pydantic_validation_error(err)
 
-    sys.stdout.write("=== GraphRAG Query CLI ===\n\n")
-    sys.stdout.write("Loading GraphRAG engine...\n\n")
-    sys.stdout.flush()
-    cli = _api.GraphRAGCli(
-        verbose=args.verbose,
-        chat_llm_base_url=args.chat_base_url,
-        chat_llm_api_key=args.chat_api_key,
-        chat_llm_model=args.chat_model,
-        embedding_base_url=args.embedding_base_url,
-        embedding_api_key=args.embedding_api_key,
-        embedding_model=args.embedding_model,
-        context_dir=args.context_dir,
-        engine=args.engine,
-        stream=args.stream,
-    )
-    sys.stdout.write("GraphRAG engine loaded.\n\n")
-    asyncio.run(_chat_loop(cli))
+    cli: typing.Union[_api.AsyncGraphRAGCli, _api.GraphRAGCli]
+    if args.mode == "console":
+        sys.stdout.write("=== GraphRAG Query CLI ===\n\n")
+        sys.stdout.write("Loading GraphRAG engine...\n\n")
+        sys.stdout.flush()
+        cli = _api.AsyncGraphRAGCli(
+            verbose=args.verbose,
+            chat_llm_base_url=args.chat_base_url,
+            chat_llm_api_key=args.chat_api_key,
+            chat_llm_model=args.chat_model,
+            embedding_base_url=args.embedding_base_url,
+            embedding_api_key=args.embedding_api_key,
+            embedding_model=args.embedding_model,
+            context_dir=args.context_dir,
+            engine=args.engine,
+            stream=args.stream,
+        )
+        sys.stdout.write("GraphRAG engine loaded.\n\n")
+
+        asyncio.run(_chat_loop(cli))
+    else:
+        from . import _qt
+        cli = _api.GraphRAGCli(
+            verbose=args.verbose,
+            chat_llm_base_url=args.chat_base_url,
+            chat_llm_api_key=args.chat_api_key,
+            chat_llm_model=args.chat_model,
+            embedding_base_url=args.embedding_base_url,
+            embedding_api_key=args.embedding_api_key,
+            embedding_model=args.embedding_model,
+            context_dir=args.context_dir,
+            engine=args.engine,
+            stream=args.stream,
+        )
+        _qt.main(cli)
 
 
-async def _chat_loop(cli: _api.GraphRAGCli) -> None:
+async def _chat_loop(cli: _api.AsyncGraphRAGCli) -> None:
     async with cli:
         while True:
             user_input = input("You (type 'exit' to quit) >> ")
