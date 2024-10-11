@@ -1,3 +1,4 @@
+import json
 import sys
 import typing
 
@@ -95,9 +96,9 @@ QPushButton:hover {
 
 USER_MESSAGE_STYLE = """
 QLabel {
-    background-color: #808080;  /* Gray background */
+    background-color: #808080;  
     padding: 5px;
-    color: #FFFFFF;  /* White font color */
+    color: #FFFFFF;  
     border-top-left-radius: 8px;
     border-bottom-left-radius: 8px;
     border-bottom-right-radius: 8px;
@@ -118,6 +119,19 @@ AutoResizingTextBrowser {
     color: #FFFFFF;  /* White font color */
     background-color: transparent; 
     border: none;
+}
+"""
+
+COPY_BUTTON_STYLE = """
+QPushButton {
+    background-color: transparent;
+    color: #FFFFFF;
+    border: none;
+    padding: 5px;
+    border-radius: 10px;  
+}
+QPushButton:hover {
+    background-color: #696969;
 }
 """
 
@@ -214,6 +228,17 @@ class ChatWindow(QWidget):
         self.resize(600, 500)
         self.layout_ = QVBoxLayout()
 
+        # Toolbar
+        self.toolbar = QWidget()
+        self.toolbarLayout = QHBoxLayout()
+        self.toolbarLayout.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.copyButton = QPushButton('Copy')
+        self.copyButton.setStyleSheet(COPY_BUTTON_STYLE)
+        self.copyButton.clicked.connect(self.copy_conversation)
+        self.toolbarLayout.addWidget(self.copyButton)
+        self.toolbar.setLayout(self.toolbarLayout)
+        self.layout_.addWidget(self.toolbar)
+
         # Chat area
         self.chatScrollArea = QScrollArea()
         self.chatScrollArea.setWidgetResizable(True)
@@ -251,6 +276,11 @@ class ChatWindow(QWidget):
         self.worker: typing.Optional[ChatWorker] = None
 
         self.setStyleSheet(CHAT_WINDOW_STYLE)
+
+    def copy_conversation(self) -> None:
+        conversation = self.cli.conversation_history()
+        conversation_text = json.dumps(conversation, ensure_ascii=False, indent=4)
+        QApplication.clipboard().setText(conversation_text)
 
     def send_message(self) -> None:
         message = self.inputText.toPlainText().strip()

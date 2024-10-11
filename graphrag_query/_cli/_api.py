@@ -114,6 +114,9 @@ class GraphRAGCli(_base_client.ContextManager):
     def close(self) -> None:
         self._graphrag_client.close()
 
+    def conversation_history(self) -> typing.List[typing.Dict[typing.Literal['role', 'content'], str]]:
+        return list(self._conversation_history)
+
     @typing_extensions.override
     def __enter__(self) -> GraphRAGCli:
         return self
