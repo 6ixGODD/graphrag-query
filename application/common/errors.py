@@ -26,6 +26,40 @@ class BaseAppError(Exception):
         }
 
 
+class ValidationError(BaseAppError):
+    def __init__(
+        self,
+        *,
+        params: typing.List[str],
+        reason: typing.List[str],
+        message: str = "Invalid parameter(s): \n"
+    ) -> None:
+        self.params = params
+        self.reason = reason
+        self.message = message
+        for i in range(len(params)):
+            self.message += f"  - {params[i]}: {reason[i]}\n"
+        super().__init__(self.message, http.HTTPStatus.BAD_REQUEST.value)
+
+    @classmethod
+    def from_pydantic_validation_error(cls, validation_error: pydantic.ValidationError) -> typing.Self:
+        params = []
+        reason = []
+        for error in validation_error.errors():
+            params.append(str(error["loc"][0]))
+            reason.append(error["msg"])
+        return cls(params=params, reason=reason)
+
+    @typing_extensions.override
+    def __str__(self):
+        return self.message
+
+    @typing_extensions.override
+    def __repr__(self):
+        return f"{self.__class__.__name__}(params={self.params!r}, message={self.message!r})"
+
+
+
 class BadRequestError(BaseAppError):
     def __init__(self, message: str = http.HTTPStatus.BAD_REQUEST.phrase):
         super().__init__(message, http.HTTPStatus.BAD_REQUEST.value)

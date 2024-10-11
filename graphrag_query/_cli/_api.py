@@ -73,12 +73,13 @@ class GraphRAGCli(_base_client.ContextManager):
             logger=self._logger,
         )
 
-    def chat(self, message: str) -> typing.Union[typing.Iterator[str], str]:
+    def chat(self, message: str, **kwargs: typing.Any) -> typing.Union[typing.Iterator[str], str]:
         self._conversation_history.append({'role': 'user', 'content': message})
         response = self._graphrag_client.chat(
             engine=self._engine,
             message=typing.cast(_types.MessageParam_T, self._conversation_history),
             stream=self._stream,
+            **kwargs,
         )
         if self._stream:
             response = typing.cast(_search_types.StreamSearchResult_T, response)
@@ -86,6 +87,9 @@ class GraphRAGCli(_base_client.ContextManager):
         else:
             response = typing.cast(_search_types.SearchResult_T, response)
             return self._parse_response(response)
+
+    def clear_history(self) -> None:
+        self._conversation_history.clear()
 
     def _parse_stream_response(self, response: _search_types.StreamSearchResult_T) -> typing.Iterator[str]:
         content = ''
@@ -123,6 +127,14 @@ class GraphRAGCli(_base_client.ContextManager):
     ) -> typing.Literal[False]:
         self.close()
         return False
+
+    @typing_extensions.override
+    def __str__(self):
+        return str(self._graphrag_client)
+
+    @typing_extensions.override
+    def __repr__(self):
+        return repr(self._graphrag_client)
 
 
 class AsyncGraphRAGCli(_base_client.AsyncContextManager):
@@ -173,12 +185,13 @@ class AsyncGraphRAGCli(_base_client.AsyncContextManager):
             logger=self._logger,
         )
 
-    async def chat(self, message: str) -> None:
+    async def chat(self, message: str, **kwargs: typing.Any) -> None:
         self._conversation_history.append({'role': 'user', 'content': message})
         response = await self._graphrag_client.chat(
             engine=self._engine,
             message=typing.cast(_types.MessageParam_T, self._conversation_history),
             stream=self._stream,
+            **kwargs,
         )
         if self._stream:
             content = ''
@@ -213,3 +226,11 @@ class AsyncGraphRAGCli(_base_client.AsyncContextManager):
     ) -> typing.Literal[False]:
         await self.close()
         return False
+
+    @typing_extensions.override
+    def __str__(self):
+        return str(self._graphrag_client)
+
+    @typing_extensions.override
+    def __repr__(self):
+        return repr(self._graphrag_client)

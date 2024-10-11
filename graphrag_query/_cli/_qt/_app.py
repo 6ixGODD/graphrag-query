@@ -127,21 +127,36 @@ class ChatWorker(QObject):
     finished = pyqtSignal()
     responseReady = pyqtSignal(str)
 
-    def __init__(self, message: str, cli) -> None:
+    def __init__(
+        self,
+        message: str,
+        cli: _api.GraphRAGCli,
+        params: typing.Optional[typing.Dict[str, typing.Any]] = None
+    ) -> None:
         super().__init__()
         self.message: str = message
         self.cli = cli
+        self._stop = False
+        self._stream_response: typing.Optional[typing.Generator[str, None, None]] = None
+        self.params = params
 
     def run(self) -> None:
-        response = self.cli.chat(self.message)
-        if self.cli.stream:
-            response = typing.cast(typing.Iterator[str], response)
-            for chunk in response:
-                self.responseReady.emit(chunk)
-        else:
-            response = typing.cast(str, response)
-            self.responseReady.emit(response)
+        response = self.cli.chat(self.message, **(self.params or {}))
+        self._stream_response = typing.cast(typing.Generator[str, None, None], response)
+        for chunk in self._stream_response:
+            if self._stop:
+                break
+            self.responseReady.emit(chunk)
         self.finished.emit()
+
+    def stop(self) -> None:
+        self._stop = True
+        self.finished.emit()
+        if self._stream_response:
+            try:
+                self._stream_response.close()
+            except ValueError:
+                pass
 
 
 # noinspection PyUnresolvedReferences
@@ -188,9 +203,10 @@ class AutoResizingTextEdit(QTextEdit):
 
 # noinspection PyUnresolvedReferences
 class ChatWindow(QWidget):
-    def __init__(self, cli: _api.GraphRAGCli) -> None:
+    def __init__(self, cli: _api.GraphRAGCli, **kwargs: typing.Any) -> None:
         super().__init__()
         self.cli = cli
+        self.params = kwargs
 
         self.assistant_label: typing.Optional[QWidget] = None
         self.assistant_response_text: str = ''
@@ -212,12 +228,21 @@ class ChatWindow(QWidget):
         self.inputText.setPlaceholderText('Type your message here...')
         self.inputText.adjust_height()
 
+        # Send button
         self.sendButton = QPushButton('Send')
         self.sendButton.clicked.connect(self.send_message)
 
+        # Clear button
+        self.clearButton = QPushButton('Clear')
+        self.clearButton.clicked.connect(self.clear_history)
+
+        buttonLayout = QHBoxLayout()
+        buttonLayout.addWidget(self.clearButton)
+        buttonLayout.addWidget(self.sendButton)
+
         inputLayout = QHBoxLayout()
         inputLayout.addWidget(self.inputText)
-        inputLayout.addWidget(self.sendButton)
+        inputLayout.addLayout(buttonLayout)
 
         self.layout_.addWidget(self.chatScrollArea)
         self.layout_.addLayout(inputLayout)
@@ -244,7 +269,7 @@ class ChatWindow(QWidget):
 
         # Start worker thread to process simulated response
         self.thread_ = QThread()
-        self.worker = ChatWorker(message, cli=self.cli)
+        self.worker = ChatWorker(message, cli=self.cli, params=self.params)
         self.worker.moveToThread(self.thread_)
 
         # Connect signals and slots
@@ -258,6 +283,23 @@ class ChatWindow(QWidget):
         self.sendButton.setEnabled(False)
         self.thread_.finished.connect(lambda: self.sendButton.setEnabled(True))
         self.thread_.start()
+
+    def clear_history(self) -> None:
+        try:
+            self.worker.stop()
+            self.worker.responseReady.disconnect(self.update_response)
+        except RuntimeError:
+            pass
+
+        self.cli.clear_history()
+        while self.chatLayout.count():
+            child = self.chatLayout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+
+        self.chatWidget.update()
+        self.chatScrollArea.update()
+        self.sendButton.setEnabled(True)
 
     @staticmethod
     def create_message_widget(text: str, sender: str = 'User') -> QWidget:
@@ -311,7 +353,7 @@ class ChatWindow(QWidget):
             event.accept()
 
 
-def main(cli: _api.GraphRAGCli) -> None:
+def main(cli: _api.GraphRAGCli, **kwargs: typing.Any) -> None:
     app = QApplication(sys.argv)
 
     # Set application palette to dark theme
@@ -320,6 +362,6 @@ def main(cli: _api.GraphRAGCli) -> None:
     palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
     app.setPalette(palette)
 
-    window = ChatWindow(cli)
+    window = ChatWindow(cli, **kwargs)
     window.show()
     sys.exit(app.exec())

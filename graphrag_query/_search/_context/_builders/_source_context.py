@@ -18,7 +18,7 @@ def build_text_unit_context(
     token_encoder: typing.Optional[tiktoken.Encoding] = None,
     column_delimiter: str = "|",
     shuffle_data: bool = True,
-    max_tokens: int = 8000,
+    data_max_tokens: int = 8000,
     context_name: str = "Sources",
     random_state: int = 86,
 ) -> typing.Tuple[str, typing.Dict[str, pd.DataFrame]]:
@@ -57,7 +57,7 @@ def build_text_unit_context(
         new_context_text = column_delimiter.join(new_context) + "\n"
         new_tokens = _utils.num_tokens(new_context_text, token_encoder)
 
-        if current_tokens + new_tokens > max_tokens:
+        if current_tokens + new_tokens > data_max_tokens:
             break
 
         current_context_text += new_context_text

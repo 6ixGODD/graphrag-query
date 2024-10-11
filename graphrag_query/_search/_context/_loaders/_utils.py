@@ -83,7 +83,7 @@ def get_community_reports(
     nodes_ = nodes.copy()
     nodes_ = nodes_[nodes_.level <= community_level]
     # Convert data types and fill missing values
-    nodes_.loc[:, 'community'] = nodes_['community'].fillna(-1).astype(int)
+    nodes_['community'] = nodes_['community'].fillna(-1).astype(int)
 
     # Group by title and aggregate community
     nodes_ = nodes_.groupby(['title']).agg({'community': 'max'}).reset_index()

@@ -11,8 +11,5 @@ _root = fastapi.APIRouter()
 
 
 @_root.post('chat/completions')
-async def chat_completions(request: dto.CompletionCreateParams):
-    if isinstance(request, dto.CompletionCreateParamsNonStreaming):
-        pass
-    else:
-        pass
+async def chat_completions(request: dto.CompletionCreateRequest):
+    ...

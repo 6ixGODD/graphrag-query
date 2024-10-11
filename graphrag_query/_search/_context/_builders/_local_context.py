@@ -21,7 +21,7 @@ from .... import _utils
 def build_entity_context(
     selected_entities: typing.List[_model.Entity],
     token_encoder: typing.Optional[tiktoken.Encoding] = None,
-    max_tokens: int = 8000,
+    data_max_tokens: int = 8000,
     include_entity_rank: bool = True,
     rank_description: str = "number of relationships",
     column_delimiter: str = "|",
@@ -63,7 +63,7 @@ def build_entity_context(
             new_context.append(field_value)
         new_context_text = column_delimiter.join(new_context) + "\n"
         new_tokens = _utils.num_tokens(new_context_text, token_encoder)
-        if current_tokens + new_tokens > max_tokens:
+        if current_tokens + new_tokens > data_max_tokens:
             break
         current_context_text += new_context_text
         all_context_records.append(new_context)
@@ -83,7 +83,7 @@ def build_covariates_context(
     selected_entities: typing.List[_model.Entity],
     covariates: typing.List[_model.Covariate],
     token_encoder: typing.Optional[tiktoken.Encoding] = None,
-    max_tokens: int = 8000,
+    data_max_tokens: int = 8000,
     column_delimiter: str = "|",
     context_name: str = "_model.Covariates",
 ) -> typing.Tuple[str, pd.DataFrame]:
@@ -129,7 +129,7 @@ def build_covariates_context(
 
         new_context_text = column_delimiter.join(new_context) + "\n"
         new_tokens = _utils.num_tokens(new_context_text, token_encoder)
-        if current_tokens + new_tokens > max_tokens:
+        if current_tokens + new_tokens > data_max_tokens:
             break
         current_context_text += new_context_text
         all_context_records.append(new_context)
@@ -150,7 +150,7 @@ def build_relationship_context(
     relationships: typing.List[_model.Relationship],
     token_encoder: typing.Optional[tiktoken.Encoding] = None,
     include_relationship_weight: bool = False,
-    max_tokens: int = 8000,
+    data_max_tokens: int = 8000,
     top_k_relationships: int = 10,
     relationship_ranking_attribute: str = "rank",
     column_delimiter: str = "|",
@@ -202,7 +202,7 @@ def build_relationship_context(
             new_context.append(field_value)
         new_context_text = column_delimiter.join(new_context) + "\n"
         new_tokens = _utils.num_tokens(new_context_text, token_encoder)
-        if current_tokens + new_tokens > max_tokens:
+        if current_tokens + new_tokens > data_max_tokens:
             break
         current_context_text += new_context_text
         all_context_records.append(new_context)

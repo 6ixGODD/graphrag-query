@@ -224,6 +224,14 @@ class AsyncGraphRAGClient(
     _global_search_engine: _search.AsyncGlobalSearchEngine
     _logger: typing.Optional[_types.Logger]
 
+    @property
+    def logger(self) -> typing.Optional[_types.Logger]:
+        return self._logger
+
+    @logger.setter
+    def logger(self, logger: _types.Logger) -> None:
+        self._logger = logger
+
     @classmethod
     @typing_extensions.override
     def from_config_file(cls, config_file: typing.Union[os.PathLike[str], pathlib.Path, str]) -> typing.Self:

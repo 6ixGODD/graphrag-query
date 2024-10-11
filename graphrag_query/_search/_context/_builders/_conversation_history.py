@@ -153,7 +153,7 @@ class ConversationHistory:
         token_encoder: typing.Optional[tiktoken.Encoding] = None,
         include_user_turns_only: bool = True,
         max_qa_turns: int = 5,
-        max_tokens: int = 8000,
+        data_max_tokens: int = 8000,
         recency_bias: bool = True,
         column_delimiter: str = "|",
         context_name: str = "Conversation History",
@@ -199,7 +199,7 @@ class ConversationHistory:
 
             context_df = pd.DataFrame(turn_list)
             context_text = header + context_df.to_csv(sep=column_delimiter, index=False)
-            if _utils.num_tokens(context_text, token_encoder) > max_tokens:
+            if _utils.num_tokens(context_text, token_encoder) > data_max_tokens:
                 break
 
             current_context_df = context_df

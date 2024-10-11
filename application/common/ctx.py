@@ -7,7 +7,7 @@ from application.common import const, log
 
 _request_id_ctx_var: contextvars.ContextVar[str] = contextvars.ContextVar(
     const.Constants.REQUEST_ID_CTX_KEY, default=''
-    )
+)
 _ip_ctx_var: contextvars.ContextVar[str] = contextvars.ContextVar(const.Constants.IP_CTX_KEY, default='')
 
 

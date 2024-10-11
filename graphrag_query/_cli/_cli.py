@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import pathlib
 import sys
 import typing
 import warnings
@@ -45,9 +46,10 @@ class _Args(pydantic.BaseModel):
         typing.Literal['console', 'gui'],
         pydantic.Field(..., pattern=r"console|gui")
     ]
+    sys_prompt: typing.Optional[str]
 
 
-def _parse_args() -> _Args:
+def _parse_args() -> typing.Tuple[_Args, typing.Dict[str, typing.Any]]:
     parser = argparse.ArgumentParser(
         description="GraphRAG Query CLI",
         prog="python -m query",
@@ -120,6 +122,12 @@ def _parse_args() -> _Args:
         choices=["console", "gui"],
         default="console",
     )
+    parser.add_argument(
+        "--sys-prompt", "-p",
+        type=str,
+        help="system prompt file in TXT format to use for the local engine",
+        default=None,
+    )
 
     parser.add_argument(
         "-V", "--version",
@@ -133,7 +141,20 @@ def _parse_args() -> _Args:
 
     parser.set_defaults(func=_help)
 
-    return _Args.parse_obj(parser.parse_args().__dict__)
+    args, unknown = parser.parse_known_args()
+    args_ = _Args.parse_obj(args.__dict__)
+    kwargs = {}
+    for arg in unknown:
+        if arg.startswith("--"):
+            kv = arg[2:].split("=", 1)
+            if len(kv) == 2:
+                kwargs[kv[0]] = kv[1]
+            else:
+                kwargs[kv[0]] = True
+        else:
+            raise _errors.InvalidParameterError(params=[arg], reason=["Unknown argument"])
+
+    return args_, kwargs
 
 
 def main() -> int:
@@ -154,7 +175,7 @@ def main() -> int:
 
 def _main() -> None:
     try:
-        args = _parse_args()
+        args, kwargs = _parse_args()
     except pydantic.ValidationError as err:
         raise _errors.InvalidParameterError.from_pydantic_validation_error(err)
 
@@ -175,11 +196,25 @@ def _main() -> None:
             engine=args.engine,
             stream=args.stream,
         )
+        sys.stdout.write(str(cli) + "\n")
         sys.stdout.write("GraphRAG engine loaded.\n\n")
 
-        asyncio.run(_chat_loop(cli))
+        sys_prompt: typing.Optional[str] = None
+        if args.sys_prompt and args.engine == "local":
+            sys.stdout.write("Loading system prompt...\n\n")
+            sys.stdout.flush()
+            if pathlib.Path(args.sys_prompt).exists():
+                with open(args.sys_prompt, "r") as f:
+                    sys_prompt = f.read()
+            else:
+                warnings.warn("System prompt file not found. Using default system prompt.")
+
+        asyncio.run(_chat_loop(cli, sys_prompt=sys_prompt, **kwargs))
     else:
         from . import _qt
+        if not args.stream:
+            warnings.warn("GUI mode only supports streaming output. Switching to streaming mode.")
+            args.stream = True
         cli = _api.GraphRAGCli(
             verbose=args.verbose,
             chat_llm_base_url=args.chat_base_url,
@@ -192,10 +227,19 @@ def _main() -> None:
             engine=args.engine,
             stream=args.stream,
         )
-        _qt.main(cli)
+
+        sys_prompt: typing.Optional[str] = None
+        if args.sys_prompt and args.engine == "local":
+            if pathlib.Path(args.sys_prompt).exists():
+                with open(args.sys_prompt, "r", encoding="utf-8") as f:
+                    sys_prompt = f.read()
+            else:
+                warnings.warn("System prompt file not found. Using default system prompt.")
+
+        _qt.main(cli, sys_prompt=sys_prompt, **kwargs)
 
 
-async def _chat_loop(cli: _api.AsyncGraphRAGCli) -> None:
+async def _chat_loop(cli: _api.AsyncGraphRAGCli, **kwargs) -> None:
     async with cli:
         while True:
             user_input = input("You (type 'exit' to quit) >> ")
@@ -203,7 +247,7 @@ async def _chat_loop(cli: _api.AsyncGraphRAGCli) -> None:
                 break
             sys.stdout.write("Assistant >> \n")
             sys.stdout.flush()
-            await cli.chat(user_input)
+            await cli.chat(user_input, **kwargs)
             sys.stdout.write("\n")
             sys.stdout.flush()
         sys.stdout.write("Bye!\n")

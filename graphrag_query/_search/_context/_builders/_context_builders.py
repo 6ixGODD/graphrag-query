@@ -100,7 +100,7 @@ class GlobalContextBuilder(BaseContextBuilder):
         include_community_weight: bool = True,
         community_weight_name: str = "occurrence",
         normalize_community_weight: bool = True,
-        max_tokens: int = 8000,
+        data_max_tokens: int = 8000,
         context_name: str = "Reports",
         conversation_history_user_turns_only: bool = True,
         conversation_history_max_turns: int = 5,
@@ -118,7 +118,7 @@ class GlobalContextBuilder(BaseContextBuilder):
                 include_user_turns_only=conversation_history_user_turns_only,
                 max_qa_turns=conversation_history_max_turns,
                 column_delimiter=column_delimiter,
-                max_tokens=max_tokens,
+                data_max_tokens=data_max_tokens,
                 recency_bias=False,
             )
             if conversation_history_context != "":
@@ -137,7 +137,7 @@ class GlobalContextBuilder(BaseContextBuilder):
             include_community_weight=include_community_weight,
             community_weight_name=community_weight_name,
             normalize_community_weight=normalize_community_weight,
-            max_tokens=max_tokens,
+            data_max_tokens=data_max_tokens,
             single_batch=False,
             context_name=context_name,
             random_state=self._random_state,
@@ -238,7 +238,7 @@ class LocalContextBuilder(BaseContextBuilder):
         exclude_entity_names: typing.Optional[typing.List[str]] = None,
         conversation_history_max_turns: int = 5,
         conversation_history_user_turns_only: bool = True,
-        max_tokens: int = 8000,
+        data_max_tokens: int = 8000,
         text_unit_prop: float = 0.5,
         community_prop: float = 0.25,
         top_k_mapped_entities: int = 10,
@@ -291,10 +291,10 @@ class LocalContextBuilder(BaseContextBuilder):
         final_context_data: typing.Dict[str, pd.DataFrame] = {}
 
         # build community context
-        community_tokens = max(int(max_tokens * community_prop), 0)
+        community_tokens = max(int(data_max_tokens * community_prop), 0)
         community_context, community_context_data = self._build_community_context(
             selected_entities=selected_entities,
-            max_tokens=community_tokens,
+            data_max_tokens=community_tokens,
             use_community_summary=use_community_summary,
             column_delimiter=column_delimiter,
             include_community_rank=include_community_rank,
@@ -308,10 +308,10 @@ class LocalContextBuilder(BaseContextBuilder):
 
         # build local (i.e. entity-relationship-covariate) context
         local_prop = 1 - community_prop - text_unit_prop
-        local_tokens = max(int(max_tokens * local_prop), 0)
+        local_tokens = max(int(data_max_tokens * local_prop), 0)
         local_context, local_context_data = self._build_local_context(
             selected_entities=selected_entities,
-            max_tokens=local_tokens,
+            data_max_tokens=local_tokens,
             include_entity_rank=include_entity_rank,
             rank_description=rank_description,
             include_relationship_weight=include_relationship_weight,
@@ -325,10 +325,10 @@ class LocalContextBuilder(BaseContextBuilder):
             final_context_data = {**final_context_data, **local_context_data}
 
         # build text unit context
-        text_unit_tokens = max(int(max_tokens * text_unit_prop), 0)
+        text_unit_tokens = max(int(data_max_tokens * text_unit_prop), 0)
         text_unit_context, text_unit_context_data = self._build_text_unit_context(
             selected_entities=selected_entities,
-            max_tokens=text_unit_tokens,
+            data_max_tokens=text_unit_tokens,
             return_candidate_context=return_candidate_context,
         )
         if text_unit_context.strip() != "":
@@ -341,7 +341,7 @@ class LocalContextBuilder(BaseContextBuilder):
         self,
         *,
         selected_entities: typing.List[_model.Entity],
-        max_tokens: int = 4000,
+        data_max_tokens: int = 4000,
         use_community_summary: bool = False,
         column_delimiter: str = "|",
         include_community_rank: bool = False,
@@ -384,7 +384,7 @@ class LocalContextBuilder(BaseContextBuilder):
             shuffle_data=False,
             include_community_rank=include_community_rank,
             min_community_rank=min_community_rank,
-            max_tokens=max_tokens,
+            data_max_tokens=data_max_tokens,
             single_batch=True,
             context_name=context_name,
         )
@@ -419,7 +419,7 @@ class LocalContextBuilder(BaseContextBuilder):
         self,
         *,
         selected_entities: typing.List[_model.Entity],
-        max_tokens: int = 8000,
+        data_max_tokens: int = 8000,
         return_candidate_context: bool = False,
         column_delimiter: str = "|",
         context_name: str = "Sources",
@@ -458,7 +458,7 @@ class LocalContextBuilder(BaseContextBuilder):
         context_text, context_data = _source_context.build_text_unit_context(
             text_units=selected_text_units,
             token_encoder=self._token_encoder,
-            max_tokens=max_tokens,
+            data_max_tokens=data_max_tokens,
             shuffle_data=False,
             context_name=context_name,
             column_delimiter=column_delimiter,
@@ -490,7 +490,7 @@ class LocalContextBuilder(BaseContextBuilder):
         self,
         *,
         selected_entities: typing.List[_model.Entity],
-        max_tokens: int = 8000,
+        data_max_tokens: int = 8000,
         include_entity_rank: bool = False,
         rank_description: str = "relationship count",
         include_relationship_weight: bool = False,
@@ -504,7 +504,7 @@ class LocalContextBuilder(BaseContextBuilder):
         entity_context, entity_context_data = _local_context.build_entity_context(
             selected_entities=selected_entities,
             token_encoder=self._token_encoder,
-            max_tokens=max_tokens,
+            data_max_tokens=data_max_tokens,
             column_delimiter=column_delimiter,
             include_entity_rank=include_entity_rank,
             rank_description=rank_description,
@@ -531,7 +531,7 @@ class LocalContextBuilder(BaseContextBuilder):
                 selected_entities=added_entities,
                 relationships=list(self._relationships.values()),
                 token_encoder=self._token_encoder,
-                max_tokens=max_tokens,
+                data_max_tokens=data_max_tokens,
                 column_delimiter=column_delimiter,
                 top_k_relationships=top_k_relationships,
                 include_relationship_weight=include_relationship_weight,
@@ -548,7 +548,7 @@ class LocalContextBuilder(BaseContextBuilder):
                     selected_entities=added_entities,
                     covariates=self._covariates[covariate],
                     token_encoder=self._token_encoder,
-                    max_tokens=max_tokens,
+                    data_max_tokens=data_max_tokens,
                     column_delimiter=column_delimiter,
                     context_name=covariate,
                 )
@@ -556,7 +556,7 @@ class LocalContextBuilder(BaseContextBuilder):
                 current_context.append(covariate_context)
                 current_context_data[covariate.lower()] = covariate_context_data
 
-            if total_tokens > max_tokens:
+            if total_tokens > data_max_tokens:
                 warnings.warn("Reached token limit - reverting to previous context state", RuntimeWarning)
                 break
 
