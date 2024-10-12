@@ -238,6 +238,7 @@ class GraphRAGConfig(pydantic_settings.BaseSettings):
         validate_default=False,
         env_nested_delimiter='__',
         env_file='.env',
+        extra='ignore',
     )
 
     @classmethod
@@ -269,7 +270,7 @@ class GraphRAGConfig(pydantic_settings.BaseSettings):
                 import yaml
             except ImportError:
                 raise ImportError("Please install the 'pyyaml' package to read YAML files.")
-            with open(config_file_, 'r') as f:
+            with open(config_file_, 'r', encoding='utf-8') as f:
                 config_dict = yaml.safe_load(f)
 
         return cls(**config_dict, **kwargs)

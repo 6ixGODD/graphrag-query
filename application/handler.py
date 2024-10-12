@@ -9,7 +9,7 @@ import fastapi
 from starlette.exceptions import HTTPException
 
 from . import dto
-from .common import const, ctx, errors
+from .common import const, context, errors
 
 
 def init_handler(app: fastapi.FastAPI):
@@ -53,6 +53,6 @@ def init_handler(app: fastapi.FastAPI):
                 code=fastapi.status.HTTP_500_INTERNAL_SERVER_ERROR
             ).dict(),
             headers={
-                const.Constants.REQUEST_ID_HEADER: ctx.get_request_id()
+                const.Constants.REQUEST_ID_HEADER: context.get_request_id()
             }
         )

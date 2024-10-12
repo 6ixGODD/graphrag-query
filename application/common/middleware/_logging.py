@@ -7,7 +7,7 @@ import http
 
 from starlette import types
 
-from application.common import const, ctx, errors
+from application.common import const, context, errors
 
 
 class LoggingMiddleware:
@@ -18,7 +18,7 @@ class LoggingMiddleware:
         if scope[const.Constants.TYPE_SCOPE_KEY] != "http":  # pragma: no cover
             # Skip non-HTTP requests
             await self.app(scope, receive, send)
-        logger = ctx.get_logger_with_context(tag=const.Constants.MIDDLEWARE_LOGGING_TAG)
+        logger = context.get_logger_with_context(tag=const.Constants.MIDDLEWARE_LOGGING_TAG)
         logger.bind(scope=scope).info(
             f"Request: {scope[const.Constants.CLIENT_SCOPE_KEY][0]}:{scope[const.Constants.CLIENT_SCOPE_KEY][1]} -> "
             f"{scope[const.Constants.SERVER_SCOPE_KEY][0]}:{scope[const.Constants.SERVER_SCOPE_KEY][1]} | "

@@ -1,3 +1,6 @@
+# Copyright (c) 2024 Microsoft Corporation.
+# Licensed under the MIT License
+
 import json
 import sys
 import typing
@@ -10,6 +13,7 @@ from PyQt6.QtCore import (
     QThread,
 )
 from PyQt6.QtGui import (
+    QClipboard,
     QCloseEvent,
     QColor,
     QPalette,
@@ -105,7 +109,7 @@ QLabel {
     border-top-right-radius: 0px;  
 }
 QLabel:hover {
-    background-color: #696969;  /* Dark gray hover effect */
+    background-color: #696969; 
 }
 """
 
@@ -125,9 +129,6 @@ AutoResizingTextBrowser {
 COPY_BUTTON_STYLE = """
 QPushButton {
     background-color: transparent;
-    color: #FFFFFF;
-    border: none;
-    padding: 5px;
     border-radius: 10px;  
 }
 QPushButton:hover {
@@ -280,7 +281,7 @@ class ChatWindow(QWidget):
     def copy_conversation(self) -> None:
         conversation = self.cli.conversation_history()
         conversation_text = json.dumps(conversation, ensure_ascii=False, indent=4)
-        QApplication.clipboard().setText(conversation_text)
+        typing.cast(QClipboard, QApplication.clipboard()).setText(conversation_text)
 
     def send_message(self) -> None:
         message = self.inputText.toPlainText().strip()
@@ -316,16 +317,17 @@ class ChatWindow(QWidget):
 
     def clear_history(self) -> None:
         try:
-            self.worker.stop()
-            self.worker.responseReady.disconnect(self.update_response)
-        except RuntimeError:
+            if self.worker:
+                self.worker.stop()
+                self.worker.responseReady.disconnect(self.update_response)
+        except (RuntimeError, TypeError):
             pass
 
         self.cli.clear_history()
         while self.chatLayout.count():
             child = self.chatLayout.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
+            if child and child.widget():
+                typing.cast(QWidget, child.widget()).deleteLater()
 
         self.chatWidget.update()
         self.chatScrollArea.update()
@@ -351,6 +353,7 @@ class ChatWindow(QWidget):
             message_widget.setWordWrap(True)
             message_widget.setStyleSheet(USER_MESSAGE_STYLE)
             message_widget.setFixedHeight(message_widget.sizeHint().height())
+            message_widget.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         # Create a container to set alignment
         container = QWidget()
         container_layout = QVBoxLayout()

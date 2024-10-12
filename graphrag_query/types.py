@@ -40,5 +40,5 @@ ResponseChunkVerbose: typing.TypeAlias = _types.SearchResultChunkVerbose
 
 Response_T: typing.TypeAlias = typing.Union[Response, ResponseVerbose]
 _Response_Chunk_T: typing.TypeAlias = typing.Union[ResponseChunk, ResponseChunkVerbose]
-StreamResponse_T: typing.TypeAlias = typing.Generator[_Response_Chunk_T, None, None]
-AsyncStreamResponse_T: typing.TypeAlias = typing.AsyncGenerator[_Response_Chunk_T, None]
+StreamResponse_T: typing.TypeAlias = typing.Iterator[_Response_Chunk_T]
+AsyncStreamResponse_T: typing.TypeAlias = typing.AsyncIterator[_Response_Chunk_T]

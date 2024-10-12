@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import collections
 import dataclasses
 import enum
 import typing
@@ -20,7 +21,6 @@ ROLE__ASSISTANT = "assistant"
 
 class ConversationRole(str, enum.Enum):
     """Enum for conversation roles."""
-
     SYSTEM = ROLE__SYSTEM
     USER = ROLE__USER
     ASSISTANT = ROLE__ASSISTANT
@@ -82,18 +82,10 @@ class QATurn:
 class ConversationHistory:
     """Class for storing a conversation history."""
 
-    _turns: typing.List[ConversationTurn] = []
-    _max_length: typing.Optional[int] = None
+    _turns: typing.Deque[ConversationTurn]
 
-    @property
-    def max_length(self) -> typing.Optional[int]:
-        """Get the maximum length of the conversation history."""
-        return self._max_length
-
-    @max_length.setter
-    def max_length(self, value: int) -> None:
-        """Set the maximum length of the conversation history."""
-        self._max_length = value
+    def __init__(self, max_length: typing.Optional[int] = None) -> None:
+        self._turns = collections.deque(maxlen=max_length)
 
     @classmethod
     def from_list(
@@ -106,16 +98,12 @@ class ConversationHistory:
 
         Each turn is a dictionary in the form of `{"role": "<conversation_role>", "content": "<turn content>"}`
         """
-        history = cls()
+        history = cls(max_length=max_length)
         for turn in conversation_turns:
-            history._turns.append(
-                ConversationTurn(
-                    role=ConversationRole.from_string(turn.get("role", ConversationRole.USER)),
-                    content=turn.get("content", ""),
-                )
+            history.add_turn(
+                role=ConversationRole.from_string(turn["role"]),
+                content=turn["content"],
             )
-            if max_length and len(history._turns) >= max_length:
-                history._turns.pop(0)
         return history
 
     def add_turn(self, role: ConversationRole, content: str) -> None:
@@ -141,7 +129,7 @@ class ConversationHistory:
     def get_user_turns(self, max_user_turns: int = 1) -> typing.List[str]:
         """Get the last user turns in the conversation history."""
         user_turns = []
-        for turn in self._turns[::-1]:
+        for turn in self._turns:
             if turn.role == ConversationRole.USER:
                 user_turns.append(turn.content)
                 if max_user_turns and len(user_turns) >= max_user_turns:
@@ -210,5 +198,4 @@ class ConversationHistory:
 
     def to_dict(self) -> typing.List[typing.Dict[str, str]]:
         """Convert conversation history to a list of dictionaries."""
-        return [{"role": turn.role.value, "content": turn.content}
-                for turn in self._turns][-(self._max_length or 0):]
+        return [{"role": turn.role.value, "content": turn.content} for turn in self._turns]

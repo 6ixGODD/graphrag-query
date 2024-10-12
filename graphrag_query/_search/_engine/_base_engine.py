@@ -15,9 +15,16 @@ from .. import (
     _llm,
     _types,
 )
-from ... import types as _base_types
 
-Logger: typing.TypeAlias = _base_types.Logger
+
+class Logger(typing.Protocol):  # TODO: Refactor
+    def error(self, msg: str, *args, **kwargs: typing.Any) -> None: ...
+
+    def warning(self, msg: str, *args, **kwargs: typing.Any) -> None: ...
+
+    def info(self, msg: str, *args, **kwargs: typing.Any) -> None: ...
+
+    def debug(self, msg: str, *args, **kwargs: typing.Any) -> None: ...
 
 
 class QueryEngine(abc.ABC):

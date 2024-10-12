@@ -6,6 +6,10 @@ from __future__ import annotations
 import importlib
 import typing
 
+from . import (
+    errors,
+    types,
+)
 from ._client import (
     AsyncGraphRAGClient,
     GraphRAGClient,
@@ -42,6 +46,9 @@ from ._version import (
 )
 
 __all__ = [
+    "errors",
+    "types",
+
     "__title__",
     "__version__",
 

@@ -34,36 +34,45 @@ class ANSIFormatter:
         return f"{''.join(styles)}{text}{cls.RESET}"
 
 
-class SaveFormatter(string.Formatter):
+class SafeFormatter(string.Formatter):
     @typing_extensions.override
     def format(self, __format_string: str, /, *args: typing.Any, **kwargs: typing.Any) -> str:
         result = ''
-        for literal_text, field_name, format_spec, conversion in self.parse(__format_string):
-            # Append the literal text
-            result += literal_text
 
-            # If there's a field, process it
-            if field_name is not None:
-                try:
-                    # Get the value
-                    obj = self.get_value(field_name, args, kwargs)
-                    # Convert and format the field
-                    obj = self.convert_field(obj, conversion)
-                    formatted = self.format_field(obj, format_spec or '')
-                    result += formatted
-                except (KeyError, IndexError):
-                    # Reconstruct the placeholder and leave it as is
-                    placeholder = '{' + field_name
-                    if conversion:
-                        placeholder += '!' + conversion
-                    if format_spec:
-                        placeholder += ':' + format_spec
-                    placeholder += '}'
-                    result += placeholder
+        try:
+            for literal_text, field_name, format_spec, conversion in self.parse(__format_string):
+                # Append the literal text
+                result += literal_text
+
+                # If there's a field, process it
+                if field_name is not None:
+                    try:
+                        # Get the value
+                        obj = self.get_value(field_name, args, kwargs)
+                        # Convert and format the field
+                        obj = self.convert_field(obj, conversion)
+                        formatted = self.format_field(obj, format_spec or '')
+                        result += formatted
+                    except (KeyError, IndexError):
+                        # Reconstruct the placeholder and leave it as is
+                        placeholder = '{' + field_name
+                        if conversion:
+                            placeholder += '!' + conversion
+                        if format_spec:
+                            placeholder += ':' + format_spec
+                        placeholder += '}'
+                        result += placeholder
+        except ValueError:
+            result = __format_string
         return result
 
     @typing_extensions.override
-    def get_value(self, key: typing.Union[int, str], args: typing.Any, kwargs: typing.Any) -> typing.Any:
+    def get_value(
+        self,
+        key: typing.Union[int, str],
+        args: typing.Sequence[typing.Any],
+        kwargs: typing.Dict[str, typing.Any]
+    ) -> typing.Any:
         if isinstance(key, int):
             if key < len(args):
                 return args[key]
@@ -84,7 +93,7 @@ class CLILogger(_types.Logger):
 
     @staticmethod
     def _safe_format(msg: str, *args: typing.Any, **kwargs: typing.Any) -> str:
-        formatter = SaveFormatter()
+        formatter = SafeFormatter()
         return formatter.format(msg, *args, **kwargs)
 
     def _log(self, level: str, color: str, msg: str, *args: typing.Any, **kwargs: typing.Any) -> None:
@@ -111,3 +120,15 @@ def parse_cli_err(err: _errors.CLIError) -> str:
     if isinstance(err, _errors.InvalidParameterError) or isinstance(err, _errors.MissingPackageError):
         return err.message
     return "An error occurred. Please try again later."
+
+
+if __name__ == '__main__':
+    fmt = SafeFormatter()
+    print(fmt.format("Hello, {0}!", "world"))
+    print(fmt.format("Hello, {name}!", name="world"))
+    print(fmt.format("Hello, {0}! You have {1} new messages.", "world", 5))
+    print(fmt.format("Hello, {name}! You have {count} new messages.", name="world", count=5))
+    print(fmt.format("{{{{{}", "world"))
+    print(fmt.format("{{{{name}}", name="world"))
+    print(fmt.format("{'name': 'world'}", name="world"))
+    print(fmt.format("{'name': 'world'}}", name="world"))

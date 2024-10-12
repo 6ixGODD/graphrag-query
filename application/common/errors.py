@@ -6,6 +6,9 @@ from __future__ import annotations
 import http
 import typing
 
+import pydantic
+import typing_extensions
+
 
 class BaseAppError(Exception):
     def __init__(self, message: str, status_code: int):
@@ -32,7 +35,7 @@ class ValidationError(BaseAppError):
         *,
         params: typing.List[str],
         reason: typing.List[str],
-        message: str = "Invalid parameter(s): \n"
+        message: str = "Validation error: \n"
     ) -> None:
         self.params = params
         self.reason = reason
@@ -57,7 +60,6 @@ class ValidationError(BaseAppError):
     @typing_extensions.override
     def __repr__(self):
         return f"{self.__class__.__name__}(params={self.params!r}, message={self.message!r})"
-
 
 
 class BadRequestError(BaseAppError):

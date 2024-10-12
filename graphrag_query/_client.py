@@ -347,6 +347,7 @@ class AsyncGraphRAGClient(
         verbose: bool = False,
         **kwargs: typing.Any
     ) -> typing.Union[_types.Response_T, _types.AsyncStreamResponse_T]:
+        message = [msg for msg in message if msg['role'] != 'system']  # TODO: Add system message support
         if not self._verify_message(message):
             raise _errors.InvalidMessageError()
 

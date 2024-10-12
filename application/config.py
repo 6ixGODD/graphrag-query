@@ -21,12 +21,8 @@ class Config(pydantic_settings.BaseSettings):
     ] = "1.0.0"
     app_route_prefix: typing.Annotated[
         str,
-        pydantic.Field(..., pattern=r"/^[a-z0-9_]+$")
+        pydantic.Field(..., pattern=r"^[a-z0-9_/]+$")
     ] = f"/api/v{app_version.split('.')[0]}"
-    app_ascii_art: typing.Annotated[
-        bool,
-        pydantic.Field(...)
-    ] = True
 
     # Logging Configurations
     log_level: typing.Annotated[
@@ -66,5 +62,15 @@ class Config(pydantic_settings.BaseSettings):
     model_config = pydantic_settings.SettingsConfigDict(
         env_prefix="GRAPH_RAG_OPENAI_",
         validate_default=False,
-        env_nested_delimiter="__"
+        env_nested_delimiter="__",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore"
     )
+
+
+_config = Config()  # singleton instance
+
+
+def get_config() -> Config:
+    return _config

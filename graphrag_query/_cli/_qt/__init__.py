@@ -1,3 +1,6 @@
+# Copyright (c) 2024 Microsoft Corporation.
+# Licensed under the MIT License
+
 from ... import errors as _errors
 
 _missing_packages = []

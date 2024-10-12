@@ -8,6 +8,7 @@ class Constants:
     # HTTP Headers
     REQUEST_ID_HEADER = "x-request-id"
     AUTHORIZATION_HEADER = "authorization"
+    IP_HEADER = "x-forwarded-for"
 
     # Logging Tags
     SYS_LOGGING_TAG = "SYSTEM"

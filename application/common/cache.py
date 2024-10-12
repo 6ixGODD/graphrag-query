@@ -107,3 +107,10 @@ class Cache(typing.MutableMapping[str, typing.Any]):
         else:
             self._cache[key] = (1, time.time(), None)
             return 1
+
+
+_cache = Cache()
+
+
+def get_cache() -> Cache:
+    return _cache

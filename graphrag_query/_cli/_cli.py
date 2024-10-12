@@ -143,7 +143,7 @@ def _parse_args() -> typing.Tuple[_Args, typing.Dict[str, typing.Any]]:
 
     args, unknown = parser.parse_known_args()
     args_ = _Args.parse_obj(args.__dict__)
-    kwargs = {}
+    kwargs: typing.Dict[str, typing.Any] = {}
     for arg in unknown:
         if arg.startswith("--"):
             kv = arg[2:].split("=", 1)
@@ -228,7 +228,7 @@ def _main() -> None:
             stream=args.stream,
         )
 
-        sys_prompt: typing.Optional[str] = None
+        sys_prompt = None
         if args.sys_prompt and args.engine == "local":
             if pathlib.Path(args.sys_prompt).exists():
                 with open(args.sys_prompt, "r", encoding="utf-8") as f:
