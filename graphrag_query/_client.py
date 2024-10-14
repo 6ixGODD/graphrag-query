@@ -19,6 +19,7 @@ from . import (
     errors as _errors,
     types as _types,
 )
+from ._search._engine import _base_engine
 
 __all__ = [
     'GraphRAGClient',
@@ -30,6 +31,13 @@ class GraphRAGClient(
     _base_client.BaseClient[typing.Union[_types.Response_T, _types.StreamResponse_T]],
     _base_client.ContextManager,
 ):
+    """
+    The GraphRAG client class. Encapsulates the GraphRAG search engine.
+
+    Args:
+        config (graphrag_query._config.GraphRAGConfig): Configuration settings.
+        logger (graphrag_query._base_engine.Logger): Logger object. For internal logging.
+    """
     _config: _cfg.GraphRAGConfig
     _chat_llm: _search.ChatLLM
     _embedding: _search.Embedding
@@ -37,23 +45,33 @@ class GraphRAGClient(
     _global_context_loader: _search.GlobalContextLoader
     _local_search_engine: _search.LocalSearchEngine
     _global_search_engine: _search.GlobalSearchEngine
-    _logger: typing.Optional[_types.Logger]
+    _logger: typing.Optional[_base_engine.Logger]
+
+    @property
+    def logger(self) -> typing.Optional[_base_engine.Logger]:
+        return self._logger
+
+    @logger.setter
+    def logger(self, logger: _base_engine.Logger) -> None:
+        self._logger = logger
 
     @classmethod
     @typing_extensions.override
     def from_config_file(cls, config_file: typing.Union[os.PathLike[str], pathlib.Path, str]) -> typing.Self:
+        """Initialize client from a config file (JSON, YAML, TOML)."""
         return cls(config=_cfg.GraphRAGConfig.from_config_file(config_file))
 
     @classmethod
     @typing_extensions.override
     def from_config_dict(cls, config_dict: typing.Dict[str, typing.Any]) -> typing.Self:
+        """Initialize client from a configuration dictionary."""
         return cls(config=_cfg.GraphRAGConfig(**config_dict))
 
     def __init__(
         self,
         *,
         config: _cfg.GraphRAGConfig,
-        logger: typing.Optional[_types.Logger] = None,
+        logger: typing.Optional[_base_engine.Logger] = None,
     ) -> None:
         self._config = config
         self._logger = logger or _defaults.get_default_logger(
@@ -66,6 +84,7 @@ class GraphRAGClient(
             serialize=self._config.logging.serialize,
         ) if self._config.logging.enabled else None
 
+        # Initialize LLMs
         if self._logger:
             self._logger.info(f'Initializing the ChatLLM with model: {self._config.chat_llm.model}')
         self._chat_llm = _search.ChatLLM(
@@ -96,6 +115,7 @@ class GraphRAGClient(
             **(self._config.embedding.kwargs or {}),
         )
 
+        # Initialize ContextLoader objects
         if self._logger:
             self._logger.info(f'Initializing the LocalContextLoader with directory: {self._config.context.directory}')
         self._local_context_loader = _search.LocalContextLoader.from_parquet_directory(
@@ -110,6 +130,7 @@ class GraphRAGClient(
             **(self._config.context.kwargs or {}),
         )
 
+        # Initialize search engines
         if self._logger:
             self._logger.info('Initializing the LocalSearchEngine')
         self._local_search_engine = _search.LocalSearchEngine(
@@ -158,6 +179,21 @@ class GraphRAGClient(
         verbose: bool = False,
         **kwargs: typing.Any
     ) -> typing.Union[_types.Response_T, _types.StreamResponse_T]:
+        """
+        Chat with the GraphRAG search engine.
+
+        Args:
+            engine (typing.Literal['local', 'global']): The search engine to use.
+            message (_types.MessageParam_T): The message to search with. Should be a list of
+                                             dictionaries with keys 'role' and 'content'.
+            stream (bool): Whether to stream the response.
+            verbose (bool): Whether responses should be verbose.
+            **kwargs (typing.Any): Additional keyword arguments.
+
+        Returns:
+            typing.Union[_types.Response_T, _types.StreamResponse_T]:
+                The response from the search engine.
+        """
         if not self._verify_message(message):
             if self._logger:
                 self._logger.error(f'Invalid message: {message}')
@@ -196,6 +232,7 @@ class GraphRAGClient(
         self._local_search_engine.close()
         self._global_search_engine.close()
 
+    # Support for context manager
     @typing_extensions.override
     def __enter__(self) -> typing.Self:
         return self
@@ -215,6 +252,13 @@ class AsyncGraphRAGClient(
     _base_client.BaseClient[typing.Awaitable[typing.Union[_types.Response_T, _types.AsyncStreamResponse_T]]],
     _base_client.AsyncContextManager,
 ):
+    """
+    The asynchronous GraphRAG client class. Encapsulates the AsyncGraphRAG search engine.
+
+    Args:
+        config (graphrag_query._config.GraphRAGConfig): The configuration object.
+        logger (graphrag_query._base_engine.Logger): Logger object. For internal logging.
+    """
     _config: _cfg.GraphRAGConfig
     _chat_llm: _search.AsyncChatLLM
     _embedding: _search.Embedding
@@ -222,14 +266,14 @@ class AsyncGraphRAGClient(
     _global_context_loader: _search.GlobalContextLoader
     _local_search_engine: _search.AsyncLocalSearchEngine
     _global_search_engine: _search.AsyncGlobalSearchEngine
-    _logger: typing.Optional[_types.Logger]
+    _logger: typing.Optional[_base_engine.Logger]
 
     @property
-    def logger(self) -> typing.Optional[_types.Logger]:
+    def logger(self) -> typing.Optional[_base_engine.Logger]:
         return self._logger
 
     @logger.setter
-    def logger(self, logger: _types.Logger) -> None:
+    def logger(self, logger: _base_engine.Logger) -> None:
         self._logger = logger
 
     @classmethod
@@ -246,7 +290,7 @@ class AsyncGraphRAGClient(
         self,
         *,
         config: _cfg.GraphRAGConfig,
-        logger: typing.Optional[_types.Logger] = None,
+        logger: typing.Optional[_base_engine.Logger] = None,
     ) -> None:
         self._config = config
         self._logger = logger or _defaults.get_default_logger(
@@ -347,6 +391,17 @@ class AsyncGraphRAGClient(
         verbose: bool = False,
         **kwargs: typing.Any
     ) -> typing.Union[_types.Response_T, _types.AsyncStreamResponse_T]:
+        """
+        Chat with the GraphRAG search engine asynchronously.
+
+        Args:
+            engine (typing.Literal['local', 'global']): The search engine to use.
+            message (_types.MessageParam_T): The message to search with. Should be a list of
+                                             dictionaries with keys 'role' and 'content'.
+            stream (bool): Whether to stream the response.
+            verbose (bool): Whether responses should be verbose.
+            **kwargs (typing.Any): Additional keyword arguments.
+        """
         message = [msg for msg in message if msg['role'] != 'system']  # TODO: Add system message support
         if not self._verify_message(message):
             raise _errors.InvalidMessageError()
@@ -384,6 +439,7 @@ class AsyncGraphRAGClient(
         await self._local_search_engine.aclose()
         await self._global_search_engine.aclose()
 
+    # Support for async context manager
     @typing_extensions.override
     async def __aenter__(self) -> typing.Self:
         return self

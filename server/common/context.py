@@ -3,7 +3,7 @@
 
 import contextvars
 
-from application.common import const, log
+from server.common import const, log
 
 _request_id_ctx_var: contextvars.ContextVar[str] = contextvars.ContextVar(
     const.Constants.REQUEST_ID_CTX_KEY,

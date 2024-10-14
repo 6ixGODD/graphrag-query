@@ -55,7 +55,10 @@ class Config(pydantic_settings.BaseSettings):
     # GraphRAG Configurations
     graphrag_config_file: typing.Annotated[
         typing.Optional[str],
-        pydantic.Field(..., min_length=1, max_length=50, pattern=r".*\.(json|yaml|toml|yml)")
+        pydantic.Field(
+            ...,
+            min_length=1, max_length=50, pattern=r".*\.(json|yaml|toml|yml)"
+        )
     ] = None
 
     # Model Configurations

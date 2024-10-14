@@ -15,6 +15,7 @@ from . import (
     _search,
     types as _types,
 )
+from ._search._engine import _base_engine
 
 _Response_T = typing.TypeVar('_Response_T')
 
@@ -48,6 +49,19 @@ class AsyncContextManager(abc.ABC):
 
 
 class BaseClient(abc.ABC, typing.Generic[_Response_T]):
+    """The base class for GraphRAG client.
+
+    Args:
+        _config (graphrag_query._config.GraphRAGConfig): The configuration object.
+        _logger (graphrag_query._base_engine.Logger): Logger object.
+
+    Methods:
+        from_config_file: Class method to create an instance of the client from a configuration file.
+        from_config_dict: Class method to create an instance of the client from a configuration dictionary.
+        chat: Method to chat with the engine.
+        close: Method to release resources.
+    """
+
     _config: _cfg.GraphRAGConfig
     _chat_llm: typing.Union[_search.ChatLLM, _search.AsyncChatLLM]
     _embedding: _search.Embedding
@@ -55,7 +69,7 @@ class BaseClient(abc.ABC, typing.Generic[_Response_T]):
     _global_context_loader: _search.GlobalContextLoader
     _local_search_engine: typing.Union[_search.LocalSearchEngine, _search.AsyncLocalSearchEngine]
     _global_search_engine: typing.Union[_search.GlobalSearchEngine, _search.AsyncGlobalSearchEngine]
-    _logger: typing.Optional[_types.Logger]
+    _logger: typing.Optional[_base_engine.Logger]
 
     @classmethod
     @abc.abstractmethod
@@ -70,7 +84,7 @@ class BaseClient(abc.ABC, typing.Generic[_Response_T]):
         self,
         *,
         _config: _cfg.GraphRAGConfig,
-        _logger: typing.Optional[_types.Logger],
+        _logger: typing.Optional[_base_engine.Logger],
         **kwargs: typing.Any
     ) -> None: ...
 

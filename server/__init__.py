@@ -6,8 +6,16 @@ from __future__ import annotations
 import fastapi
 import tabulate
 
-from application import handler, config, router
-from application.common import middleware, log, graphrag
+from server import (
+    config,
+    handler,
+    router,
+)
+from server.common import (
+    graphrag,
+    log,
+    middleware,
+)
 
 
 def create_app() -> fastapi.FastAPI:

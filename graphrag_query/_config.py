@@ -220,7 +220,11 @@ class GlobalSearchConfig(pydantic.BaseModel):
         pydantic.Field(..., env="KWARGS")
     ] = None
 
-    @pydantic.field_serializer('map_sys_prompt', 'reduce_sys_prompt', 'general_knowledge_sys_prompt')
+    @pydantic.field_serializer(
+        'map_sys_prompt',
+        'reduce_sys_prompt',
+        'general_knowledge_sys_prompt'
+    )
     def __serialize_prompt(self, prompt: typing.Optional[str]) -> typing.Optional[str]:
         return prompt[:50] + '...' if prompt and len(prompt) > 50 else prompt
 
@@ -247,6 +251,16 @@ class GraphRAGConfig(pydantic_settings.BaseSettings):
         config_file: typing.Union[str, os.PathLike[str], pathlib.Path],
         **kwargs: typing.Any,
     ) -> GraphRAGConfig:
+        """
+        Load the configuration from a file. The file format is determined by the file extension.
+
+        Args:
+            config_file (Union[str, os.PathLike[str], pathlib.Path]): Path to the configuration file.
+            **kwargs (Any): Additional keyword arguments to pass to the constructor.
+
+        Returns:
+            GraphRAGConfig: The configuration object.
+        """
         config_file_ = pathlib.Path(config_file)
         if not config_file_.exists():
             raise FileNotFoundError(f"Config file not found: {config_file_}")
@@ -256,14 +270,14 @@ class GraphRAGConfig(pydantic_settings.BaseSettings):
 
         if config_file_.suffix == '.json':
             import json
-            with open(config_file_, 'r') as f:
+            with open(config_file_, 'r', encoding='utf-8') as f:
                 config_dict = json.load(f)
         elif config_file_.suffix == '.toml':
             try:
                 import toml
             except ImportError:
                 raise ImportError("Please install the 'toml' package to read TOML files.")
-            with open(config_file_, 'r') as f:
+            with open(config_file_, 'r', encoding='utf-8') as f:
                 config_dict = toml.load(f)
         else:
             try:

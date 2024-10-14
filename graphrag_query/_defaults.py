@@ -7,15 +7,16 @@ import sys
 import typing
 import warnings
 
-from . import (_version, types as _types)
+from . import _version
+from ._search._engine import _base_engine
 
 __all__ = [
     'get_default_logger',
 ]
 
-
 _DEFAULT_LOGGING_LEVEL = 'INFO'
 _DEFAULT_LOGGING_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+
 
 def get_default_logger(
     *,
@@ -26,7 +27,7 @@ def get_default_logger(
     rotation: typing.Optional[str] = None,
     retention: typing.Optional[str] = None,
     serialize: typing.Optional[bool] = None
-) -> _types.Logger:
+) -> _base_engine.Logger:
     serialize = serialize if serialize is not None else True
     try:
         import loguru as _loguru
@@ -78,7 +79,7 @@ def get_default_logger(
             )
 
         _loguru_logger = _loguru_logger.bind(namespace=f'{_version.__title__}@{_version.__version__}')
-        return typing.cast(_types.Logger, _loguru_logger)
+        return typing.cast(_base_engine.Logger, _loguru_logger)
 
     except ImportError:
         warnings.warn('Required package "loguru" not found. Using default logger instead.')
@@ -112,4 +113,4 @@ def get_default_logger(
             _err_file_handler.setFormatter(_logging.Formatter(fmt or _DEFAULT_LOGGING_FORMAT))
             _logger.addHandler(_err_file_handler)
 
-        return typing.cast(_types.Logger, _logger)
+        return typing.cast(_base_engine.Logger, _logger)

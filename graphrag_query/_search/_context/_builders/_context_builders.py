@@ -270,7 +270,9 @@ class LocalContextBuilder(BaseContextBuilder):
         # if there is conversation history, attached the previous user questions to the current query
         if conversation_history:
             pre_user_questions = "\n".join(
-                conversation_history.get_user_turns(conversation_history_max_turns)
+                # TODO: Change to all turns for including assistant answers as well
+                # conversation_history.get_user_turns(conversation_history_max_turns)
+                conversation_history.get_all_turns(conversation_history_max_turns)
             )
             query = f"{query}\n{pre_user_questions}"
 

@@ -7,7 +7,6 @@ import dataclasses
 import typing
 
 
-# TODO: Instead of using dataclasses, use pydantic models?
 @dataclasses.dataclass
 class VectorStoreDocument:
     """A document that is stored in vector storage."""

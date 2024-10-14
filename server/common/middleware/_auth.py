@@ -8,8 +8,8 @@ import typing
 
 from starlette import types
 
-from application import dto
-from application.common import const
+from server import dto
+from server.common import const
 
 
 class AuthMiddleware:

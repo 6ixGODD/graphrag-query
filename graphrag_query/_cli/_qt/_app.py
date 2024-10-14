@@ -21,7 +21,6 @@ from PyQt6.QtGui import (
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
-    QLabel,
     QPushButton,
     QScrollArea,
     QSizePolicy,
@@ -32,6 +31,8 @@ from PyQt6.QtWidgets import (
 )
 
 from .. import _api
+
+MAX_USER_MESSAGE_WIDTH = 400
 
 CHAT_WINDOW_STYLE = """
 QWidget {
@@ -99,17 +100,33 @@ QPushButton:hover {
 """
 
 USER_MESSAGE_STYLE = """
-QLabel {
-    background-color: #808080;  
-    padding: 5px;
-    color: #FFFFFF;  
+
+/* same as QLabel */
+QTextBrowser {
+    color: #FFFFFF;  /* White font color */
+    background-color: #808080;
     border-top-left-radius: 8px;
     border-bottom-left-radius: 8px;
     border-bottom-right-radius: 8px;
     border-top-right-radius: 0px;  
+    padding: 5px;
+    text-align: left;
 }
-QLabel:hover {
+QTextBrowser:hover {
     background-color: #696969; 
+}
+AutoResizingTextBrowser {
+    color: #FFFFFF;  /* White font color */
+    background-color: #808080;
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    border-top-right-radius: 0px;
+    padding: 5px;
+    text-align: left;
+}
+AutoResizingTextBrowser:hover {
+    background-color: #696969;
 }
 """
 
@@ -176,8 +193,9 @@ class ChatWorker(QObject):
 
 # noinspection PyUnresolvedReferences
 class AutoResizingTextBrowser(QTextBrowser):
-    def __init__(self, parent: typing.Optional[QWidget] = None) -> None:
+    def __init__(self, parent: typing.Optional[QWidget] = None, adjust: bool = False) -> None:
         super().__init__(parent)
+        self.adjust_width = adjust
         document = self.document()
         if document:
             document.contentsChanged.connect(self.adjust_height)
@@ -186,10 +204,24 @@ class AutoResizingTextBrowser(QTextBrowser):
         document = self.document()
         if not document:
             return
-        docHeight = document.size().height()
-        margins = self.contentsMargins()
-        totalHeight = docHeight + margins.top() + margins.bottom() + self.frameWidth() * 2
+        if self.adjust_width:
+            font_metrics = self.fontMetrics()
+            text_width = font_metrics.boundingRect(self.toPlainText()).width()
+            self.setFixedWidth(min(text_width, MAX_USER_MESSAGE_WIDTH) + 20)
+            print("=" * 80)
+            print(f"Plain Text: {self.toPlainText()}")
+            print(f"Text width: {text_width}")
+            print(f"Max width: {self.maximumWidth()}")
+            print("=" * 80)
+
+        docHeight = document.documentLayout().documentSize().height()
+        totalHeight = docHeight + self.frameWidth() * 2
+
         self.setFixedHeight(int(totalHeight))
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.adjust_height()
 
 
 # noinspection PyUnresolvedReferences
@@ -335,7 +367,11 @@ class ChatWindow(QWidget):
 
     @staticmethod
     def create_message_widget(text: str, sender: str = 'User') -> QWidget:
-        message_widget: typing.Union[QLabel, AutoResizingTextBrowser]
+        # Create a container to set alignment
+        container = QWidget()
+        container_layout = QVBoxLayout()
+        container_layout.setContentsMargins(10, 5, 10, 5)
+
         # Create message container
         if sender == 'Assistant':
             message_widget = AutoResizingTextBrowser()
@@ -343,27 +379,20 @@ class ChatWindow(QWidget):
             message_widget.setStyleSheet(ASSISTANT_MESSAGE_STYLE)
             message_widget.setOpenExternalLinks(True)
             message_widget.setOpenLinks(True)
-            message_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+            message_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
             message_widget.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+            message_widget.setHtml(markdown.markdown(text))
 
-            html_content = markdown.markdown(text)
-            message_widget.setHtml(html_content)
-        else:
-            message_widget = QLabel(text)
-            message_widget.setWordWrap(True)
-            message_widget.setStyleSheet(USER_MESSAGE_STYLE)
-            message_widget.setFixedHeight(message_widget.sizeHint().height())
-            message_widget.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        # Create a container to set alignment
-        container = QWidget()
-        container_layout = QVBoxLayout()
-        container_layout.setContentsMargins(10, 5, 10, 5)
-
-        # Set alignment
-        if sender == 'User':
-            container_layout.addWidget(message_widget, 0, Qt.AlignmentFlag.AlignRight)
-        else:
             container_layout.addWidget(message_widget, 0, Qt.AlignmentFlag.AlignTop)
+        else:
+            message_widget = AutoResizingTextBrowser(adjust=True)
+            message_widget.setReadOnly(True)
+            message_widget.setStyleSheet(USER_MESSAGE_STYLE)
+            message_widget.setOpenExternalLinks(False)
+            message_widget.setOpenLinks(False)
+            message_widget.setPlainText(text)
+            message_widget.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+            container_layout.addWidget(message_widget, 0, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight)
 
         container.setLayout(container_layout)
         return container

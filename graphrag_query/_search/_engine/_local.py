@@ -57,6 +57,7 @@ class LocalSearchEngine(_base_engine.QueryEngine):
             raise ValueError("Either context_loader or context_builder must be provided")
 
         if context_loader:
+            # If context_loader is provided, load context_builder from it
             context_builder = context_loader.to_context_builder(
                 embedder=embedding,
                 community_level=community_level or _defaults.DEFAULT__LOCAL_SEARCH__COMMUNITY_LEVEL,

@@ -20,6 +20,7 @@ ROLE__ASSISTANT = "assistant"
 
 
 class ConversationRole(str, enum.Enum):
+    # TODO: Use typing.Literal instead of string enum
     """Enum for conversation roles."""
     SYSTEM = ROLE__SYSTEM
     USER = ROLE__USER
@@ -128,13 +129,13 @@ class ConversationHistory:
 
     def get_user_turns(self, max_user_turns: int = 1) -> typing.List[str]:
         """Get the last user turns in the conversation history."""
-        user_turns = []
-        for turn in self._turns:
-            if turn.role == ConversationRole.USER:
-                user_turns.append(turn.content)
-                if max_user_turns and len(user_turns) >= max_user_turns:
-                    break
-        return user_turns
+        return [turn.content
+                for turn in list(self._turns)
+                if turn.role == ConversationRole.USER][-max_user_turns:]
+
+    def get_all_turns(self, max_turns: int = 10) -> typing.List[str]:
+        """Get all turns in the conversation history."""
+        return [turn.content for turn in list(self._turns)[-max_turns:]]
 
     def build_context(
         self,

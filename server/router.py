@@ -9,8 +9,8 @@ import fastapi
 import openai
 
 import graphrag_query
-from application import dto
-from application.common import const, context, errors, graphrag, utils
+from server import dto
+from server.common import const, context, errors, graphrag, utils
 
 _root = fastapi.APIRouter()
 

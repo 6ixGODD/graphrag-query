@@ -7,7 +7,7 @@ import http
 
 from starlette import types
 
-from application.common import const, context, errors
+from server.common import const, context, errors
 
 
 class LoggingMiddleware:

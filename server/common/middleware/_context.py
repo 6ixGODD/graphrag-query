@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from starlette import types
 
-from application.common import const, context, utils
+from server.common import const, context, utils
 
 
 class ContextMiddleware:
@@ -38,6 +38,7 @@ class ContextMiddleware:
         else:
             context.clear_ip()
             context.set_ip(scope[const.Constants.CLIENT_SCOPE_KEY][0])
+
         async def send_wrapper(message) -> None:
             # Add request ID to the response headers
             if message[const.Constants.TYPE_MESSAGE_KEY] == "http.response.start":

@@ -17,7 +17,15 @@ from .. import (
 )
 
 
-class Logger(typing.Protocol):  # TODO: Refactor
+class Logger(typing.Protocol):
+    """
+    A protocol for a logger object.
+
+    This protocol is compatible with the standard library's `logging.Logger` class and
+    some other logging libraries like `loguru.logger.Logger`. It is used to provide
+    logging functionality to the query engine.
+    """
+
     def error(self, msg: str, *args, **kwargs: typing.Any) -> None: ...
 
     def warning(self, msg: str, *args, **kwargs: typing.Any) -> None: ...
@@ -28,6 +36,13 @@ class Logger(typing.Protocol):  # TODO: Refactor
 
 
 class QueryEngine(abc.ABC):
+    """
+    Base class for a GraphRAG query engine.
+
+    This class defines the interface for a query engine that can be used to interact with
+    a GraphRAG model. It provides methods for searching the model with a query and
+    returning the results.
+    """
     _chat_llm: _llm.BaseChatLLM
     _embedding: _llm.BaseEmbedding
     _context_builder: _context.BaseContextBuilder

@@ -48,7 +48,7 @@ class GraphRAGCli(_base_client.ContextManager):
         self._verbose = verbose
         self._engine = engine
         self._stream = stream
-        self._conversation_history = collections.deque(maxlen=10)
+        self._conversation_history = collections.deque(maxlen=30)
         self._logger = _utils.CLILogger()
 
         self._graphrag_client = _client.GraphRAGClient(

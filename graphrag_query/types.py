@@ -6,6 +6,7 @@ from __future__ import annotations
 import typing
 
 from ._search import _types
+from ._search._engine import _base_engine
 from ._search._llm import _types as _llm_types
 
 MessageParam_T: typing.TypeAlias = _llm_types.MessageParam_T
@@ -22,17 +23,7 @@ __all__ = [
     'AsyncStreamResponse_T',
 ]
 
-
-class Logger(typing.Protocol):
-    def error(self, msg: str, *args, **kwargs: typing.Any) -> None: ...
-
-    def warning(self, msg: str, *args, **kwargs: typing.Any) -> None: ...
-
-    def info(self, msg: str, *args, **kwargs: typing.Any) -> None: ...
-
-    def debug(self, msg: str, *args, **kwargs: typing.Any) -> None: ...
-
-
+Logger: typing.TypeAlias = _base_engine.Logger
 Response: typing.TypeAlias = _types.SearchResult
 ResponseVerbose: typing.TypeAlias = _types.SearchResultVerbose
 ResponseChunk: typing.TypeAlias = _types.SearchResultChunk
