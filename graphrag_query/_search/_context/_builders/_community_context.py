@@ -1,6 +1,16 @@
 # Copyright (c) 2024 Microsoft Corporation.
 # Licensed under the MIT License
 
+"""
+Module for building community context data for system prompts in the GraphRAG framework.
+
+Functions:
+    build_community_context: Prepares community report data as context for system prompts.
+    _compute_community_weights: Calculates community weight based on associated entities and text units.
+    _rank_report_context: Sorts community report data by community weight and rank.
+    _convert_report_context_to_df: Converts community report context records into a pandas DataFrame.
+"""
+
 from __future__ import annotations
 
 import random
@@ -33,12 +43,42 @@ def build_community_context(
     random_state: int = 86,
 ) -> _types.Context_T:
     """
-    Prepare community report data table as context data for system prompt.
+    Prepares community report data as a context table for system prompts.
 
-    If entities are provided, the community weight is calculated as the count of text units associated with entities
-    within the community.
+    Args:
+        community_reports:
+            A list of community reports to include in the context.
+        entities:
+            An optional list of entities associated with the community reports.
+        token_encoder: An optional token encoder for calculating token counts.
+        use_community_summary:
+            Whether to use the community summary or the full content.
+        column_delimiter:
+            The delimiter to use for separating columns in the context data.
+        shuffle_data:
+            Whether to shuffle the community reports before adding them to the
+            context.
+        include_community_rank:
+            Whether to include community rank in the context.
+        min_community_rank:
+            The minimum rank required for a community report to be included.
+        community_rank_name: The name of the column used for community rank.
+        include_community_weight:
+            Whether to include community weight in the context.
+        community_weight_name: The name of the column used for community weight.
+        normalize_community_weight:
+            Whether to normalize the community weight across reports.
+        data_max_tokens:
+            The maximum number of tokens allowed in the context data.
+        single_batch: Whether to limit the context to a single batch.
+        context_name: The name to use for the context section.
+        random_state:
+            A seed used to shuffle the community reports (if shuffle_data is
+            True).
 
-    The calculated weight is added as an attribute to the community reports and added to the context data table.
+    Returns:
+        A tuple containing the formatted context string and a dictionary with
+        the context data as a DataFrame.
     """
 
     def _is_included(report: _model.CommunityReport) -> bool:
@@ -169,7 +209,23 @@ def _compute_community_weights(
     weight_attribute: str = "occurrence",
     normalize: bool = True,
 ) -> typing.List[_model.CommunityReport]:
-    """Calculate a community's weight as count of text units associated with entities within the community."""
+    """
+    Calculates a community's weight as the count of text units associated with
+    entities in the community.
+
+    Args:
+        community_reports:
+            A list of community reports to update with weight information.
+        entities:
+            A list of entities to use for calculating the community weights.
+        weight_attribute:
+            The name of the attribute to store the calculated weight.
+        normalize:
+            Whether to normalize the weights across all community reports.
+
+    Returns:
+        A list of community reports with updated weight information.
+    """
     if not entities:
         return community_reports
 
@@ -207,7 +263,18 @@ def _rank_report_context(
     weight_column: typing.Optional[str] = "occurrence weight",
     rank_column: typing.Optional[str] = "rank",
 ) -> pd.DataFrame:
-    """Sort report context by community weight and rank if existed."""
+    """
+    Sorts the report context by community weight and rank, if these attributes
+    are provided.
+
+    Args:
+        report_df: A DataFrame containing the community report data.
+        weight_column: The name of the column containing community weights.
+        rank_column: The name of the column containing community ranks.
+
+    Returns:
+        A sorted DataFrame based on the community weight and rank.
+    """
     rank_attributes: typing.List[str] = []
     if weight_column:
         rank_attributes.append(weight_column)
@@ -226,7 +293,19 @@ def _convert_report_context_to_df(
     weight_column: typing.Optional[str] = None,
     rank_column: typing.Optional[str] = None,
 ) -> pd.DataFrame:
-    """Convert report context records to pandas dataframe and sort by weight and rank if existed."""
+    """
+    Converts community report context records into a pandas DataFrame and sorts
+    by weight and rank.
+
+    Args:
+        context_records: A list of records representing community reports.
+        header: A list of column headers for the DataFrame.
+        weight_column: An optional column name for community weights.
+        rank_column: An optional column name for community ranks.
+
+    Returns:
+        A pandas DataFrame containing the community report context data.
+    """
     if len(context_records) == 0:
         return pd.DataFrame()
 

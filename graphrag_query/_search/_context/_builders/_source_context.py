@@ -1,6 +1,14 @@
 # Copyright (c) 2024 Microsoft Corporation.
 # Licensed under the MIT License
 
+"""
+Module for preparing text-unit data and counting relationships for system prompts in the GraphRAG framework.
+
+Functions:
+    build_text_unit_context: Prepares text-unit data as context for system prompts.
+    count_relationships: Counts the number of relationships associated with a text unit for a given entity.
+"""
+
 from __future__ import annotations
 
 import random
@@ -22,7 +30,26 @@ def build_text_unit_context(
     context_name: str = "Sources",
     random_state: int = 86,
 ) -> typing.Tuple[str, typing.Dict[str, pd.DataFrame]]:
-    """Prepare text-unit data table as context data for system prompt."""
+    """
+    Prepares text-unit data as a context table for use in system prompts.
+
+    Args:
+        text_units: A list of text units to include in the context.
+        token_encoder: An optional token encoder to calculate token counts.
+        column_delimiter:
+            The delimiter to use for separating columns in the context data.
+        shuffle_data:
+            Whether to shuffle the text units before adding them to the context.
+        data_max_tokens:
+            The maximum number of tokens allowed in the context data.
+        context_name: The name to use for the context section.
+        random_state:
+            A seed used to shuffle the text units (if shuffle_data is True).
+
+    Returns:
+        A tuple containing the formatted context string and a dictionary with
+        the context data as a DataFrame.
+    """
     if text_units is None or len(text_units) == 0:
         return "", {}
 
@@ -76,7 +103,19 @@ def build_text_unit_context(
 def count_relationships(
     text_unit: _model.TextUnit, entity: _model.Entity, relationships: typing.Dict[str, _model.Relationship]
 ) -> int:
-    """Count the number of relationships of the selected entity that are associated with the text unit."""
+    """
+    Counts the number of relationships associated with a text unit for a given
+    entity.
+
+    Args:
+        text_unit: The text unit whose relationships will be counted.
+        entity: The entity for which relationships will be checked.
+        relationships: A dictionary of all relationships in the dataset.
+
+    Returns:
+        The number of relationships associated with the text unit for the given
+        entity.
+    """
     if text_unit.relationship_ids is None:
         entity_relationships = [
             rel for rel in relationships.values() if rel.source == entity.title or rel.target == entity.title

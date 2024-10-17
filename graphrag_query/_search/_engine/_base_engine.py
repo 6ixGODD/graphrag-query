@@ -19,11 +19,12 @@ from .. import (
 
 class Logger(typing.Protocol):
     """
-    A protocol for a logger object.
+    A protocol for defining basic logging behavior for a logger object.
 
-    This protocol is compatible with the standard library's `logging.Logger` class and
-    some other logging libraries like `loguru.logger.Logger`. It is used to provide
-    logging functionality to the query engine.
+    This protocol specifies the logging methods required to log messages at
+    different severity levels, making it compatible with mainstream logging
+    systems, such as Python's built-in `logging` module. It is designed to be
+    used for collecting logs of internal processes in GraphRAG.
     """
 
     def error(self, msg: str, *args, **kwargs: typing.Any) -> None: ...
@@ -37,11 +38,18 @@ class Logger(typing.Protocol):
 
 class QueryEngine(abc.ABC):
     """
-    Base class for a GraphRAG query engine.
+    Base class for GraphRAG query engines.
 
-    This class defines the interface for a query engine that can be used to interact with
-    a GraphRAG model. It provides methods for searching the model with a query and
-    returning the results.
+    This class defines the structure and behavior for executing queries in
+    GraphRAG. It manages components such as a chat language model, embeddings,
+    and a context builder, while providing methods to execute and handle query
+    results. It supports both streaming and non-streaming search results.
+
+    Attributes:
+        _chat_llm: The chat language model instance.
+        _embedding: The embedding model instance for text vectorization.
+        _context_builder: The context builder that manages search context.
+        _logger: Optional logger for logging internal engine events.
     """
     _chat_llm: _llm.BaseChatLLM
     _embedding: _llm.BaseEmbedding
@@ -51,6 +59,15 @@ class QueryEngine(abc.ABC):
     @property
     @abc.abstractmethod
     def context_builder(self) -> _context.BaseContextBuilder:
+        """
+        Retrieves the context builder instance for the engine.
+
+        The context builder is used to manage the search context and can be
+        shared across multiple engines to avoid costly reinitialization.
+
+        Returns:
+            The context builder instance.
+        """
         ...
 
     def __init__(
@@ -76,6 +93,28 @@ class QueryEngine(abc.ABC):
         stream: bool = False,
         **kwargs: typing.Any,
     ) -> typing.Union[_types.SearchResult_T, _types.StreamSearchResult_T]:
+        """
+        Executes a search query using the engine.
+
+        Args:
+            query: The search query string.
+            conversation_history:
+                A conversation history object or list of dictionaries containing
+                prior user and assistant messages.
+            verbose:
+                If True, returns detailed search results (`SearchResultVerbose`
+                or `SearchResultChunkVerbose` (if `steam` is Ture)). Otherwise,
+                returns basic results (`SearchResult` or `SearchResultChunk`).
+            stream:
+                If True, enables streaming mode and returns an iterator of
+                search results chunk by chunk. If False, returns the result once
+                the query is complete.
+            **kwargs: Additional parameters for the search engine.
+
+        Returns:
+            A search result object or a stream of result chunks, depending on
+            the mode.
+        """
         ...
 
     def _parse_result(
@@ -90,6 +129,37 @@ class QueryEngine(abc.ABC):
         reduce_context_data: typing.Optional[typing.Dict[str, pd.DataFrame]] = None,
         reduce_context_text: typing.Optional[typing.Union[str, typing.List[str]]] = None,
     ) -> _types.SearchResult_T:
+        """
+        Parses the non-streaming search result from the language model response.
+
+        Converts the LLM response into either a `SearchResult` or a
+        `SearchResultVerbose` object, depending on the verbosity level.
+
+        Args:
+            result: The chat response from the LLM.
+            verbose:
+                Whether to return a detailed (`SearchResultVerbose`) or basic
+                (`SearchResult`) result.
+            created: The timestamp when the search was initiated.
+            context_data:
+                Optional additional context data in DataFrame format. Only used
+                in verbose mode.
+            context_text:
+                Optional additional context text, as a string or list of
+                strings. Only used in verbose mode.
+            map_result:
+                Optional results from the map phase of a global search. Only
+                used in verbose mode.
+            reduce_context_data:
+                Optional context data for the reduce phase of a global search.
+                Only used in verbose mode.
+            reduce_context_text:
+                Optional context text for the reduce phase of a global search.
+                Only used in verbose mode.
+
+        Returns:
+            A search result object.
+        """
         usage = _types.Usage(
             completion_tokens=result.usage.completion_tokens,
             prompt_tokens=result.usage.prompt_tokens,
@@ -143,6 +213,38 @@ class QueryEngine(abc.ABC):
         reduce_context_data: typing.Optional[typing.Dict[str, pd.DataFrame]] = None,
         reduce_context_text: typing.Optional[typing.Union[str, typing.List[str]]] = None,
     ) -> _types.StreamSearchResult_T:
+        """
+        Parses the streaming search result from the language model response.
+
+        Converts the LLM response into a generator that yields either
+        `SearchResultChunk` or `SearchResultChunkVerbose` objects depending on
+        the verbosity level.
+
+        Args:
+            result: The chat response from the LLM.
+            verbose:
+                Whether to return a detailed (`SearchResultVerbose`) or basic
+                (`SearchResult`) result.
+            created: The timestamp when the search was initiated.
+            context_data:
+                Optional additional context data in DataFrame format. Only used
+                in verbose mode.
+            context_text:
+                Optional additional context text, as a string or list of
+                strings. Only used in verbose mode.
+            map_result:
+                Optional results from the map phase of a global search. Only
+                used in verbose mode.
+            reduce_context_data:
+                Optional context data for the reduce phase of a global search.
+                Only used in verbose mode.
+            reduce_context_text:
+                Optional context text for the reduce phase of a global search.
+                Only used in verbose mode.
+
+        Yields:
+            A search result chunk object.
+        """
         for chunk in result:
             usage = _types.Usage(
                 completion_tokens=chunk.usage.completion_tokens,
@@ -196,6 +298,10 @@ class QueryEngine(abc.ABC):
                 )
 
     def close(self) -> None:
+        """
+        Closes the resources used by the engine, including the language model
+        and embedding components.
+        """
         self._chat_llm.close()
         self._embedding.close()
 
@@ -216,6 +322,20 @@ class QueryEngine(abc.ABC):
 
 
 class AsyncQueryEngine(abc.ABC):
+    """
+    Base class for asynchronous GraphRAG query engines.
+
+    This class defines the structure and behavior for executing asynchronous queries
+    in GraphRAG. It manages components such as an asynchronous chat language model,
+    embeddings, and a context builder, while providing methods to execute and handle
+    query results. It supports both streaming and non-streaming search results.
+
+    Attributes:
+        _chat_llm: The asynchronous chat language model instance.
+        _embedding: The embedding model instance for text vectorization.
+        _context_builder: The context builder that manages search context.
+        _logger: Optional logger for logging internal engine events.
+    """
     _chat_llm: _llm.BaseAsyncChatLLM
     _embedding: _llm.BaseEmbedding
     _context_builder: _context.BaseContextBuilder
@@ -224,6 +344,15 @@ class AsyncQueryEngine(abc.ABC):
     @property
     @abc.abstractmethod
     def context_builder(self) -> _context.BaseContextBuilder:
+        """
+        Retrieves the context builder instance for the engine.
+
+        The context builder is used to manage the search context and can be
+        shared across multiple engines to avoid costly reinitialization.
+
+        Returns:
+            The context builder instance.
+        """
         ...
 
     def __init__(
@@ -249,6 +378,28 @@ class AsyncQueryEngine(abc.ABC):
         stream: bool = False,
         **kwargs: typing.Any,
     ) -> typing.Union[_types.SearchResult_T, _types.AsyncStreamSearchResult_T]:
+        """
+        Asynchronously executes a search query using the engine.
+
+        Args:
+            query: The search query string.
+            conversation_history:
+                A conversation history object or list of dictionaries containing
+                prior user and assistant messages.
+            verbose:
+                If True, returns detailed search results (`SearchResultVerbose`
+                or `SearchResultChunkVerbose` (if `steam` is Ture)). Otherwise,
+                returns basic results (`SearchResult` or `SearchResultChunk`).
+            stream:
+                If True, enables streaming mode and returns an async iterator of
+                search results chunk by chunk. If False, returns the result once
+                the query is complete.
+            **kwargs: Additional parameters for the search engine.
+
+        Returns:
+            A search result object or a stream of result chunks, depending on
+            the mode.
+        """
         ...
 
     def _parse_result(
@@ -263,6 +414,37 @@ class AsyncQueryEngine(abc.ABC):
         reduce_context_data: typing.Optional[typing.Dict[str, pd.DataFrame]] = None,
         reduce_context_text: typing.Optional[typing.Union[str, typing.List[str]]] = None,
     ) -> _types.SearchResult_T:
+        """
+        Parses the non-streaming search result from the language model response.
+
+        Converts the LLM response into either a `SearchResult` or a
+        `SearchResultVerbose` object, depending on the verbosity level.
+
+        Args:
+            result: The chat response from the LLM.
+            verbose:
+                Whether to return a detailed (`SearchResultVerbose`) or basic
+                (`SearchResult`) result.
+            created: The timestamp when the search was initiated.
+            context_data:
+                Optional additional context data in DataFrame format. Only used
+                in verbose mode.
+            context_text:
+                Optional additional context text, as a string or list of
+                strings. Only used in verbose mode.
+            map_result:
+                Optional results from the map phase of a global search. Only
+                used in verbose mode.
+            reduce_context_data:
+                Optional context data for the reduce phase of a global search.
+                Only used in verbose mode.
+            reduce_context_text:
+                Optional context text for the reduce phase of a global search.
+                Only used in verbose mode.
+
+        Returns:
+            A search result object.
+        """
         usage = _types.Usage(
             completion_tokens=result.usage.completion_tokens,
             prompt_tokens=result.usage.prompt_tokens,
@@ -316,6 +498,38 @@ class AsyncQueryEngine(abc.ABC):
         reduce_context_data: typing.Optional[typing.Dict[str, pd.DataFrame]] = None,
         reduce_context_text: typing.Optional[typing.Union[str, typing.List[str]]] = None,
     ) -> _types.AsyncStreamSearchResult_T:
+        """
+        Parses the streaming search result from the language model response.
+
+        Converts the LLM response into an async generator that yields either
+        `SearchResultChunk` or `SearchResultChunkVerbose` objects depending on
+        the verbosity level.
+
+        Args:
+            result: The chat response from the LLM.
+            verbose:
+                Whether to return a detailed (`SearchResultVerbose`) or basic
+                (`SearchResult`) result.
+            created: The timestamp when the search was initiated.
+            context_data:
+                Optional additional context data in DataFrame format. Only used
+                in verbose mode.
+            context_text:
+                Optional additional context text, as a string or list of
+                strings. Only used in verbose mode.
+            map_result:
+                Optional results from the map phase of a global search. Only
+                used in verbose mode.
+            reduce_context_data:
+                Optional context data for the reduce phase of a global search.
+                Only used in verbose mode.
+            reduce_context_text:
+                Optional context text for the reduce phase of a global search.
+                Only used in verbose mode.
+
+        Yields:
+            A search result chunk object.
+        """
         async for chunk in result:
             usage = _types.Usage(
                 completion_tokens=chunk.usage.completion_tokens,

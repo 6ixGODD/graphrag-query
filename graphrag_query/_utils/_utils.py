@@ -5,8 +5,8 @@ from __future__ import annotations
 
 import inspect
 import json
-import warnings
 import typing
+import warnings
 
 import json_repair
 
@@ -26,12 +26,12 @@ def filter_kwargs(
     by the function itself, but are instead used by other functions called by the function.
 
     Args:
-        func (Callable): The function to filter keyword arguments for.
-        kwargs_ (Dict[str, Any]): The keyword arguments to filter.
-        prefix (str, optional): The prefix to add to the keyword arguments. Defaults to "".
+        func: The function to filter keyword arguments for.
+        kwargs_: The keyword arguments to filter.
+        prefix: The prefix to add to the keyword arguments. Defaults to "".
 
     Returns:
-        Dict[str, Any]: The filtered keyword arguments.
+        The filtered keyword arguments.
     """
 
     # Remove the prefix of the keyword arguments
@@ -52,10 +52,10 @@ def deserialize_json(json_: str) -> typing.Dict[str, typing.Any]:
     string is then deserialized and returned as a dictionary.
 
     Args:
-        json_ (str): The JSON string to deserialize.
+        json_: The JSON string to deserialize.
 
     Returns:
-        Dict[str, Any]: The deserialized JSON string as a dictionary.
+        The deserialized JSON string as a dictionary.
     """
 
     try:

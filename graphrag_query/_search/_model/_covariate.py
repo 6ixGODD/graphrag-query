@@ -13,7 +13,8 @@ class Covariate(_identified.Identified):
     A protocol for a covariate in the system.
 
     Covariates are metadata associated with a subject, e.g. entity claims.
-    Each subject (e.g. entity) may be associated with multiple types of covariates.
+    Each subject (e.g. entity) may be associated with multiple types of
+    covariates.
     """
 
     subject_id: str = ""
@@ -26,9 +27,14 @@ class Covariate(_identified.Identified):
     """The covariate type."""
 
     text_unit_ids: typing.Optional[typing.List[str]] = None
-    """typing.List of text unit IDs in which the covariate info appears (optional)."""
+    """
+    typing.List of text unit IDs in which the covariate info appears (optional).
+    """
 
     document_ids: typing.Optional[typing.List[str]] = None
-    """typing.List of document IDs in which the covariate info appears (optional)."""
+    """
+    
+    typing.List of document IDs in which the covariate info appears (optional).
+    """
 
     attributes: typing.Optional[typing.Dict[str, typing.Any]] = None

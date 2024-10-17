@@ -252,14 +252,24 @@ class GraphRAGConfig(pydantic_settings.BaseSettings):
         **kwargs: typing.Any,
     ) -> GraphRAGConfig:
         """
-        Load the configuration from a file. The file format is determined by the file extension.
+        Loads the configuration from a file. The file format is determined by
+        the file extension.
+
+        Supported file formats: JSON (.json), TOML (.toml), YAML (.yaml, .yml).
 
         Args:
-            config_file (Union[str, os.PathLike[str], pathlib.Path]): Path to the configuration file.
-            **kwargs (Any): Additional keyword arguments to pass to the constructor.
+            config_file: Path to the configuration file.
+            **kwargs: Additional keyword arguments to pass to the constructor.
 
         Returns:
-            GraphRAGConfig: The configuration object.
+            GraphRAGConfig: The configuration object initialized from the file.
+
+        Raises:
+            FileNotFoundError: If the configuration file does not exist.
+            ValueError: If the file format is unsupported.
+            ImportError:
+                If the required package for reading the file format is not
+                installed.
         """
         config_file_ = pathlib.Path(config_file)
         if not config_file_.exists():
@@ -290,6 +300,16 @@ class GraphRAGConfig(pydantic_settings.BaseSettings):
         return cls(**config_dict, **kwargs)
 
     def __init__(self, **kwargs: typing.Any) -> None:
+        """
+        Initializes the GraphRAGConfig object, ensuring all required fields are
+        present.
+
+        Args:
+            **kwargs: Configuration parameters for initialization.
+
+        Raises:
+            GraphRAGWarning: If a required field is missing or invalid.
+        """
         # Ensure all fields are present
         for field in self.__fields__.keys():
             if (field not in kwargs or not isinstance(kwargs[field], dict)

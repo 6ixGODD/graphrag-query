@@ -37,12 +37,12 @@ class Entity(_named.Named):
 
     rank: int = 1
     """
-    Rank of the entity, used for sorting (optional). Higher rank indicates more important 
-    entity. This can be based on centrality or other metrics.
+    Rank of the entity, used for sorting (optional). Higher rank indicates more 
+    important entity. This can be based on centrality or other metrics.
     """
 
     attributes: typing.Optional[typing.Dict[str, typing.Any]] = None
     """
-    Additional attributes associated with the entity (optional), e.g. start time, end 
-    time, etc. To be included in the search prompt.
+    Additional attributes associated with the entity (optional), e.g. start 
+    time, end time, etc. To be included in the search prompt.
     """

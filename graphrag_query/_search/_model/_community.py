@@ -22,12 +22,12 @@ class Community(_named.Named):
 
     covariate_ids: typing.Optional[typing.Dict[str, typing.List[str]]] = None
     """
-    typing.Dictionary of different types of covariates related to the community (optional), 
-    e.g. claims
+    typing.Dictionary of different types of covariates related to the community 
+    (optional), e.g. claims
     """
 
     attributes: typing.Optional[typing.Dict[str, typing.Any]] = None
     """
-    A dictionary of additional attributes associated with the community (optional). 
-    To be included in the search prompt.
+    A dictionary of additional attributes associated with the community 
+    (optional). To be included in the search prompt.
     """

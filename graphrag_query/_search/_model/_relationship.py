@@ -9,8 +9,10 @@ from . import _identified
 
 
 class Relationship(_identified.Identified):
-    """A relationship between two entities. This is a generic relationship, and can be used to represent any type of 
-    relationship between any two entities."""
+    """
+    A relationship between two entities. This is a generic relationship, and
+    can be used to represent any type of relationship between any two entities.
+    """
 
     source: str = ""
     """The source entity name."""
@@ -35,6 +37,6 @@ class Relationship(_identified.Identified):
 
     attributes: typing.Optional[typing.Dict[str, typing.Any]] = None
     """
-    Additional attributes associated with the relationship (optional). To be included 
-    in the search prompt
+    Additional attributes associated with the relationship (optional). To be 
+    included in the search prompt
     """

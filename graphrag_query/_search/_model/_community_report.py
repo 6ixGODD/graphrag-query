@@ -21,13 +21,22 @@ class CommunityReport(_named.Named):
     """Full content of the report."""
 
     rank: float = 1.0
-    """Rank of the report, used for sorting (optional). Higher means more important"""
+    """
+    Rank of the report, used for sorting (optional). Higher means more 
+    important.
+    """
 
     summary_embedding: typing.Optional[typing.List[float]] = None
-    """The semantic (i.e. text) embedding of the report summary (optional)."""
+    """
+    The semantic (i.e. text) embedding of the report summary (optional).
+    """
 
     full_content_embedding: typing.Optional[typing.List[float]] = None
-    """The semantic (i.e. text) embedding of the full report content (optional)."""
+    """
+    The semantic (i.e. text) embedding of the full report content (optional).
+    """
 
     attributes: typing.Optional[typing.Dict[str, typing.Any]] = None
-    """A dictionary of additional attributes associated with the report (optional)."""
+    """
+    A dictionary of additional attributes associated with the report (optional).
+    """

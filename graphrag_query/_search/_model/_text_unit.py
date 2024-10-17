@@ -24,7 +24,10 @@ class TextUnit(_identified.Identified):
     """List of relationship IDs related to the text unit (optional)."""
 
     covariate_ids: typing.Optional[typing.Dict[str, typing.List[str]]] = None
-    """Dictionary of different types of covariates related to the text unit (optional)."""
+    """
+    Dictionary of different types of covariates related to the text unit 
+    (optional).
+    """
 
     n_tokens: typing.Optional[int] = None
     """The number of tokens in the text (optional)."""
@@ -33,4 +36,7 @@ class TextUnit(_identified.Identified):
     """List of document IDs in which the text unit appears (optional)."""
 
     attributes: typing.Optional[typing.Dict[str, typing.Any]] = None
-    """A dictionary of additional attributes associated with the text unit (optional)."""
+    """
+    A dictionary of additional attributes associated with the text unit
+    (optional).
+    """

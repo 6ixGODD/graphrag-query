@@ -1,6 +1,23 @@
 # Copyright (c) 2024 Microsoft Corporation.
 # Licensed under the MIT License
 
+"""
+Module for building context data tables for system prompts, including entities,
+relationships, and covariates, for use in the GraphRAG framework.
+
+Functions:
+    build_entity_context: Prepares entity data as context for system prompts.
+    build_covariates_context:
+        Prepares covariate data as context for system prompts.
+    build_relationship_context:
+        Prepares relationship data as context for system prompts.
+    _filter_relationships:
+        Filters and sorts relationships based on selected entities.
+    get_candidate_context:
+        Prepares candidate context tables for entities, relationships, and
+        covariates.
+"""
+
 from __future__ import annotations
 
 import collections
@@ -27,7 +44,24 @@ def build_entity_context(
     column_delimiter: str = "|",
     context_name: str = "Entities",
 ) -> typing.Tuple[str, pd.DataFrame]:
-    """Prepare entity data table as context data for system prompt."""
+    """
+    Prepares entity data as a context table for use in system prompts.
+
+    Args:
+        selected_entities: A list of entities to include in the context.
+        token_encoder: An optional token encoder to calculate token counts.
+        data_max_tokens:
+            The maximum number of tokens allowed in the context data.
+        include_entity_rank: Whether to include entity ranking information.
+        rank_description: A description for the ranking column (if included).
+        column_delimiter:
+            The delimiter to use for separating columns in the context data.
+        context_name: The name to use for the context section.
+
+    Returns:
+        A tuple containing the formatted context string and a DataFrame
+        representing the context data.
+    """
     if len(selected_entities) == 0:
         return "", pd.DataFrame()
 
@@ -87,7 +121,23 @@ def build_covariates_context(
     column_delimiter: str = "|",
     context_name: str = "_model.Covariates",
 ) -> typing.Tuple[str, pd.DataFrame]:
-    """Prepare covariate data tables as context data for system prompt."""
+    """
+    Prepares covariate data as a context table for use in system prompts.
+
+    Args:
+        selected_entities: A list of entities to include in the context.
+        covariates: A list of covariates related to the selected entities.
+        token_encoder: An optional token encoder to calculate token counts.
+        data_max_tokens:
+            The maximum number of tokens allowed in the context data.
+        column_delimiter:
+            The delimiter to use for separating columns in the context data.
+        context_name: The name to use for the context section.
+
+    Returns:
+        A tuple containing the formatted context string and a DataFrame
+        representing the context data.
+    """
     # create an empty list of covariates
     if len(selected_entities) == 0 or len(covariates) == 0:
         return "", pd.DataFrame()
@@ -156,7 +206,28 @@ def build_relationship_context(
     column_delimiter: str = "|",
     context_name: str = "_model.Relationships",
 ) -> typing.Tuple[str, pd.DataFrame]:
-    """Prepare relationship data tables as context data for system prompt."""
+    """
+    Prepares relationship data as a context table for use in system prompts.
+
+    Args:
+        selected_entities: A list of entities for which to gather relationships.
+        relationships: A list of relationships between entities.
+        token_encoder: An optional token encoder to calculate token counts.
+        include_relationship_weight:
+            Whether to include relationship weights in the context.
+        data_max_tokens:
+            The maximum number of tokens allowed in the context data.
+        top_k_relationships: The maximum number of top relationships to include.
+        relationship_ranking_attribute:
+            The attribute used to rank relationships.
+        column_delimiter:
+            The delimiter to use for separating columns in the context data.
+        context_name: The name to use for the context section.
+
+    Returns:
+        A tuple containing the formatted context string and a DataFrame
+        representing the context data.
+    """
     selected_relationships = _filter_relationships(
         selected_entities=selected_entities,
         relationships=relationships,
@@ -224,7 +295,26 @@ def _filter_relationships(
     top_k_relationships: int = 10,
     relationship_ranking_attribute: str = "rank",
 ) -> typing.List[_model.Relationship]:
-    """Filter and sort relationships based on a set of selected entities and a ranking attribute."""
+    """
+    Filters and sorts relationships based on the selected entities and a ranking
+    attribute.
+
+    Relationships are divided into in-network (between selected entities) and
+    out-of-network (between selected and non-selected entities), and then sorted
+    based on their relevance.
+
+    Args:
+        selected_entities:
+            A list of entities to use for filtering relationships.
+        relationships: A list of all relationships to filter and rank.
+        top_k_relationships:
+            The maximum number of relationships to include per entity.
+        relationship_ranking_attribute:
+            The attribute used to rank relationships.
+
+    Returns:
+        A list of filtered and ranked relationships.
+    """
     # First priority: in-network relationships (i.e. relationships between selected entities)
     in_network_relationships = _relationships.get_in_network_relationships(
         selected_entities=selected_entities,
@@ -310,7 +400,29 @@ def get_candidate_context(
     entity_rank_description: str = "number of relationships",
     include_relationship_weight: bool = False,
 ) -> typing.Dict[str, pd.DataFrame]:
-    """Prepare entity, relationship, and covariate data tables as context data for system prompt."""
+    """
+    Prepares candidate context data tables for entities, relationships, and
+    covariates.
+
+    This method retrieves relevant entities, relationships, and covariates, and
+    prepares them as candidate context tables, which can then be used to
+    construct the final context for system prompts.
+
+    Args:
+        selected_entities: A list of selected entities relevant to the context.
+        entities: A list of all entities in the dataset.
+        relationships: A list of relationships to consider.
+        covariates: A dictionary of covariates grouped by type.
+        include_entity_rank:
+            Whether to include the rank of entities in the context.
+        entity_rank_description: A description for the entity rank column.
+        include_relationship_weight:
+            Whether to include the weight of relationships in the context.
+
+    Returns:
+        A dictionary containing DataFrames for entities, relationships, and
+        covariates.
+    """
     candidate_context = {}
     candidate_relationships = _relationships.get_candidate_relationships(
         selected_entities=selected_entities,

@@ -32,17 +32,26 @@ class GraphRAGClient(
     _base_client.ContextManager,
 ):
     """
-    The GraphRAG client class. Encapsulates the GraphRAG search engine.
+    Synchronous client for interacting with the GraphRAG system.
 
-    Args:
-        config (graphrag_query._config.GraphRAGConfig): Configuration settings.
-        logger (graphrag_query._base_engine.Logger): Logger object. For internal logging.
+    This class integrates configuration, local and global search engines, and
+    logging to perform the entire GraphRAG lifecycle. It allows users to execute
+    chat-based interactions using either local or global search strategies,
+    manage resources, and handle logging.
+
+    Attributes:
+        _config: The configuration object for the GraphRAG system.
+        _chat_llm: The synchronous language model used for chat interactions.
+        _embedding: The embedding model used for handling entity embeddings.
+        _local_search_engine: The search engine for performing local searches.
+        _global_search_engine: The search engine for performing global searches.
+        _logger:
+            Optional logger for recording internal events and debugging
+            information.
     """
     _config: _cfg.GraphRAGConfig
     _chat_llm: _search.ChatLLM
     _embedding: _search.Embedding
-    _local_context_loader: _search.LocalContextLoader
-    _global_context_loader: _search.GlobalContextLoader
     _local_search_engine: _search.LocalSearchEngine
     _global_search_engine: _search.GlobalSearchEngine
     _logger: typing.Optional[_base_engine.Logger]
@@ -73,6 +82,16 @@ class GraphRAGClient(
         config: _cfg.GraphRAGConfig,
         logger: typing.Optional[_base_engine.Logger] = None,
     ) -> None:
+        """
+        Initializes the GraphRAGClient with the given configuration and logger.
+
+        Args:
+            config: The configuration object for the GraphRAG system.
+            logger:
+                Optional logger for logging client events. If not provided, a
+                default logger will be created based on the configuration
+                settings.
+        """
         self._config = config
         self._logger = logger or _defaults.get_default_logger(
             level=self._config.logging.level,
@@ -118,17 +137,13 @@ class GraphRAGClient(
         # Initialize ContextLoader objects
         if self._logger:
             self._logger.info(f'Initializing the LocalContextLoader with directory: {self._config.context.directory}')
-        self._local_context_loader = _search.LocalContextLoader.from_parquet_directory(
+        local_context_loader = _search.LocalContextLoader.from_parquet_directory(
             self._config.context.directory,
             **(self._config.context.kwargs or {}),
         )
 
         if self._logger:
             self._logger.info(f'Initializing the GlobalContextLoader with directory: {self._config.context.directory}')
-        self._global_context_loader = _search.GlobalContextLoader.from_parquet_directory(
-            self._config.context.directory,
-            **(self._config.context.kwargs or {}),
-        )
 
         # Initialize search engines
         if self._logger:
@@ -136,7 +151,7 @@ class GraphRAGClient(
         self._local_search_engine = _search.LocalSearchEngine(
             chat_llm=self._chat_llm,
             embedding=self._embedding,
-            context_loader=self._local_context_loader,
+            context_loader=local_context_loader,
             sys_prompt=self._config.local_search.sys_prompt,
             community_level=self._config.local_search.community_level,
             store_coll_name=self._config.local_search.store_coll_name,
@@ -180,20 +195,41 @@ class GraphRAGClient(
         **kwargs: typing.Any
     ) -> typing.Union[_types.Response_T, _types.StreamResponse_T]:
         """
-        Chat with the GraphRAG search engine.
+        Performs a chat-based interaction using the specified search engine
+        (local or global).
 
         Args:
-            engine (typing.Literal['local', 'global']): The search engine to use.
-            message (_types.MessageParam_T): The message to search with. Should be a list of
-                                             dictionaries with keys 'role' and 'content'.
-            stream (bool): Whether to stream the response.
-            verbose (bool): Whether responses should be verbose.
-            **kwargs (typing.Any): Additional keyword arguments.
+            engine:
+                Specifies whether to use the local or global search engine.
+                Defaults to 'local'.
+            message:
+                An iterable of dictionaries representing the entire chat history
+                and the current message.
+                Each dictionary must contain the following keys:
+                - 'role': The role of the message sender, which can be 'user',
+                          'assistant', 'system', 'tool', or 'function'.
+                          Currently, 'system', 'tool', and 'function' roles are
+                          not supported and will be ignored.
+                - 'content': The actual content of the message.
+            stream:
+                If True, enables streaming mode to receive the response
+                incrementally. Defaults to False.
+            verbose:
+                If True, returns a detailed response with additional
+                information. Recommended to be False in production environments.
+                Defaults to False.
+            **kwargs: Additional arguments.
 
         Returns:
-            typing.Union[_types.Response_T, _types.StreamResponse_T]:
-                The response from the search engine.
+            The response from the LLM, either complete or streamed, based on the
+            `stream` argument.
+
+        Raises:
+            InvalidMessageError: If the message format is invalid.
+            InvalidEngineError: If the specified engine is not recognized.
         """
+        # TODO: Add support for system, function, and tool roles
+        message = [msg for msg in message if msg['role'] not in ['system', 'function', 'tool']]
         if not self._verify_message(message):
             if self._logger:
                 self._logger.error(f'Invalid message: {message}')
@@ -229,6 +265,10 @@ class GraphRAGClient(
 
     @typing_extensions.override
     def close(self) -> None:
+        """
+        Closes the client and releases any resources held by the search engines
+        and language models.
+        """
         self._local_search_engine.close()
         self._global_search_engine.close()
 
@@ -253,17 +293,29 @@ class AsyncGraphRAGClient(
     _base_client.AsyncContextManager,
 ):
     """
-    The asynchronous GraphRAG client class. Encapsulates the AsyncGraphRAG search engine.
+    Asynchronous client for interacting with the GraphRAG system.
 
-    Args:
-        config (graphrag_query._config.GraphRAGConfig): The configuration object.
-        logger (graphrag_query._base_engine.Logger): Logger object. For internal logging.
+    This class provides an asynchronous implementation for integrating
+    configuration, local and global search engines, and logging to perform the
+    entire GraphRAG lifecycle. It allows users to execute chat-based
+    interactions asynchronously using either local or global search strategies,
+    manage resources, and handle logging.
+
+    Attributes:
+        _config: The configuration object for the GraphRAG system.
+        _chat_llm: The asynchronous language model used for chat interactions.
+        _embedding: The embedding model used for handling entity embeddings.
+        _local_search_engine:
+            The search engine for performing local searches asynchronously.
+        _global_search_engine:
+            The search engine for performing global searches asynchronously.
+        _logger:
+            Optional logger for recording internal events and debugging
+            information.
     """
     _config: _cfg.GraphRAGConfig
     _chat_llm: _search.AsyncChatLLM
     _embedding: _search.Embedding
-    _local_context_loader: _search.LocalContextLoader
-    _global_context_loader: _search.GlobalContextLoader
     _local_search_engine: _search.AsyncLocalSearchEngine
     _global_search_engine: _search.AsyncGlobalSearchEngine
     _logger: typing.Optional[_base_engine.Logger]
@@ -292,6 +344,17 @@ class AsyncGraphRAGClient(
         config: _cfg.GraphRAGConfig,
         logger: typing.Optional[_base_engine.Logger] = None,
     ) -> None:
+        """
+        Initializes the AsyncGraphRAGClient with the given configuration and
+        logger.
+
+        Args:
+            config: The configuration object for the GraphRAG system.
+            logger:
+                Optional logger for logging client events. If not provided, a
+                default logger will be created based on the configuration
+                settings.
+        """
         self._config = config
         self._logger = logger or _defaults.get_default_logger(
             level=self._config.logging.level,
@@ -337,7 +400,7 @@ class AsyncGraphRAGClient(
 
         if self._logger:
             self._logger.info(f'Initializing the LocalContextLoader with directory: {self._config.context.directory}')
-        self._local_context_loader = _search.LocalContextLoader.from_parquet_directory(
+        local_context_loader = _search.LocalContextLoader.from_parquet_directory(
             self._config.context.directory,
             **(self._config.context.kwargs or {}),
         )
@@ -347,7 +410,7 @@ class AsyncGraphRAGClient(
         self._local_search_engine = _search.AsyncLocalSearchEngine(
             chat_llm=self._chat_llm,
             embedding=self._embedding,
-            context_loader=self._local_context_loader,
+            context_loader=local_context_loader,
             sys_prompt=self._config.local_search.sys_prompt,
             community_level=self._config.local_search.community_level,
             store_coll_name=self._config.local_search.store_coll_name,
@@ -392,17 +455,41 @@ class AsyncGraphRAGClient(
         **kwargs: typing.Any
     ) -> typing.Union[_types.Response_T, _types.AsyncStreamResponse_T]:
         """
-        Chat with the GraphRAG search engine asynchronously.
+        Asynchronously performs a chat-based interaction using the specified
+        search engine (local or global).
 
         Args:
-            engine (typing.Literal['local', 'global']): The search engine to use.
-            message (_types.MessageParam_T): The message to search with. Should be a list of
-                                             dictionaries with keys 'role' and 'content'.
-            stream (bool): Whether to stream the response.
-            verbose (bool): Whether responses should be verbose.
-            **kwargs (typing.Any): Additional keyword arguments.
+            engine:
+                Specifies whether to use the local or global search engine.
+                Defaults to 'local'.
+            message:
+                An iterable of dictionaries representing the entire chat history
+                and the current message. Each dictionary must contain the
+                following keys:
+                - 'role': The role of the message sender, which can be 'user',
+                          'assistant', 'system', 'tool', or 'function'.
+                          Currently, 'system', 'tool', and 'function' roles are
+                          not supported and will be ignored.
+                - 'content': The actual content of the message.
+            stream:
+                If True, enables streaming mode to receive the response
+                incrementally. Defaults to False.
+            verbose:
+                If True, returns a detailed response with additional
+                information. Recommended to be False in production environments.
+                Defaults to False.
+            **kwargs: Additional arguments for customizing the chat interaction.
+
+        Returns:
+            The response from the LLM, either complete or streamed, based on the
+            `stream` argument.
+
+        Raises:
+            InvalidMessageError: If the message format is invalid.
+            InvalidEngineError: If the specified engine is not recognized.
         """
-        message = [msg for msg in message if msg['role'] != 'system']  # TODO: Add system message support
+        # TODO: Add support for system, function, and tool roles
+        message = [msg for msg in message if msg['role'] not in ['system', 'function', 'tool']]
         if not self._verify_message(message):
             raise _errors.InvalidMessageError()
 
@@ -436,6 +523,10 @@ class AsyncGraphRAGClient(
 
     @typing_extensions.override
     async def close(self) -> None:
+        """
+        Asynchronously closes the client and releases any resources held by the
+        search engines and language models.
+        """
         await self._local_search_engine.aclose()
         await self._global_search_engine.aclose()
 

@@ -16,6 +16,6 @@ class Identified(pydantic.BaseModel):
 
     short_id: typing.Optional[str] = None
     """
-    Human readable ID used to refer to this community in prompts or texts displayed to users, 
-    such as in a report text (optional).
+    Human readable ID used to refer to this community in prompts or texts 
+    displayed to users, such as in a report text (optional).
     """

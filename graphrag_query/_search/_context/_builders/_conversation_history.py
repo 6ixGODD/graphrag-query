@@ -81,7 +81,16 @@ class QATurn:
 
 
 class ConversationHistory:
-    """Class for storing a conversation history."""
+    """
+    ConversationHistory is a class for storing and managing conversation turns.
+    It supports adding new conversation turns, converting the conversation
+    history to different formats, and preparing it as context data for system
+    prompts.
+
+    Attributes:
+        A deque of conversation turns, with an optional maximum length to limit
+        the number of stored turns.
+    """
 
     _turns: typing.Deque[ConversationTurn]
 
@@ -95,9 +104,20 @@ class ConversationHistory:
         max_length: typing.Optional[int] = None,
     ) -> typing.Self:
         """
-        Create a conversation history from a list of conversation turns.
+        Creates a ConversationHistory instance from a list of conversation
+        turns.
 
-        Each turn is a dictionary in the form of `{"role": "<conversation_role>", "content": "<turn content>"}`
+        Args:
+            conversation_turns:
+                A list of conversation turns where each turn is represented as
+                a dictionary with keys "role" (the role of the speaker, such as
+                user or assistant) and "content" (the content of the turn).
+            max_length:
+                An optional maximum length for the conversation history deque.
+                If provided, limits the number of turns that can be stored.
+
+        Returns:
+            A new instance of ConversationHistory with the provided turns.
         """
         history = cls(max_length=max_length)
         for turn in conversation_turns:
@@ -112,7 +132,14 @@ class ConversationHistory:
         self._turns.append(ConversationTurn(role=role, content=content))
 
     def to_qa_turns(self) -> typing.List[QATurn]:
-        """Convert conversation history to a list of QA turns."""
+        """
+        Converts the conversation history into a list of QA turns (user query
+        and assistant responses).
+
+        Returns:
+            A list of QATurn objects representing the conversation as a series
+            of user queries and corresponding assistant answers.
+        """
         qa_turns: typing.List[QATurn] = []
         current_qa_turn = None
         for turn in self._turns:
@@ -128,13 +155,29 @@ class ConversationHistory:
         return qa_turns
 
     def get_user_turns(self, max_user_turns: int = 1) -> typing.List[str]:
-        """Get the last user turns in the conversation history."""
+        """
+        Retrieves the last user turns from the conversation history.
+
+        Args:
+            max_user_turns: The maximum number of user turns to retrieve.
+
+        Returns:
+            A list of strings representing the content of the last user turns.
+        """
         return [turn.content
                 for turn in list(self._turns)
                 if turn.role == ConversationRole.USER][-max_user_turns:]
 
     def get_all_turns(self, max_turns: int = 10) -> typing.List[str]:
-        """Get all turns in the conversation history."""
+        """
+        Retrieves all turns from the conversation history, up to the specified maximum.
+
+        Args:
+            max_turns: The maximum number of turns to retrieve.
+
+        Returns:
+            A list of strings representing the content of the turns.
+        """
         return [turn.content for turn in list(self._turns)[-max_turns:]]
 
     def build_context(
@@ -148,7 +191,29 @@ class ConversationHistory:
         context_name: str = "Conversation History",
     ) -> _types.SingleContext_T:
         """
-        Prepare conversation history as context data for system prompt.
+        Prepares the conversation history as context data for system prompts.
+
+        This method converts the conversation history into a structured context
+        suitable for inclusion in system prompts, while respecting token limits
+        and various formatting options.
+
+        Args:
+            token_encoder:
+                An optional token encoder for calculating token counts.
+            include_user_turns_only:
+                If True, only include user turns in the context.
+            max_qa_turns: The maximum number of QA turns to include.
+            data_max_tokens:
+                The maximum number of tokens allowed for the context data.
+            recency_bias: If True, prioritize more recent conversation turns.
+            column_delimiter:
+                The delimiter used to separate columns in the context data.
+            context_name:
+                The name of the context section for conversation history.
+
+        Returns:
+            A tuple containing the context as a string and a dictionary with the
+            context data as a DataFrame.
         """
         qa_turns = self.to_qa_turns()
         if include_user_turns_only:
@@ -198,5 +263,13 @@ class ConversationHistory:
         return context_text, {context_name.lower(): current_context_df}
 
     def to_dict(self) -> typing.List[typing.Dict[str, str]]:
-        """Convert conversation history to a list of dictionaries."""
+        """
+        Converts the conversation history into a list of dictionaries.
+
+        Each dictionary represents a conversation turn, with the role (user or
+        assistant) and the corresponding content.
+
+        Returns:
+            A list of dictionaries representing the conversation history.
+        """
         return [{"role": turn.role.value, "content": turn.content} for turn in self._turns]

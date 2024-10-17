@@ -21,6 +21,26 @@ from .._search import _types as _search_types
 
 
 class GraphRAGCli(_base_client.ContextManager):
+    """
+    Synchronous Command Line Interface (CLI) client for interacting with the
+    GraphRAG system.
+
+    This class allows users to interact with the GraphRAG system via the command
+    line in a synchronous manner. It manages conversation history, handles user
+    messages, and outputs assistant responses to the console. It integrates with
+    the `GraphRAGClient` to perform local or global searches based on user
+    input.
+
+    Attributes:
+        _verbose: A boolean indicating whether verbose logging is enabled.
+        _engine: Specifies the search engine to use ('local' or 'global').
+        _stream: A boolean indicating whether to use streaming responses.
+        _conversation_history:
+            A deque storing the conversation history with a maximum length.
+        _graphrag_client:
+            An instance of `GraphRAGClient` used to interact with the GraphRAG
+            system.
+    """
     _verbose: bool
     _engine: typing.Literal['local', 'global']
     _stream: bool
@@ -45,6 +65,21 @@ class GraphRAGCli(_base_client.ContextManager):
         engine: typing.Literal['local', 'global'],
         stream: bool,
     ):
+        """
+        Initializes the GraphRAGCli with the provided configuration and parameters.
+
+        Args:
+            verbose: If True, enables verbose logging.
+            chat_llm_base_url: Optional base URL for the chat language model API.
+            chat_llm_api_key: API key for the chat language model.
+            chat_llm_model: Name of the chat language model to use.
+            embedding_base_url: Optional base URL for the embedding model API.
+            embedding_api_key: API key for the embedding model.
+            embedding_model: Name of the embedding model to use.
+            context_dir: Directory path where context data files are stored.
+            engine: Specifies whether to use the 'local' or 'global' search engine.
+            stream: If True, enables streaming mode for responses.
+        """
         self._verbose = verbose
         self._engine = engine
         self._stream = stream
@@ -74,6 +109,18 @@ class GraphRAGCli(_base_client.ContextManager):
         )
 
     def chat(self, message: str, **kwargs: typing.Any) -> typing.Union[typing.Iterator[str], str]:
+        """
+        Sends a message to the assistant and returns the assistant's response.
+
+        Args:
+            message: The user's input message to send to the assistant.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            The assistant's response. If streaming is enabled, returns an
+            iterator over response chunks; otherwise, returns the full response
+            string.
+        """
         self._conversation_history.append({'role': 'user', 'content': message})
         response = self._graphrag_client.chat(
             engine=self._engine,
@@ -89,9 +136,22 @@ class GraphRAGCli(_base_client.ContextManager):
             return self._parse_response(response)
 
     def clear_history(self) -> None:
+        """
+        Clears the conversation history.
+        """
         self._conversation_history.clear()
 
     def _parse_stream_response(self, response: _search_types.StreamSearchResult_T) -> typing.Iterator[str]:
+        """
+        Parses a streaming response from the assistant and yields response
+        chunks.
+
+        Args:
+            response: The streaming response object from the assistant.
+
+        Yields:
+            Chunks of the assistant's response as they are received.
+        """
         content = ''
         response = typing.cast(_search_types.StreamSearchResult_T, response)
         for chunk in response:
@@ -104,6 +164,15 @@ class GraphRAGCli(_base_client.ContextManager):
         self._conversation_history.append({'role': 'assistant', 'content': content})
 
     def _parse_response(self, response: _search_types.SearchResult_T) -> str:
+        """
+        Parses a complete response from the assistant and returns it.
+
+        Args:
+            response: The complete response object from the assistant.
+
+        Returns:
+            The assistant's response as a string.
+        """
         response = typing.cast(_search_types.SearchResult_T, response)
         sys.stdout.write(str(response.choice.message.content) or '')
         sys.stdout.write('\n')
@@ -112,9 +181,18 @@ class GraphRAGCli(_base_client.ContextManager):
         return str(response.choice.message.content)
 
     def close(self) -> None:
+        """
+        Closes the underlying GraphRAG client and releases resources.
+        """
         self._graphrag_client.close()
 
     def conversation_history(self) -> typing.List[typing.Dict[typing.Literal['role', 'content'], str]]:
+        """
+        Retrieves the current conversation history.
+
+        Returns:
+            The conversation history as a list of message dictionaries.
+        """
         return list(self._conversation_history)
 
     @typing_extensions.override
@@ -141,6 +219,26 @@ class GraphRAGCli(_base_client.ContextManager):
 
 
 class AsyncGraphRAGCli(_base_client.AsyncContextManager):
+    """
+    Asynchronous Command Line Interface (CLI) client for interacting with the
+    GraphRAG system.
+
+    This class allows users to interact with the GraphRAG system via the command
+    line in an asynchronous manner. It manages conversation history, handles
+    user messages, and outputs assistant responses to the console. It integrates
+    with the `AsyncGraphRAGClient` to perform local or global searches based on
+    user input.
+
+    Attributes:
+        _verbose: A boolean indicating whether verbose logging is enabled.
+        _engine: Specifies the search engine to use ('local' or 'global').
+        _stream: A boolean indicating whether to use streaming responses.
+        _conversation_history:
+            A deque storing the conversation history with a maximum length.
+        _graphrag_client:
+            An instance of `AsyncGraphRAGClient` used to interact with the
+            GraphRAG system.
+    """
     _verbose: bool
     _engine: typing.Literal['local', 'global']
     _stream: bool
@@ -161,6 +259,24 @@ class AsyncGraphRAGCli(_base_client.AsyncContextManager):
         engine: typing.Literal['local', 'global'],
         stream: bool,
     ):
+        """
+        Initializes the AsyncGraphRAGCli with the provided configuration and
+        parameters.
+
+        Args:
+            verbose: If True, enables verbose logging.
+            chat_llm_base_url:
+                Optional base URL for the chat language model API.
+            chat_llm_api_key: API key for the chat language model.
+            chat_llm_model: Name of the chat language model to use.
+            embedding_base_url: Optional base URL for the embedding model API.
+            embedding_api_key: API key for the embedding model.
+            embedding_model: Name of the embedding model to use.
+            context_dir: Directory path where context data files are stored.
+            engine:
+                Specifies whether to use the 'local' or 'global' search engine.
+            stream: If True, enables streaming mode for responses.
+        """
         self._verbose = verbose
         self._engine = engine
         self._stream = stream
@@ -189,6 +305,14 @@ class AsyncGraphRAGCli(_base_client.AsyncContextManager):
         )
 
     async def chat(self, message: str, **kwargs: typing.Any) -> None:
+        """
+        Asynchronously sends a message to the assistant and outputs the
+        assistant's response.
+
+        Args:
+            message: The user's input message to send to the assistant.
+            **kwargs: Additional keyword arguments to pass to the chat method.
+        """
         self._conversation_history.append({'role': 'user', 'content': message})
         response = await self._graphrag_client.chat(
             engine=self._engine,
@@ -214,6 +338,10 @@ class AsyncGraphRAGCli(_base_client.AsyncContextManager):
             self._conversation_history.append({'role': 'assistant', 'content': str(response.choice.message.content)})
 
     async def close(self) -> None:
+        """
+        Asynchronously closes the underlying GraphRAG client and releases
+        resources.
+        """
         await self._graphrag_client.close()
 
     @typing_extensions.override

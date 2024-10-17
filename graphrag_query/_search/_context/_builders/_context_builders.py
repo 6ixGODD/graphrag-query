@@ -43,6 +43,24 @@ class BaseContextBuilder(abc.ABC):
 
 
 class GlobalContextBuilder(BaseContextBuilder):
+    """
+    GlobalContextBuilder is responsible for building the necessary context for
+    the map phase of Global Search in the GraphRAG framework. It constructs the
+    data needed to execute global search queries by gathering community reports
+    and entities from the graph index.
+
+    Attributes:
+        _community_reports:
+            A list of community reports from the graph index to be used as
+            context.
+        _entities: A list of entities (nodes) from the graph index.
+        _token_encoder:
+            An optional token encoder used to calculate token counts, ensuring
+            consistency with the encoder used by the LLM.
+        _random_state:
+            A random seed used to shuffle the data during community context
+            construction.
+    """
     _community_reports: typing.List[_model.CommunityReport]
     _entities: typing.Optional[typing.List[_model.Entity]]
     _token_encoder: typing.Optional[tiktoken.Encoding]
@@ -54,6 +72,24 @@ class GlobalContextBuilder(BaseContextBuilder):
         local_context_builder: LocalContextBuilder,
         random_state: int = 42,
     ) -> GlobalContextBuilder:
+        """
+        Creates a GlobalContextBuilder from an existing LocalContextBuilder to
+        save on construction costs.
+
+        This method reuses the data and structures already present in a
+        LocalContextBuilder to quickly initialize a GlobalContextBuilder.
+
+        Args:
+            local_context_builder:
+                The LocalContextBuilder instance whose data will be reused to
+                initialize the GlobalContextBuilder.
+            random_state:
+                The random seed used to shuffle community data.
+
+        Returns:
+            A new instance of GlobalContextBuilder initialized with data from
+            the local context builder.
+        """
         return cls(
             community_reports=list(local_context_builder.community_reports.values()),
             entities=list(local_context_builder.entities.values()),
@@ -106,7 +142,49 @@ class GlobalContextBuilder(BaseContextBuilder):
         conversation_history_max_turns: int = 5,
         **kwargs: typing.Any,
     ) -> _types.Context_T:
-        """Prepare batches of community report data table as context data for global search."""
+        """
+        Prepares batches of community report data as context for the global
+        search map phase.
+
+        This method builds the necessary context for executing the map phase of
+        Global Search by combining community reports and entities, along with
+        optional conversation history. It integrates data based on the provided
+        parameters and token limits, ensuring that the constructed context fits
+        within the designated token window.
+
+        Args:
+            conversation_history:
+                Optional conversation history to provide additional context.
+            use_community_summary:
+                Whether to use a summary of community data rather than the full reports.
+            column_delimiter:
+                The delimiter used for separating data in the context.
+            shuffle_data: Whether to shuffle the community data.
+            include_community_rank:
+                Whether to include the rank of each community in the context.
+            min_community_rank:
+                The minimum rank required for a community to be included.
+            community_rank_name: The name to use for the community rank column.
+            include_community_weight:
+                Whether to include the weight (occurrence) of each community.
+            community_weight_name:
+                The name to use for the community weight column.
+            normalize_community_weight:
+                Whether to normalize community weight values.
+            data_max_tokens:
+                The maximum number of tokens allowed for context data.
+            context_name:
+                The name to use for the context section in the final context.
+            conversation_history_user_turns_only:
+                If True, only include user turns in conversation history.
+            conversation_history_max_turns:
+                The maximum number of conversation turns to include.
+            **kwargs: Additional arguments for future expansion.
+
+        Returns:
+            he constructed context data as either a single string or a list of
+            context strings, along with any associated metadata.
+        """
         conversation_history_context = ""
         final_context_data = {}
         if conversation_history:
@@ -153,6 +231,38 @@ class GlobalContextBuilder(BaseContextBuilder):
 
 
 class LocalContextBuilder(BaseContextBuilder):
+    """
+    LocalContextBuilder is responsible for constructing context data for the
+    local search phase in GraphRAG. It collects and processes entity, community
+    report, relationship, text unit, and covariate data from the graph index and
+     prepares it for local search queries.
+
+    Attributes:
+        _entities:
+            A dictionary mapping entity IDs to their corresponding entity
+            objects in the graph index.
+        _community_reports:
+            A dictionary mapping community report IDs to community report
+            objects.
+        _text_units: A dictionary mapping text unit IDs to text unit objects.
+        _relationships:
+            A dictionary mapping relationship (edge) IDs to relationship objects
+            in the graph.
+        _covariates:
+            A dictionary mapping covariate (claim) IDs to lists of covariates.
+        _entity_text_embeddings:
+            A vector store containing the embeddings of the entities for fast
+            lookup.
+        _text_embedder:
+            The text embedding model used for generating embeddings, consistent
+            with the vector store.
+        _token_encoder:
+            An optional encoder used to calculate the number of tokens in text,
+            for alignment with LLMs.
+        _embedding_vectorstore_key:
+            A key used to identify entities when searching for matching results,
+            though this could be redesigned for a more streamlined approach.
+    """
     _entities: typing.Dict[str, _model.Entity]
     _community_reports: typing.Dict[str, _model.CommunityReport]
     _text_units: typing.Dict[str, _model.TextUnit]
@@ -256,10 +366,65 @@ class LocalContextBuilder(BaseContextBuilder):
         **kwargs: typing.Any,
     ) -> _types.Context_T:
         """
-        Build data context for local search prompt.
+        Builds context data for local search prompts by combining community
+        reports, entities, relationships, covariates, and text units according
+        to defined proportions and rules.
 
-        Build a context by combining community reports and entity/relationship/covariate tables,
-        and text units using a predefined ratio set by summary_prop.
+        This method maps user queries to relevant entities, and then constructs
+        the local context by combining entity relationships, community reports,
+        text units, and covariates. It allows for flexibility in including or
+        excluding entities, ranking based on relationships, and controlling
+        token limits for the context window.
+
+        Args:
+            query:
+                The search query used to map to relevant entities and context.
+            conversation_history:
+                Optional conversation history to provide additional context.
+            include_entity_names:
+                A list of entity names to explicitly include in the context.
+            exclude_entity_names:
+                A list of entity names to explicitly exclude from the context.
+            conversation_history_max_turns:
+                The maximum number of conversation turns to include.
+            conversation_history_user_turns_only:
+                Whether to include only user turns in conversation history.
+            data_max_tokens:
+                Maximum number of tokens to allocate for context.
+            text_unit_prop: The proportion of tokens allocated to text units.
+            community_prop:
+                The proportion of tokens allocated to community reports.
+            top_k_mapped_entities:
+                The number of top-matching entities to include in the context.
+            top_k_relationships:
+                The number of top relationships to include in the context.
+            include_community_rank:
+                Whether to include the rank of the community in the context.
+            include_entity_rank:
+                Whether to include the rank of the entity in the context.
+            rank_description:
+                Description used to explain the ranking criteria for entities.
+            include_relationship_weight:
+                Whether to include relationship weight in the context.
+            relationship_ranking_attribute:
+                The attribute used to rank relationships.
+            return_candidate_context:
+                If True, return the candidate entities/relationships/covariates
+                that were considered for inclusion in the context, not just the
+                final context.
+            use_community_summary:
+                Whether to use a summary for community data in the context.
+            min_community_rank:
+                The minimum rank a community must have to be included.
+            community_context_name:
+                The name to use for the community context section.
+            column_delimiter:
+                The delimiter to use for separating columns in the context data.
+            **kwargs: Additional arguments for future expansion.
+
+        Returns:
+            The constructed context and associated data, ready to be used in
+            local search queries.
         """
         include_entity_names = include_entity_names or []
         exclude_entity_names = exclude_entity_names or []
@@ -351,7 +516,33 @@ class LocalContextBuilder(BaseContextBuilder):
         return_candidate_context: bool = False,
         context_name: str = "Reports",
     ) -> _types.SingleContext_T:
-        """Add community data to the context window until it hits the max_tokens limit."""
+        """
+        Builds the community context by selecting relevant community reports
+        associated with the selected entities.
+
+        This method adds community data to the context window, prioritizing
+        communities that have the most relevant entities. It ensures that the
+        data stays within the token limit.
+
+        Args:
+            selected_entities:
+                A list of selected entities relevant to the query.
+            data_max_tokens: Maximum number of tokens for community data.
+            use_community_summary:
+                Whether to use community summaries instead of full reports.
+            column_delimiter: Delimiter used for separating data in the context.
+            include_community_rank:
+                Whether to include the rank of each community in the context.
+            min_community_rank:
+                The minimum rank required for a community to be included.
+            return_candidate_context:
+                If True, return the candidate communities considered for
+                inclusion.
+            context_name: The name of the context section for community data.
+
+        Returns:
+            The community context data and any associated metadata.
+        """
         if len(selected_entities) == 0 or len(self._community_reports) == 0:
             return "", {context_name.lower(): pd.DataFrame()}
 
@@ -426,7 +617,23 @@ class LocalContextBuilder(BaseContextBuilder):
         column_delimiter: str = "|",
         context_name: str = "Sources",
     ) -> _types.SingleContext_T:
-        """Rank matching text units and add them to the context window until it hits the max_tokens limit."""
+        """
+        Ranks and selects relevant text units associated with the selected
+        entities, and adds them to the context until the token limit is reached.
+
+        Args:
+            selected_entities:
+                A list of entities used to find matching text units.
+            data_max_tokens: Maximum number of tokens for the text unit context.
+            return_candidate_context:
+                If True, return the candidate text units considered for
+                inclusion.
+            column_delimiter: Delimiter used for separating data in the context.
+            context_name: The name of the context section for text unit data.
+
+        Returns:
+            The text unit context and any associated metadata.
+        """
         if not selected_entities or not self._text_units:
             return "", {context_name.lower(): pd.DataFrame()}
 
@@ -501,7 +708,30 @@ class LocalContextBuilder(BaseContextBuilder):
         return_candidate_context: bool = False,
         column_delimiter: str = "|",
     ) -> _types.SingleContext_T:
-        """Build data context for local search prompt combining entity/relationship/covariate tables."""
+        """
+        Builds the local context by combining entity, relationship, and
+        covariate data, ensuring it fits within the token limit.
+
+        Args:
+            selected_entities: A list of entities relevant to the query.
+            data_max_tokens: Maximum number of tokens for the local context.
+            include_entity_rank:
+                Whether to include the rank of the entities in the context.
+            rank_description:
+                A description of how the entity ranking is determined.
+            include_relationship_weight:
+                Whether to include the weight of relationships in the context.
+            top_k_relationships: The number of top relationships to include.
+            relationship_ranking_attribute:
+                The attribute used to rank relationships.
+            return_candidate_context:
+                If True, return the candidate relationships/covariates
+                considered for inclusion.
+            column_delimiter: Delimiter used for separating data in the context.
+
+        Returns:
+            The local context data and any associated metadata.
+        """
         # build entity context
         entity_context, entity_context_data = _local_context.build_entity_context(
             selected_entities=selected_entities,

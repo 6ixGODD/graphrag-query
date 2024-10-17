@@ -156,6 +156,9 @@ QPushButton:hover {
 
 # noinspection PyUnresolvedReferences
 class ChatWorker(QObject):
+    """
+    Worker class for handling chat messages in a separate thread.
+    """
     finished = pyqtSignal()
     responseReady = pyqtSignal(str)
 
@@ -173,6 +176,9 @@ class ChatWorker(QObject):
         self.params = params
 
     def run(self) -> None:
+        """
+        Processes the chat message and emits responses.
+        """
         response = self.cli.chat(self.message, **(self.params or {}))
         self._stream_response = typing.cast(typing.Generator[str, None, None], response)
         for chunk in self._stream_response:
@@ -182,6 +188,9 @@ class ChatWorker(QObject):
         self.finished.emit()
 
     def stop(self) -> None:
+        """
+        Stops the worker process.
+        """
         self._stop = True
         self.finished.emit()
         if self._stream_response:
@@ -193,6 +202,10 @@ class ChatWorker(QObject):
 
 # noinspection PyUnresolvedReferences
 class AutoResizingTextBrowser(QTextBrowser):
+    """
+    QTextBrowser that automatically adjusts its height based on its content.
+    """
+
     def __init__(self, parent: typing.Optional[QWidget] = None, adjust: bool = False) -> None:
         super().__init__(parent)
         self.adjust_width = adjust
@@ -201,6 +214,9 @@ class AutoResizingTextBrowser(QTextBrowser):
             document.contentsChanged.connect(self.adjust_height)
 
     def adjust_height(self) -> None:
+        """
+        Adjusts the height of the text browser to fit its content.
+        """
         document = self.document()
         if not document:
             return
@@ -226,6 +242,10 @@ class AutoResizingTextBrowser(QTextBrowser):
 
 # noinspection PyUnresolvedReferences
 class AutoResizingTextEdit(QTextEdit):
+    """
+    QTextEdit that automatically adjusts its height based on its content.
+    """
+
     def __init__(self, parent: typing.Optional[QWidget] = None) -> None:
         super().__init__(parent)
         document = self.document()
@@ -233,6 +253,9 @@ class AutoResizingTextEdit(QTextEdit):
             document.contentsChanged.connect(self.adjust_height)
 
     def adjust_height(self) -> None:
+        """
+        Adjusts the height of the text edit to fit its content.
+        """
         document = self.document()
         if not document:
             return
@@ -242,6 +265,9 @@ class AutoResizingTextEdit(QTextEdit):
         self.setFixedHeight(min(100, int(totalHeight)))
 
     def keyPressEvent(self, event):
+        """
+        Handles key press events, sending the message on Ctrl+Enter.
+        """
         if event.key() == Qt.Key.Key_Return and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
             self.parent().send_message()
         else:
@@ -250,6 +276,10 @@ class AutoResizingTextEdit(QTextEdit):
 
 # noinspection PyUnresolvedReferences
 class ChatWindow(QWidget):
+    """
+    The main window for the chat application.
+    """
+
     def __init__(self, cli: _api.GraphRAGCli, **kwargs: typing.Any) -> None:
         super().__init__()
         self.cli = cli
@@ -311,11 +341,17 @@ class ChatWindow(QWidget):
         self.setStyleSheet(CHAT_WINDOW_STYLE)
 
     def copy_conversation(self) -> None:
+        """
+        Copies the conversation history to the clipboard.
+        """
         conversation = self.cli.conversation_history()
         conversation_text = json.dumps(conversation, ensure_ascii=False, indent=4)
         typing.cast(QClipboard, QApplication.clipboard()).setText(conversation_text)
 
     def send_message(self) -> None:
+        """
+        Sends the user's message to the assistant.
+        """
         message = self.inputText.toPlainText().strip()
         if not message:
             return
@@ -348,6 +384,9 @@ class ChatWindow(QWidget):
         self.thread_.start()
 
     def clear_history(self) -> None:
+        """
+        Clears the chat history and resets the interface.
+        """
         try:
             if self.worker:
                 self.worker.stop()
@@ -367,6 +406,16 @@ class ChatWindow(QWidget):
 
     @staticmethod
     def create_message_widget(text: str, sender: str = 'User') -> QWidget:
+        """
+        Creates a message widget for the chat interface.
+
+        Args:
+            text: The message text.
+            sender: 'User' or 'Assistant' indicating the sender.
+
+        Returns:
+            The message widget.
+        """
         # Create a container to set alignment
         container = QWidget()
         container_layout = QVBoxLayout()
@@ -398,6 +447,12 @@ class ChatWindow(QWidget):
         return container
 
     def update_response(self, chunk: str) -> None:
+        """
+        Updates the assistant's response in the chat interface.
+
+        Args:
+            chunk: A chunk of the assistant's response text.
+        """
         if self.assistant_label:
             self.assistant_response_text += chunk
             # Update the content of the message widget
@@ -416,6 +471,13 @@ class ChatWindow(QWidget):
 
 
 def main(cli: _api.GraphRAGCli, **kwargs: typing.Any) -> None:
+    """
+    Runs the chat GUI application.
+
+    Args:
+        cli: An instance of GraphRAGCli.
+        **kwargs: Additional parameters.
+    """
     app = QApplication(sys.argv)
 
     # Set application palette to dark theme

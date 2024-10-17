@@ -14,6 +14,32 @@ from ... import _utils, errors as _errors
 
 
 class ChatLLM(_base_llm.BaseChatLLM):
+    """
+    Synchronous implementation of a chat-based large language model (LLM) using
+    the OpenAI API.
+
+    This class provides methods for interacting with OpenAI's chat completion
+    API in a synchronous manner. It handles sending messages and receiving
+    responses, including support for message streaming.
+
+    Attributes:
+        _model: The model identifier for the chat LLM.
+        _client: The OpenAI client instance used to communicate with the LLM.
+    """
+
+    _model: str
+    _client: openai.OpenAI
+
+    @property
+    @typing_extensions.override
+    def model(self) -> str:
+        return self._model
+
+    @model.setter
+    @typing_extensions.override
+    def model(self, value: str) -> None:
+        self._model = value
+
     def __init__(
         self,
         *,
@@ -26,6 +52,21 @@ class ChatLLM(_base_llm.BaseChatLLM):
         http_client: typing.Optional[httpx.Client] = None,
         **kwargs: typing.Any
     ) -> None:
+        """
+        Initializes the ChatLLM with the specified model and OpenAI API settings.
+
+        Args:
+            model: The model identifier to use for chat completions.
+            api_key: The API key for authenticating with the OpenAI API.
+            organization: Optional. The organization ID for the OpenAI API.
+            base_url: Optional. The base URL for the OpenAI API.
+            timeout: Optional. The request timeout in seconds.
+            max_retries:
+                Optional. The maximum number of retries for failed requests.
+            http_client:
+                Optional. The HTTP client to use for making synchronous requests.
+            **kwargs: Additional keyword arguments for `openai.OpenAI`.
+        """
         self._client = openai.OpenAI(
             api_key=api_key,
             organization=organization,
@@ -45,6 +86,23 @@ class ChatLLM(_base_llm.BaseChatLLM):
         stream: bool = False,
         **kwargs: typing.Any
     ) -> typing.Union[_types.ChatResponse_T, _types.SyncChatStreamResponse_T]:
+        """
+        Sends a chat message to the OpenAI API and retrieves a response.
+
+        Args:
+            msg: The message payload to send to the LLM.
+            stream: If True, enables streaming mode for the response.
+            **kwargs:
+                Additional keyword arguments for
+                `openai.OpenAI.chat.completions.create`.
+
+        Returns:
+            A synchronous chat response, either as a single response or a stream
+            of responses.
+
+        Raises:
+            OpenAIAPIError: If openai.APIError occurs while sending the message.
+        """
         try:
             response = self._client.chat.completions.create(
                 model=self._model,
@@ -57,6 +115,27 @@ class ChatLLM(_base_llm.BaseChatLLM):
         return typing.cast(_types.ChatCompletion, response) \
             if not stream else (typing.cast(_types.ChatCompletionChunk, c) for c in response)
 
+    @typing_extensions.override
+    def close(self) -> None:
+        self._client.close()
+
+
+class AsyncChatLLM(_base_llm.BaseAsyncChatLLM):
+    """
+    Asynchronous implementation of a chat-based large language model (LLM) using
+    the OpenAI API.
+
+    This class provides methods for interacting with OpenAI's chat completion
+    API asynchronously. It supports sending messages and receiving responses,
+    with optional streaming for chat responses.
+
+    Attributes:
+        _model: The model identifier for the chat LLM.
+        _aclient:
+            The asynchronous OpenAI client instance used to communicate with
+            the LLM.
+    """
+
     @property
     @typing_extensions.override
     def model(self) -> str:
@@ -67,12 +146,6 @@ class ChatLLM(_base_llm.BaseChatLLM):
     def model(self, value: str) -> None:
         self._model = value
 
-    @typing_extensions.override
-    def close(self) -> None:
-        self._client.close()
-
-
-class AsyncChatLLM(_base_llm.BaseAsyncChatLLM):
     def __init__(
         self,
         *,
@@ -85,6 +158,23 @@ class AsyncChatLLM(_base_llm.BaseAsyncChatLLM):
         http_client: typing.Optional[httpx.AsyncClient] = None,
         **kwargs: typing.Any
     ) -> None:
+        """
+        Initializes the AsyncChatLLM with the specified model and OpenAI API
+        settings.
+
+        Args:
+            model: The model identifier to use for chat completions.
+            api_key: The API key for authenticating with the OpenAI API.
+            organization: Optional. The organization ID for the OpenAI API.
+            base_url: Optional. The base URL for the OpenAI API.
+            timeout: Optional. The request timeout in seconds.
+            max_retries:
+                Optional. The maximum number of retries for failed requests.
+            http_client:
+                Optional. The HTTP client to use for making asynchronous
+                requests.
+            **kwargs: Additional keyword arguments for `openai.AsyncOpenAI`.
+        """
         self._aclient = openai.AsyncOpenAI(
             api_key=api_key,
             organization=organization,
@@ -104,6 +194,24 @@ class AsyncChatLLM(_base_llm.BaseAsyncChatLLM):
         stream: bool = False,
         **kwargs: typing.Any
     ) -> typing.Union[_types.ChatResponse_T, _types.AsyncChatStreamResponse_T]:
+        """
+        Asynchronously sends a chat message to the OpenAI API and retrieves a
+        response.
+
+        Args:
+            msg: The message payload to send to the LLM.
+            stream: If True, enables streaming mode for the response.
+            **kwargs:
+                Additional keyword arguments for
+                `openai.AsyncOpenAI.chat.completions.create`.
+
+        Returns:
+            An asynchronous chat response, either as a single response or a
+            stream of responses.
+
+        Raises:
+            OpenAIAPIError: If openai.APIError occurs while sending the message.
+        """
         try:
             response = await self._aclient.chat.completions.create(
                 model=self._model,
@@ -117,16 +225,6 @@ class AsyncChatLLM(_base_llm.BaseAsyncChatLLM):
         return typing.cast(_types.ChatCompletion, response) if not stream else (
             c async for c in typing.cast(_types.AsyncChatStreamResponse_T, response)
         )
-
-    @property
-    @typing_extensions.override
-    def model(self) -> str:
-        return self._model
-
-    @model.setter
-    @typing_extensions.override
-    def model(self, value: str) -> None:
-        self._model = value
 
     @typing_extensions.override
     async def aclose(self) -> None:

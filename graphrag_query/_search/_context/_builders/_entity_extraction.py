@@ -39,8 +39,8 @@ def map_query_to_entities(
     oversample_scaler: int = 2,
 ) -> typing.List[_model.Entity]:
     """
-    Extract entities that match a given query using semantic similarity of text embeddings of query and entity
-    descriptions.
+    Extract entities that match a given query using semantic similarity of text
+    embeddings of query and entity descriptions.
     """
     if include_entity_names is None:
         include_entity_names = []
@@ -135,7 +135,10 @@ def find_nearest_neighbors_by_entity_rank(
     exclude_entity_names: typing.Optional[typing.List[str]] = None,
     k: int = 10,
 ) -> typing.List[_model.Entity]:
-    """Retrieve entities that have direct connections with the target entity, sorted by entity rank."""
+    """
+    Retrieve entities that have direct connections with the target entity,
+    sorted by entity rank.
+    """
     if exclude_entity_names is None:
         exclude_entity_names = []
     entity_relationships = [
