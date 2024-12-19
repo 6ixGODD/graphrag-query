@@ -63,7 +63,7 @@ class Config(pydantic_settings.BaseSettings):
 
     # Model Configurations
     model_config = pydantic_settings.SettingsConfigDict(
-        env_prefix="GRAPH_RAG_OPENAI_",
+        env_prefix="GRAPH_RAG_OPENAI__",
         validate_default=False,
         env_nested_delimiter="__",
         env_file=".env",

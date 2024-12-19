@@ -149,6 +149,10 @@ class LocalSearchConfig(pydantic.BaseModel):
         typing.Optional[str],
         pydantic.Field(..., env="SYS_PROMPT", min_length=1, repr=False)
     ] = None
+    sys_prompt_path: typing.Annotated[
+        typing.Optional[str],
+        pydantic.Field(..., env="SYS_PROMPT_PATH", min_length=1, repr=False)
+    ] = None
     community_level: typing.Annotated[
         typing.Optional[int],
         pydantic.Field(..., env="COMMUNITY_LEVEL", ge=0)

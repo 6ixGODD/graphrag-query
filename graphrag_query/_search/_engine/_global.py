@@ -225,7 +225,7 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
             query=query,
             context=context,
             verbose=verbose,
-            sys_prompt=map_sys_prompt,
+            map_sys_prompt=map_sys_prompt,
             json_mode=self._json_mode,
             **kwargs
         ) for context in context_chunks]
@@ -245,7 +245,7 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
         query: str,
         context: str,
         verbose: bool,
-        sys_prompt: typing.Optional[str] = None,
+        map_sys_prompt: typing.Optional[str] = None,
         json_mode: bool = True,
         **kwargs: typing.Any
     ) -> _types.SearchResult_T:
@@ -266,7 +266,7 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
             verbose:
                 If True, returns a detailed SearchResultVerbose object,
                 otherwise returns a basic SearchResult object.
-            sys_prompt:
+            map_sys_prompt:
                 A temporary prompt to override the default map system prompt.
             **kwargs:
                 Additional keyword arguments. Should be prefixed with 'map__'
@@ -281,7 +281,7 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
         if self._logger:
             self._logger.info(f"Starting map for query: {query} at {created}")
 
-        prompt = (sys_prompt or self._map_sys_prompt).format_map(
+        prompt = (map_sys_prompt or self._map_sys_prompt).format_map(
             collections.defaultdict(str, context_data=context, query=query)
         )
         msg = [{"role": "system", "content": prompt}, {"role": "user", "content": query}]

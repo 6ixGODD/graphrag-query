@@ -29,6 +29,25 @@ class ClientError(GraphRAGError):
     pass
 
 
+class InvalidEngineError(GraphRAGError):
+    def __init__(
+        self,
+        engine: str,
+        message: str = "The engine is invalid"
+    ):
+        self.engine = engine
+        self.message = message
+        super().__init__(message)
+
+    @typing_extensions.override
+    def __str__(self):
+        return self.message
+
+    @typing_extensions.override
+    def __repr__(self):
+        return f"{self.__class__.__name__}(engine={self.engine!r}, message={self.message!r})"
+
+
 class CLIError(GraphRAGError):
     pass
 

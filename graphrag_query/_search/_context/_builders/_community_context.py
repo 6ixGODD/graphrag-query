@@ -2,13 +2,18 @@
 # Licensed under the MIT License
 
 """
-Module for building community context data for system prompts in the GraphRAG framework.
+Module for building community context data for system prompts in the GraphRAG
+framework.
 
 Functions:
-    build_community_context: Prepares community report data as context for system prompts.
-    _compute_community_weights: Calculates community weight based on associated entities and text units.
-    _rank_report_context: Sorts community report data by community weight and rank.
-    _convert_report_context_to_df: Converts community report context records into a pandas DataFrame.
+    build_community_context:
+        Prepares community report data as context for system prompts.
+    _compute_community_weights:
+        Calculates community weight based on associated entities and text units.
+    _rank_report_context:
+        Sorts community report data by community weight and rank.
+    _convert_report_context_to_df:
+        Converts community report context records into a pandas DataFrame.
 """
 
 from __future__ import annotations

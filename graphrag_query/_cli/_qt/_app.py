@@ -224,11 +224,6 @@ class AutoResizingTextBrowser(QTextBrowser):
             font_metrics = self.fontMetrics()
             text_width = font_metrics.boundingRect(self.toPlainText()).width()
             self.setFixedWidth(min(text_width, MAX_USER_MESSAGE_WIDTH) + 20)
-            print("=" * 80)
-            print(f"Plain Text: {self.toPlainText()}")
-            print(f"Text width: {text_width}")
-            print(f"Max width: {self.maximumWidth()}")
-            print("=" * 80)
 
         docHeight = document.documentLayout().documentSize().height()
         totalHeight = docHeight + self.frameWidth() * 2

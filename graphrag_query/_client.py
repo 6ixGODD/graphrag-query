@@ -148,11 +148,20 @@ class GraphRAGClient(
         # Initialize search engines
         if self._logger:
             self._logger.info('Initializing the LocalSearchEngine')
+        if self._config.local_search.sys_prompt_path and pathlib.Path(
+                self._config.local_search.sys_prompt_path
+                ).exists():
+            self._logger.info(f'Loading sys_prompt from file: {self._config.local_search.sys_prompt_path}')
+            with open(self._config.local_search.sys_prompt_path, 'r') as f:
+                sys_prompt = f.read()
+        else:
+            self._logger.info(f'Loading sys_prompt from config')
+            sys_prompt = self._config.local_search.sys_prompt
         self._local_search_engine = _search.LocalSearchEngine(
             chat_llm=self._chat_llm,
             embedding=self._embedding,
             context_loader=local_context_loader,
-            sys_prompt=self._config.local_search.sys_prompt,
+            sys_prompt=sys_prompt,
             community_level=self._config.local_search.community_level,
             store_coll_name=self._config.local_search.store_coll_name,
             store_uri=self._config.local_search.store_uri,

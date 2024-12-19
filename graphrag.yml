@@ -29,11 +29,12 @@ logging:
   kwargs: null
 
 context:
-  directory: 'artifacts'
+  directory: Your Context Directory
   kwargs: null
 
 local_search:
   sys_prompt: null
+  sys_prompt_path: null
   community_level: null
   store_coll_name: null
   store_uri: null

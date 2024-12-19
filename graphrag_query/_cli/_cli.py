@@ -60,7 +60,7 @@ def _parse_args() -> typing.Tuple[_Args, typing.Dict[str, typing.Any]]:
     parser.add_argument(
         "--verbose", "-v",
         action="store_true",
-        help="enable verbose logging",
+        help="Increase output verbosity for debugging",
     )
     parser.add_argument(
         "--engine", "-e",

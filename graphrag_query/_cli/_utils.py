@@ -10,7 +10,7 @@ import typing
 
 import typing_extensions
 
-from graphrag_query import (
+from .. import (
     errors as _errors,
     types as _types,
 )
