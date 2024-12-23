@@ -4,20 +4,21 @@
 from __future__ import annotations
 
 from ._base_llm import (
-    BaseAsyncChatLLM, 
+    BaseAsyncChatLLM,
     BaseAsyncEmbedding,
-    BaseChatLLM, BaseEmbedding,
+    BaseChatLLM,
+    BaseEmbedding,
 )
 from ._chat import (
     AsyncChatLLM,
     ChatLLM,
 )
 from ._embedding import (
-    AsyncEmbedding, 
+    AsyncEmbedding,
     Embedding,
 )
 from ._types import (
-    AsyncChatStreamResponse_T, 
+    AsyncChatStreamResponse_T,
     ChatResponse_T,
     EmbeddingResponse_T,
     MessageParam_T,

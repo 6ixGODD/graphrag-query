@@ -6,22 +6,16 @@ from __future__ import annotations
 import abc
 import typing
 
-import openai
 import typing_extensions
 
 from . import _types
 
 
 class BaseChatLLM(abc.ABC):
-    """
-    Abstract base class for synchronous chat-based LLMs. This class defines the
-    core interface for interacting with a chat LLM in a synchronous manner,
+    """Abstract base class for synchronous chat-based LLMs. This class defines
+    the core interface for interacting with a chat LLM in a synchronous manner,
     including methods for sending messages and retrieving responses.
-
-    Attributes:
-        _client: The OpenAI client instance used to communicate with the LLM.
     """
-    _client: openai.OpenAI
 
     @property
     @abc.abstractmethod
@@ -69,17 +63,10 @@ class BaseChatLLM(abc.ABC):
 
 
 class BaseAsyncChatLLM(abc.ABC):
-    """
-    Abstract base class for asynchronous chat-based LLMs. This class defines the
-    core interface for interacting with a chat LLM asynchronously, including
+    """Abstract base class for asynchronous chat-based LLMs. This class defines
+    the core interface for interacting with a chat LLM asynchronously, including
     methods for sending messages and retrieving responses.
-
-    Attributes:
-        _aclient:
-            The asynchronous OpenAI client instance used to communicate with
-            the LLM.
     """
-    _aclient: openai.AsyncOpenAI
 
     @property
     @abc.abstractmethod
@@ -128,14 +115,10 @@ class BaseAsyncChatLLM(abc.ABC):
 
 
 class BaseEmbedding(abc.ABC):
+    """Abstract base class for synchronous embedding models. This class defines
+    the interface for generating embeddings from text data in a synchronous
+    manner.
     """
-    Abstract base class for synchronous embedding models. This class defines the
-    interface for generating embeddings from text data in a synchronous manner.
-
-    Attributes:
-        _client: The OpenAI client instance used to generate embeddings.
-    """
-    _client: openai.OpenAI
 
     @property
     @abc.abstractmethod
@@ -176,15 +159,9 @@ class BaseEmbedding(abc.ABC):
 
 
 class BaseAsyncEmbedding(abc.ABC):
-    """
-    Abstract base class for asynchronous embedding models. This class defines
+    """Abstract base class for asynchronous embedding models. This class defines
     the interface for generating embeddings from text data asynchronously.
-
-    Attributes:
-        _aclient:
-            The asynchronous OpenAI client instance used to generate embeddings.
     """
-    _aclient: openai.AsyncOpenAI
 
     @property
     @abc.abstractmethod

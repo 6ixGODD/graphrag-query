@@ -102,8 +102,8 @@ class BaseClient(abc.ABC, typing.Generic[_Response_T]):
     """
 
     _config: _cfg.GraphRAGConfig
-    _chat_llm: typing.Union[_search.ChatLLM, _search.AsyncChatLLM]
-    _embedding: _search.Embedding
+    _chat_llm: typing.Union[_search.BaseChatLLM, _search.BaseAsyncChatLLM]
+    _embedding: _search.BaseEmbedding
     _local_search_engine: typing.Union[_search.LocalSearchEngine, _search.AsyncLocalSearchEngine]
     _global_search_engine: typing.Union[_search.GlobalSearchEngine, _search.AsyncGlobalSearchEngine]
     _logger: typing.Optional[_base_engine.Logger]

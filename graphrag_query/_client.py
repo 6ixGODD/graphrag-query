@@ -50,8 +50,8 @@ class GraphRAGClient(
             information.
     """
     _config: _cfg.GraphRAGConfig
-    _chat_llm: _search.ChatLLM
-    _embedding: _search.Embedding
+    _chat_llm: _search.BaseChatLLM
+    _embedding: _search.BaseEmbedding
     _local_search_engine: _search.LocalSearchEngine
     _global_search_engine: _search.GlobalSearchEngine
     _logger: typing.Optional[_base_engine.Logger]
@@ -80,6 +80,8 @@ class GraphRAGClient(
         self,
         *,
         config: _cfg.GraphRAGConfig,
+        chat_llm: typing.Optional[_search.BaseChatLLM] = None,
+        embedding: typing.Optional[_search.BaseEmbedding] = None,
         logger: typing.Optional[_base_engine.Logger] = None,
     ) -> None:
         """
@@ -103,36 +105,45 @@ class GraphRAGClient(
             serialize=self._config.logging.serialize,
         ) if self._config.logging.enabled else None
 
-        # Initialize LLMs
-        if self._logger:
-            self._logger.info(f'Initializing the ChatLLM with model: {self._config.chat_llm.model}')
-        self._chat_llm = _search.ChatLLM(
-            model=self._config.chat_llm.model,
-            api_key=self._config.chat_llm.api_key,
-            organization=self._config.chat_llm.organization,
-            base_url=self._config.chat_llm.base_url,
-            timeout=self._config.chat_llm.timeout,
-            max_retries=self._config.chat_llm.max_retries,
-            **(self._config.chat_llm.kwargs or {}),
-        )
-
-        if self._logger:
-            self._logger.info(f'Initializing the Embedding with model: {self._config.embedding.model}')
-        self._embedding = _search.Embedding(
-            model=self._config.embedding.model,
-            api_key=self._config.embedding.api_key,
-            organization=self._config.embedding.organization,
-            base_url=self._config.embedding.base_url,
-            timeout=self._config.embedding.timeout,
-            max_retries=self._config.embedding.max_retries,
-            max_tokens=self._config.embedding.max_tokens,
-            token_encoder=tiktoken.get_encoding(
-                self._config.embedding.token_encoder
+        # Initialize Chat LLM
+        if chat_llm:
+            self._chat_llm = chat_llm
+            self._logger.info(f"Using the provided ChatLLM: {chat_llm}")
+        else:
+            if self._logger:
+                self._logger.info(f'Initializing the ChatLLM with model: {self._config.chat_llm.model}')
+            self._chat_llm = _search.ChatLLM(
+                model=self._config.chat_llm.model,
+                api_key=self._config.chat_llm.api_key,
+                organization=self._config.chat_llm.organization,
+                base_url=self._config.chat_llm.base_url,
+                timeout=self._config.chat_llm.timeout,
+                max_retries=self._config.chat_llm.max_retries,
+                **(self._config.chat_llm.kwargs or {}),
             )
-            if self._config.embedding.token_encoder
-            else None,
-            **(self._config.embedding.kwargs or {}),
-        )
+
+        # Initialize Embedding
+        if embedding:
+            self._embedding = embedding
+            self._logger.info(f"Using the provided Embedding: {embedding}")
+        else:
+            if self._logger:
+                self._logger.info(f'Initializing the Embedding with model: {self._config.embedding.model}')
+            self._embedding = _search.Embedding(
+                model=self._config.embedding.model,
+                api_key=self._config.embedding.api_key,
+                organization=self._config.embedding.organization,
+                base_url=self._config.embedding.base_url,
+                timeout=self._config.embedding.timeout,
+                max_retries=self._config.embedding.max_retries,
+                max_tokens=self._config.embedding.max_tokens,
+                token_encoder=tiktoken.get_encoding(
+                    self._config.embedding.token_encoder
+                )
+                if self._config.embedding.token_encoder
+                else None,
+                **(self._config.embedding.kwargs or {}),
+            )
 
         # Initialize ContextLoader objects
         if self._logger:
@@ -148,14 +159,17 @@ class GraphRAGClient(
         # Initialize search engines
         if self._logger:
             self._logger.info('Initializing the LocalSearchEngine')
-        if self._config.local_search.sys_prompt_path and pathlib.Path(
+        if (
                 self._config.local_search.sys_prompt_path
-                ).exists():
-            self._logger.info(f'Loading sys_prompt from file: {self._config.local_search.sys_prompt_path}')
-            with open(self._config.local_search.sys_prompt_path, 'r') as f:
+                and pathlib.Path(self._config.local_search.sys_prompt_path).exists()
+        ):
+            if self._logger:
+                self._logger.info(f'Loading sys_prompt from file: {self._config.local_search.sys_prompt_path}')
+            with open(self._config.local_search.sys_prompt_path, 'r', encoding='utf-8') as f:
                 sys_prompt = f.read()
         else:
-            self._logger.info(f'Loading sys_prompt from config')
+            if self._logger:
+                self._logger.info(f'Loading sys_prompt from config')
             sys_prompt = self._config.local_search.sys_prompt
         self._local_search_engine = _search.LocalSearchEngine(
             chat_llm=self._chat_llm,
@@ -323,8 +337,8 @@ class AsyncGraphRAGClient(
             information.
     """
     _config: _cfg.GraphRAGConfig
-    _chat_llm: _search.AsyncChatLLM
-    _embedding: _search.Embedding
+    _chat_llm: _search.BaseAsyncChatLLM
+    _embedding: _search.BaseEmbedding
     _local_search_engine: _search.AsyncLocalSearchEngine
     _global_search_engine: _search.AsyncGlobalSearchEngine
     _logger: typing.Optional[_base_engine.Logger]
@@ -351,6 +365,8 @@ class AsyncGraphRAGClient(
         self,
         *,
         config: _cfg.GraphRAGConfig,
+        chat_llm: typing.Optional[_search.BaseChatLLM] = None,
+        embedding: typing.Optional[_search.BaseEmbedding] = None,
         logger: typing.Optional[_base_engine.Logger] = None,
     ) -> None:
         """
@@ -416,11 +432,23 @@ class AsyncGraphRAGClient(
 
         if self._logger:
             self._logger.info('Initializing the LocalSearchEngine')
+        if (
+                self._config.local_search.sys_prompt_path
+                and pathlib.Path(self._config.local_search.sys_prompt_path).exists()
+        ):
+            if self._logger:
+                self._logger.info(f'Loading sys_prompt from file: {self._config.local_search.sys_prompt_path}')
+            with open(self._config.local_search.sys_prompt_path, 'r', encoding='utf-8') as f:
+                sys_prompt = f.read()
+        else:
+            if self._logger:
+                self._logger.info(f'Loading sys_prompt from config')
+            sys_prompt = self._config.local_search.sys_prompt
         self._local_search_engine = _search.AsyncLocalSearchEngine(
             chat_llm=self._chat_llm,
             embedding=self._embedding,
             context_loader=local_context_loader,
-            sys_prompt=self._config.local_search.sys_prompt,
+            sys_prompt=sys_prompt,
             community_level=self._config.local_search.community_level,
             store_coll_name=self._config.local_search.store_coll_name,
             store_uri=self._config.local_search.store_uri,
