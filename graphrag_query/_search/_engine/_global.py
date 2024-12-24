@@ -162,9 +162,12 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
         conversation_history: _types.ConversationHistory_T = None,
         verbose: bool = False,
         stream: bool = False,
+
         map_sys_prompt: typing.Optional[str] = None,
         reduce_sys_prompt: typing.Optional[str] = None,
         general_knowledge_sys_prompt: typing.Optional[str] = None,
+        chat_llm: _llm.BaseChatLLM = None,
+
         **kwargs: typing.Any,
     ) -> typing.Union[_types.SearchResult_T, _types.StreamSearchResult_T]:
         """
@@ -197,6 +200,9 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
             general_knowledge_sys_prompt:
                 A temporary prompt to override the default general knowledge
                 system prompt for this search.
+            chat_llm:
+                A temporary chat language model to override the default chat
+                language model for this search.
             **kwargs:
                 Additional keyword arguments, can be prefixed with 'map__' for
                 `self._map` or 'reduce__' for `self._reduce` or not prefixed for
@@ -207,6 +213,7 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
             A search result object or a stream of search result chunks,
             depending on the value of `stream`.
         """
+        chat_llm = chat_llm or self._chat_llm
         created = time.time()
         if self._logger:
             self._logger.info(f"Starting search for query: {query} at {created}")
@@ -226,6 +233,7 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
             context=context,
             verbose=verbose,
             map_sys_prompt=map_sys_prompt,
+            chat_llm=chat_llm,
             json_mode=self._json_mode,
             **kwargs
         ) for context in context_chunks]
@@ -236,6 +244,7 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
             stream=stream,
             reduce_sys_prompt=reduce_sys_prompt,
             general_knowledge_sys_prompt=general_knowledge_sys_prompt,
+            chat_llm=chat_llm,
             **kwargs
         )
 
@@ -246,6 +255,7 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
         context: str,
         verbose: bool,
         map_sys_prompt: typing.Optional[str] = None,
+        chat_llm: _llm.BaseChatLLM = None,
         json_mode: bool = True,
         **kwargs: typing.Any
     ) -> _types.SearchResult_T:
@@ -268,6 +278,9 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
                 otherwise returns a basic SearchResult object.
             map_sys_prompt:
                 A temporary prompt to override the default map system prompt.
+            chat_llm:
+                A temporary chat language model to override the default chat
+                language model for this search.
             **kwargs:
                 Additional keyword arguments. Should be prefixed with 'map__'
                 for `ChatLLM.chat` method. See details in the specific method
@@ -289,11 +302,11 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
             self._logger.debug(f"Constructed messages: {msg}")
 
         response = typing.cast(
-            _llm.ChatResponse_T, self._chat_llm.chat(
+            _llm.ChatResponse_T, chat_llm.chat(
                 msg=typing.cast(_llm.MessageParam_T, msg),
                 stream=False,
                 response_format={"type": "json_object"} if json_mode else openai.NOT_GIVEN,
-                **_utils.filter_kwargs(self._chat_llm.chat, kwargs, prefix='map__')
+                **_utils.filter_kwargs(chat_llm.chat, kwargs, prefix='map__')
             )
         )
         result = self._parse_map(response)
@@ -307,7 +320,7 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
         if verbose:
             return _types.SearchResultVerbose(
                 created=created.__int__(),
-                model=self._chat_llm.model,
+                model=chat_llm.model,
                 system_fingerprint=response.system_fingerprint,
                 choice=_types.Choice(
                     finish_reason=response.choices[0].finish_reason,
@@ -325,7 +338,7 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
         else:
             return _types.SearchResult(
                 created=created.__int__(),
-                model=self._chat_llm.model,
+                model=chat_llm.model,
                 system_fingerprint=response.system_fingerprint,
                 choice=_types.Choice(
                     finish_reason=response.choices[0].finish_reason,
@@ -364,8 +377,11 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
         query: str,
         verbose: bool,
         stream: bool,
+
         reduce_sys_prompt: typing.Optional[str] = None,
         general_knowledge_sys_prompt: typing.Optional[str] = None,
+        chat_llm: _llm.BaseChatLLM = None,
+
         **kwargs: typing.Any
     ) -> typing.Union[_types.SearchResult_T, _types.StreamSearchResult_T]:
         """
@@ -394,6 +410,9 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
             general_knowledge_sys_prompt:
                 A temporary prompt to override the default general knowledge
                 system prompt for this search.
+            chat_llm:
+                A temporary chat language model to override the default chat
+                language model for this search.
             **kwargs:
                 Additional keyword arguments. Should be prefixed with 'reduce__'
                 for `ChatLLM.chat` method. See details in the specific method
@@ -430,7 +449,7 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
                 self._logger.warning("No key points found from the map phase")
             return _types.SearchResult(
                 created=created.__int__(),
-                model=self._chat_llm.model,
+                model=chat_llm.model,
                 choice=_types.Choice(
                     finish_reason="stop",
                     message=_types.Message(
@@ -440,7 +459,7 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
                 usage=None,
             ) if not verbose else _types.SearchResultVerbose(
                 created=created.__int__(),
-                model=self._chat_llm.model,
+                model=chat_llm.model,
                 choice=_types.Choice(
                     finish_reason="stop",
                     message=_types.Message(
@@ -481,10 +500,10 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
 
         if self._logger:
             self._logger.debug(f"Constructed messages: {msg}")
-        result = self._chat_llm.chat(
+        result = chat_llm.chat(
             msg=typing.cast(_llm.MessageParam_T, msg),
             stream=stream,
-            **_utils.filter_kwargs(self._chat_llm.chat, kwargs, prefix='reduce__')
+            **_utils.filter_kwargs(chat_llm.chat, kwargs, prefix='reduce__')
         )
 
         if stream:
@@ -667,9 +686,12 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
         conversation_history: _types.ConversationHistory_T,
         verbose: bool = False,
         stream: bool = False,
+
         map_sys_prompt: typing.Optional[str] = None,
         reduce_sys_prompt: typing.Optional[str] = None,
         general_knowledge_sys_prompt: typing.Optional[str] = None,
+        chat_llm: _llm.BaseAsyncChatLLM = None,
+
         **kwargs: typing.Any,
     ) -> typing.Union[_types.SearchResult_T, _types.AsyncStreamSearchResult_T]:
         """
@@ -702,6 +724,9 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
             general_knowledge_sys_prompt:
                 A temporary prompt to override the default general knowledge
                 system prompt for this search.
+            chat_llm:
+                A temporary chat language model to override the default chat
+                language model for this search.
             **kwargs:
                 Additional keyword arguments, can be prefixed with 'map__' for
                 `self._map` or 'reduce__' for `self._reduce` or not prefixed for
@@ -731,6 +756,7 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
                     context=context,
                     verbose=verbose,
                     map_sys_prompt=map_sys_prompt,
+                    chat_llm=chat_llm,
                     **kwargs
                 ) for context in context_chunks]
             )
@@ -742,6 +768,7 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
             stream=stream,
             reduce_sys_prompt=reduce_sys_prompt,
             general_knowledge_sys_prompt=general_knowledge_sys_prompt,
+            chat_llm=chat_llm,
             **kwargs
         )
 
@@ -752,6 +779,7 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
         context: str,
         verbose: bool,
         sys_prompt: typing.Optional[str] = None,
+        chat_llm: _llm.BaseAsyncChatLLM = None,
         **kwargs: typing.Any
     ) -> _types.SearchResult_T:
         """
@@ -773,6 +801,9 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
                 otherwise returns a basic SearchResult object.
             sys_prompt:
                 A temporary prompt to override the default map system prompt.
+            chat_llm:
+                A temporary chat language model to override the default chat
+                language model for this search.
             **kwargs:
                 Additional keyword arguments. Should be prefixed with 'map__'
                 for `ChatLLM.chat` method. See details in the specific method
@@ -796,10 +827,10 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
 
         async with self._semaphore:
             response = typing.cast(
-                _llm.ChatResponse_T, (await self._chat_llm.achat(
+                _llm.ChatResponse_T, (await chat_llm.achat(
                     msg=typing.cast(_llm.MessageParam_T, msg),
                     stream=False,
-                    **_utils.filter_kwargs(self._chat_llm.achat, kwargs, prefix='map__')
+                    **_utils.filter_kwargs(chat_llm.achat, kwargs, prefix='map__')
                 ))
             )
         result = self._parse_map(response)
@@ -813,7 +844,7 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
         if verbose:
             return _types.SearchResultVerbose(
                 created=created.__int__(),
-                model=self._chat_llm.model,
+                model=chat_llm.model,
                 system_fingerprint=response.system_fingerprint,
                 choice=_types.Choice(
                     finish_reason=response.choices[0].finish_reason,
@@ -831,7 +862,7 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
         else:
             return _types.SearchResult(
                 created=created.__int__(),
-                model=self._chat_llm.model,
+                model=chat_llm.model,
                 system_fingerprint=response.system_fingerprint,
                 choice=_types.Choice(
                     finish_reason=response.choices[0].finish_reason,
@@ -870,8 +901,11 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
         query: str,
         verbose: bool,
         stream: bool,
+
         reduce_sys_prompt: typing.Optional[str] = None,
         general_knowledge_sys_prompt: typing.Optional[str] = None,
+        chat_llm: _llm.BaseAsyncChatLLM = None,
+
         **kwargs: typing.Any
     ) -> typing.Union[_types.SearchResult_T, _types.AsyncStreamSearchResult_T]:
         """
@@ -900,6 +934,9 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
             general_knowledge_sys_prompt:
                 A temporary prompt to override the default general knowledge
                 system prompt for this search.
+            chat_llm:
+                A temporary chat language model to override the default chat
+                language model for this search.
             **kwargs:
                 Additional keyword arguments. Should be prefixed with 'reduce__'
                 for `ChatLLM.chat` method. See details in the specific method
@@ -936,7 +973,7 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
                 self._logger.warning("No key points found from the map phase")
             return _types.SearchResult(
                 created=created.__int__(),
-                model=self._chat_llm.model,
+                model=chat_llm.model,
                 choice=_types.Choice(
                     finish_reason="stop",
                     message=_types.Message(
@@ -946,7 +983,7 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
                 usage=None,
             ) if not verbose else _types.SearchResultVerbose(
                 created=created.__int__(),
-                model=self._chat_llm.model,
+                model=chat_llm.model,
                 choice=_types.Choice(
                     finish_reason="stop",
                     message=_types.Message(
@@ -989,10 +1026,10 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
             self._logger.debug(f"Constructed messages: {msg}")
 
         async with self._semaphore:
-            response = await self._chat_llm.achat(
+            response = await chat_llm.achat(
                 msg=typing.cast(_llm.MessageParam_T, msg),
                 stream=stream,
-                **_utils.filter_kwargs(self._chat_llm.achat, kwargs, prefix='reduce__')
+                **_utils.filter_kwargs(chat_llm.achat, kwargs, prefix='reduce__')
             )
 
         if stream:

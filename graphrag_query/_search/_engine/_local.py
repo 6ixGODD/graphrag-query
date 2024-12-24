@@ -112,7 +112,10 @@ class LocalSearchEngine(_base_engine.QueryEngine):
         conversation_history: _types.ConversationHistory_T = None,
         verbose: bool = False,
         stream: bool = False,
+
         sys_prompt: typing.Optional[str] = None,
+        chat_llm: typing.Optional[_llm.BaseChatLLM] = None,
+
         **kwargs: typing.Any,
     ) -> typing.Union[_types.SearchResult_T, _types.StreamSearchResult_T]:
         """
@@ -138,6 +141,9 @@ class LocalSearchEngine(_base_engine.QueryEngine):
             sys_prompt:
                 A temporary prompt to override the default system prompt for
                 this search.
+            chat_llm:
+                A temporary chat language model to override the default chat
+                language model for this search.
             **kwargs:
                 Additional keyword arguments for
                 `LocalContextBuilder.build_context` or `ChatLLM.chat`. See
@@ -147,6 +153,7 @@ class LocalSearchEngine(_base_engine.QueryEngine):
             A search result object or a stream of search result chunks,
             depending on the value of `stream`.
         """
+        chat_llm = chat_llm or self._chat_llm
         created = time.time()
         if self._logger:
             self._logger.info(f"Starting search for query: {query} at {created}")
@@ -169,7 +176,7 @@ class LocalSearchEngine(_base_engine.QueryEngine):
         if self._logger:
             self._logger.debug(f"Constructed messages: {messages}")
 
-        result = self._chat_llm.chat(msg=typing.cast(_llm.MessageParam_T, messages), stream=stream, **kwargs)
+        result = chat_llm.chat(msg=typing.cast(_llm.MessageParam_T, messages), stream=stream, **kwargs)
 
         if self._logger:
             self._logger.info(f"Received result: {result}\nspent time: {time.time() - created} seconds")
@@ -303,7 +310,10 @@ class AsyncLocalSearchEngine(_base_engine.AsyncQueryEngine):
         conversation_history: _types.ConversationHistory_T,
         verbose: bool = False,
         stream: bool = False,
+
         sys_prompt: typing.Optional[str] = None,
+        chat_llm: typing.Optional[_llm.BaseAsyncChatLLM] = None,
+
         **kwargs: typing.Any,
     ) -> typing.Union[_types.SearchResult_T, _types.AsyncStreamSearchResult_T]:
         """
@@ -330,6 +340,9 @@ class AsyncLocalSearchEngine(_base_engine.AsyncQueryEngine):
             sys_prompt:
                 A temporary prompt to override the default system prompt for
                 this search.
+            chat_llm:
+                A temporary chat language model to override the default chat
+                language model for this search.
             **kwargs:
                 Additional keyword arguments for
                 `LocalContextBuilder.build_context` or `ChatLLM.chat`. See
@@ -339,7 +352,7 @@ class AsyncLocalSearchEngine(_base_engine.AsyncQueryEngine):
             A search result object or a stream of search result chunks,
             depending on the value of `stream`.
         """
-
+        chat_llm = chat_llm or self._chat_llm
         created = time.time()
         if self._logger:
             self._logger.info(f"Starting search for query: {query} at {created}")
@@ -362,7 +375,7 @@ class AsyncLocalSearchEngine(_base_engine.AsyncQueryEngine):
         if self._logger:
             self._logger.debug(f"Constructed messages: {messages}")
 
-        result = await self._chat_llm.achat(msg=typing.cast(_llm.MessageParam_T, messages), stream=stream, **kwargs)
+        result = await chat_llm.achat(msg=typing.cast(_llm.MessageParam_T, messages), stream=stream, **kwargs)
 
         if self._logger:
             self._logger.info(f"Received result: {result}\nspent time: {time.time() - created} seconds")

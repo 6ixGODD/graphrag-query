@@ -64,6 +64,15 @@ class GraphRAGClient(
     def logger(self, logger: _base_engine.Logger) -> None:
         self._logger = logger
 
+    @property
+    def chat_llm(self) -> _search.BaseChatLLM:
+        return self._chat_llm
+
+    @chat_llm.setter
+    def chat_llm(self, chat_llm: _search.BaseChatLLM) -> None:
+        self._chat_llm.close()
+        self._chat_llm = chat_llm
+
     @classmethod
     @typing_extensions.override
     def from_config_file(cls, config_file: typing.Union[os.PathLike[str], pathlib.Path, str]) -> typing.Self:
