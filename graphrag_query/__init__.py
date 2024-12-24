@@ -24,6 +24,8 @@ from ._config import (
     LoggingConfig,
 )
 from ._search import (
+    AsyncChatLLM,
+    AsyncEmbedding,
     AsyncGlobalSearchEngine,
     AsyncLocalSearchEngine,
     AsyncQueryEngine,
@@ -32,6 +34,8 @@ from ._search import (
     BaseChatLLM,
     BaseContextBuilder,
     BaseEmbedding,
+    ChatLLM,
+    Embedding,
     GlobalContextBuilder,
     GlobalContextLoader,
     GlobalSearchEngine,
@@ -64,6 +68,8 @@ __all__ = [
     "LocalSearchConfig",
     "LoggingConfig",
 
+    "AsyncChatLLM",
+    "AsyncEmbedding",
     "AsyncGlobalSearchEngine",
     "AsyncLocalSearchEngine",
     "AsyncQueryEngine",
@@ -72,6 +78,8 @@ __all__ = [
     "BaseChatLLM",
     "BaseContextBuilder",
     "BaseEmbedding",
+    "ChatLLM",
+    "Embedding",
     "GlobalContextBuilder",
     "GlobalContextLoader",
     "GlobalSearchEngine",

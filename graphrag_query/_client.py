@@ -108,7 +108,8 @@ class GraphRAGClient(
         # Initialize Chat LLM
         if chat_llm:
             self._chat_llm = chat_llm
-            self._logger.info(f"Using the provided ChatLLM: {chat_llm}")
+            if self._logger:
+                self._logger.info(f"Using the provided ChatLLM: {chat_llm}")
         else:
             if self._logger:
                 self._logger.info(f'Initializing the ChatLLM with model: {self._config.chat_llm.model}')
@@ -365,7 +366,7 @@ class AsyncGraphRAGClient(
         self,
         *,
         config: _cfg.GraphRAGConfig,
-        chat_llm: typing.Optional[_search.BaseChatLLM] = None,
+        chat_llm: typing.Optional[_search.BaseAsyncChatLLM] = None,
         embedding: typing.Optional[_search.BaseEmbedding] = None,
         logger: typing.Optional[_base_engine.Logger] = None,
     ) -> None:
@@ -391,43 +392,50 @@ class AsyncGraphRAGClient(
             serialize=self._config.logging.serialize,
         ) if self._config.logging.enabled else None
 
-        if self._logger:
-            self._logger.info(f'Initializing the AsyncChatLLM with model: {self._config.chat_llm.model}')
-
-        self._chat_llm = _search.AsyncChatLLM(
-            model=self._config.chat_llm.model,
-            api_key=self._config.chat_llm.api_key,
-            organization=self._config.chat_llm.organization,
-            base_url=self._config.chat_llm.base_url,
-            timeout=self._config.chat_llm.timeout,
-            max_retries=self._config.chat_llm.max_retries,
-            **(self._config.chat_llm.kwargs or {}),
-        )
-
-        if self._logger:
-            self._logger.info(f'Initializing the Embedding with model: {self._config.embedding.model}')
-
-        self._embedding = _search.Embedding(
-            model=self._config.embedding.model,
-            api_key=self._config.embedding.api_key,
-            organization=self._config.embedding.organization,
-            base_url=self._config.embedding.base_url,
-            timeout=self._config.embedding.timeout,
-            max_retries=self._config.embedding.max_retries,
-            max_tokens=self._config.embedding.max_tokens,
-            token_encoder=tiktoken.get_encoding(
-                self._config.embedding.token_encoder
+        if chat_llm:
+            self._chat_llm = chat_llm
+            if self._logger:
+                self._logger.info(f"Using the provided ChatLLM: {chat_llm}")
+        else:
+            if self._logger:
+                self._logger.info(f'Initializing the ChatLLM with model: {self._config.chat_llm.model}')
+            self._chat_llm = _search.AsyncChatLLM(
+                model=self._config.chat_llm.model,
+                api_key=self._config.chat_llm.api_key,
+                organization=self._config.chat_llm.organization,
+                base_url=self._config.chat_llm.base_url,
+                timeout=self._config.chat_llm.timeout,
+                max_retries=self._config.chat_llm.max_retries,
+                **(self._config.chat_llm.kwargs or {}),
             )
-            if self._config.embedding.token_encoder
-            else None,
-            **(self._config.embedding.kwargs or {}),
-        )
+
+        if embedding:
+            self._embedding = embedding
+            if self._logger:
+                self._logger.info(f"Using the provided Embedding: {embedding}")
+        else:
+            if self._logger:
+                self._logger.info(f'Initializing the Embedding with model: {self._config.embedding.model}')
+            self._embedding = _search.Embedding(
+                model=self._config.embedding.model,
+                api_key=self._config.embedding.api_key,
+                organization=self._config.embedding.organization,
+                base_url=self._config.embedding.base_url,
+                timeout=self._config.embedding.timeout,
+                max_retries=self._config.embedding.max_retries,
+                max_tokens=self._config.embedding.max_tokens,
+                token_encoder=tiktoken.get_encoding(
+                    self._config.embedding.token_encoder
+                )
+                if self._config.embedding.token_encoder
+                else None,
+                **(self._config.embedding.kwargs or {}),
+            )
 
         if self._logger:
             self._logger.info(f'Initializing the LocalContextLoader with directory: {self._config.context.directory}')
         local_context_loader = _search.LocalContextLoader.from_parquet_directory(
-            self._config.context.directory,
-            **(self._config.context.kwargs or {}),
+            self._config.context.directory, **(self._config.context.kwargs or {}),
         )
 
         if self._logger:

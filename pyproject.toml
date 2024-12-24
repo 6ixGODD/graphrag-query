@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "graphrah-query"
+name = "graphrag-query"
 version = "0.1.0"
 description = ""
 authors = ["6ixGODD <6goddddddd@gmail.com>"]
