@@ -39,12 +39,12 @@ Each key point in the response should have the following element:
 question. An 'I don't know' type of response should have a score of 0.
 
 The response should be JSON formatted as follows:
-{{
+{
     "points": [
-        {{"description": "Description of point 1 [Data: Reports (report ids)]", "score": score_value}},
-        {{"description": "Description of point 2 [Data: Reports (report ids)]", "score": score_value}}
+        {"description": "Description of point 1 [Data: Reports (report ids)]", "score": score_value},
+        {"description": "Description of point 2 [Data: Reports (report ids)]", "score": score_value}
     ]
-}}
+}
 
 The response shall preserve the original meaning and use of modal verbs such as "shall", "may" or "will".
 
@@ -65,7 +65,7 @@ Do not include information where the supporting evidence for it is not provided.
 
 ---Data tables---
 
-{context_data}
+{{ context_data }}
 
 ---Goal---
 
@@ -98,12 +98,12 @@ where 1, 2, 3, 7, 34, 46, and 64 represent the id (not the index) of the relevan
 Do not include information where the supporting evidence for it is not provided.
 
 The response should be JSON formatted as follows:
-{{
+{
     "points": [
-        {{"description": "Description of point 1 [Data: Reports (report ids)]", "score": score_value}},
-        {{"description": "Description of point 2 [Data: Reports (report ids)]", "score": score_value}}
+        {"description": "Description of point 1 [Data: Reports (report ids)]", "score": score_value},
+        {"description": "Description of point 2 [Data: Reports (report ids)]", "score": score_value}
     ]
-}}
+}
 """
 
 GLOBAL_SEARCH__REDUCE__SYS_PROMPT = """
@@ -153,7 +153,7 @@ Markdown formatted, multiple paragraphs.
 
 ---Analyst Reports---
 
-{report_data}
+{{ report_data }}
 
 
 ---Goal---
@@ -244,7 +244,7 @@ Markdown formatted, multiple paragraphs.
 
 ---Data tables---
 
-{context_data}
+{{ context_data }}
 
 
 ---Goal---

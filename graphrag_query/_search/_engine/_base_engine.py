@@ -70,6 +70,28 @@ class QueryEngine(abc.ABC):
         """
         ...
 
+    @property
+    @abc.abstractmethod
+    def chat_llm(self) -> _llm.BaseChatLLM:
+        """
+        Retrieves the chat language model instance for the engine.
+
+        Returns:
+            The chat language model instance.
+        """
+        ...
+
+    @chat_llm.setter
+    @abc.abstractmethod
+    def chat_llm(self, chat_llm: _llm.BaseChatLLM) -> None:
+        """
+        Sets the chat language model instance for the engine.
+
+        Args:
+            chat_llm: The chat language model instance.
+        """
+        ...
+
     def __init__(
         self,
         *,
@@ -352,6 +374,28 @@ class AsyncQueryEngine(abc.ABC):
 
         Returns:
             The context builder instance.
+        """
+        ...
+
+    @property
+    @abc.abstractmethod
+    def chat_llm(self) -> _llm.BaseAsyncChatLLM:
+        """
+        Retrieves the asynchronous chat language model instance for the engine.
+
+        Returns:
+            The asynchronous chat language model instance.
+        """
+        ...
+
+    @chat_llm.setter
+    @abc.abstractmethod
+    def chat_llm(self, chat_llm: _llm.BaseAsyncChatLLM) -> None:
+        """
+        Sets the asynchronous chat language model instance for the engine.
+
+        Args:
+            chat_llm: The asynchronous chat language model instance.
         """
         ...
 

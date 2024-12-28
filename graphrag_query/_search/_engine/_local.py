@@ -3,11 +3,12 @@
 
 from __future__ import annotations
 
-import collections
+import asyncio
 import time
 import typing
 import warnings
 
+import jinja2
 import typing_extensions
 
 from . import _base_engine
@@ -53,6 +54,17 @@ class LocalSearchEngine(_base_engine.QueryEngine):
     @property
     def context_builder(self) -> _context.LocalContextBuilder:
         return self._context_builder
+
+    @typing_extensions.override
+    @property
+    def chat_llm(self) -> _llm.BaseChatLLM:
+        return self._chat_llm
+
+    @typing_extensions.override
+    @chat_llm.setter
+    def chat_llm(self, chat_llm: _llm.BaseChatLLM) -> None:
+        self._chat_llm.close()
+        self._chat_llm = chat_llm
 
     def __init__(
         self,
@@ -168,8 +180,7 @@ class LocalSearchEngine(_base_engine.QueryEngine):
             conversation_history=conversation_history,
             **kwargs,
         )
-        # TODO: Add Jinja2 template support for sys_prompt (same for GlobalSearchEngine)
-        prompt = (sys_prompt or self._sys_prompt).format_map(collections.defaultdict(str, context_data=context_text))
+        prompt = jinja2.Template(sys_prompt or self._sys_prompt).render(context_data=context_text)
         messages = ([{"role": "system", "content": prompt}] +
                     conversation_history.to_dict() +
                     [{"role": "user", "content": query}])
@@ -252,6 +263,17 @@ class AsyncLocalSearchEngine(_base_engine.AsyncQueryEngine):
     @property
     def context_builder(self) -> _context.LocalContextBuilder:
         return self._context_builder
+
+    @typing_extensions.override
+    @property
+    def chat_llm(self) -> _llm.BaseAsyncChatLLM:
+        return self._chat_llm
+
+    @typing_extensions.override
+    @chat_llm.setter
+    def chat_llm(self, chat_llm: _llm.BaseAsyncChatLLM) -> None:
+        asyncio.run(self._chat_llm.aclose())
+        self._chat_llm = chat_llm
 
     def __init__(
         self,
@@ -368,7 +390,7 @@ class AsyncLocalSearchEngine(_base_engine.AsyncQueryEngine):
             conversation_history=conversation_history,
             **kwargs,
         )
-        prompt = (sys_prompt or self._sys_prompt).format_map(collections.defaultdict(str, context_data=context_text))
+        prompt = jinja2.Template(sys_prompt or self._sys_prompt).render(context_data=context_text)
         messages = ([{"role": "system", "content": prompt}] +
                     conversation_history.to_dict() +
                     [{"role": "user", "content": query}])

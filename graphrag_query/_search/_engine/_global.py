@@ -4,11 +4,11 @@
 from __future__ import annotations
 
 import asyncio
-import collections
 import time
 import typing
 import warnings
 
+import jinja2
 import openai
 import tiktoken
 import typing_extensions
@@ -49,10 +49,10 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
             the tokenizer used by the large language model (LLM).
         _map_sys_prompt:
             The prompt used during the map phase of global search. Must include
-            the placeholder '{context_data}' for injecting real data.
+            the placeholder '{{ context_data }}' for injecting real data.
         _reduce_sys_prompt:
             The prompt used during the reduce phase of global search. Must
-            include the placeholder '{report_data}' for injecting real data.
+            include the placeholder '{{ report_data }}' for injecting real data.
         _allow_general_knowledge:
             A flag indicating whether the model is allowed to use real-world
             knowledge in responses. If True, the general knowledge prompt will
@@ -88,6 +88,17 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
     @property
     def context_builder(self) -> _context.GlobalContextBuilder:
         return self._context_builder
+
+    @typing_extensions.override
+    @property
+    def chat_llm(self) -> _llm.BaseChatLLM:
+        return self._chat_llm
+
+    @typing_extensions.override
+    @chat_llm.setter
+    def chat_llm(self, value: _llm.BaseChatLLM) -> None:
+        self._chat_llm.close()
+        self._chat_llm = value
 
     def __init__(
         self,
@@ -134,19 +145,19 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
         )
         self._token_encoder = tiktoken.get_encoding(encoding_model or _defaults.DEFAULT__ENCODING_MODEL)
         self._map_sys_prompt = map_sys_prompt or _defaults.GLOBAL_SEARCH__MAP__SYS_PROMPT
-        if '{context_data}' not in self._map_sys_prompt:
+        if '{{ context_data }}' not in self._map_sys_prompt:
             warnings.warn(
-                'Global Search\'s Map System Prompt does not contain "{context_data}"', _errors.GraphRAGWarning
+                'Global Search\'s Map System Prompt does not contain "{{ context_data }}"', _errors.GraphRAGWarning
             )
             if self._logger:
-                self._logger.warning('Global Search\'s Map System Prompt does not contain "{context_data}"')
+                self._logger.warning('Global Search\'s Map System Prompt does not contain "{{ context_data }}"')
         self._reduce_sys_prompt = reduce_sys_prompt or _defaults.GLOBAL_SEARCH__REDUCE__SYS_PROMPT
-        if '{report_data}' not in self._reduce_sys_prompt:
+        if '{{ report_data }}' not in self._reduce_sys_prompt:
             warnings.warn(
-                'Global Search\'s Reduce System Prompt does not contain "{report_data}"', _errors.GraphRAGWarning
+                'Global Search\'s Reduce System Prompt does not contain "{{ report_data }}"', _errors.GraphRAGWarning
             )
             if self._logger:
-                self._logger.warning('Global Search\'s Reduce System Prompt does not contain "{report_data}"')
+                self._logger.warning('Global Search\'s Reduce System Prompt does not contain "{{ report_data }}"')
         self._allow_general_knowledge = allow_general_knowledge if allow_general_knowledge is not None else True
         self._general_knowledge_sys_prompt = (general_knowledge_sys_prompt or
                                               _defaults.GLOBAL_SEARCH__REDUCE__GENERAL_KNOWLEDGE_INSTRUCTION)
@@ -294,9 +305,7 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
         if self._logger:
             self._logger.info(f"Starting map for query: {query} at {created}")
 
-        prompt = (map_sys_prompt or self._map_sys_prompt).format_map(
-            collections.defaultdict(str, context_data=context, query=query)
-        )
+        prompt = jinja2.Template(map_sys_prompt or self._map_sys_prompt).render(context_data=context, query=query)
         msg = [{"role": "system", "content": prompt}, {"role": "user", "content": query}]
         if self._logger:
             self._logger.debug(f"Constructed messages: {msg}")
@@ -491,9 +500,7 @@ class GlobalSearchEngine(_base_engine.QueryEngine):
             data.append(formatted_response)
 
         report_data = '\n\n'.join(data)
-        prompt = (reduce_sys_prompt or self._reduce_sys_prompt).format_map(
-            collections.defaultdict(str, report_data=report_data)
-        )
+        prompt = jinja2.Template(reduce_sys_prompt or self._reduce_sys_prompt).render(report_data=report_data)
         if self._allow_general_knowledge:
             prompt += f'\n{general_knowledge_sys_prompt or self._general_knowledge_sys_prompt}'
         msg = [{"role": "system", "content": prompt}, {"role": "user", "content": query}]
@@ -581,10 +588,10 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
             the tokenizer used by the large language model (LLM).
         _map_sys_prompt:
             The prompt used during the map phase of global search. Must include
-            the placeholder '{context_data}' for injecting real data.
+            the placeholder '{{ context_data }}' for injecting real data.
         _reduce_sys_prompt:
             The prompt used during the reduce phase of global search. Must
-            include the placeholder '{report_data}' for injecting real data.
+            include the placeholder '{{ report_data }}' for injecting real data.
         _allow_general_knowledge:
             A flag indicating whether the model is allowed to use real-world
             knowledge in responses. If True, the general knowledge prompt will
@@ -621,6 +628,17 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
     @property
     def context_builder(self) -> _context.GlobalContextBuilder:
         return self._context_builder
+
+    @typing_extensions.override
+    @property
+    def chat_llm(self) -> _llm.BaseAsyncChatLLM:
+        return self._chat_llm
+
+    @typing_extensions.override
+    @chat_llm.setter
+    def chat_llm(self, value: _llm.BaseAsyncChatLLM) -> None:
+        asyncio.run(self._chat_llm.aclose())
+        self._chat_llm = value
 
     def __init__(
         self,
@@ -817,9 +835,7 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
         if self._logger:
             self._logger.info(f"Starting map for query: {query} at {created}")
 
-        prompt = (sys_prompt or self._map_sys_prompt).format_map(
-            collections.defaultdict(str, context_data=context, query=query)
-        )
+        prompt = jinja2.Template(sys_prompt or self._map_sys_prompt).render(context_data=context, query=query)
         msg = [{"role": "system", "content": prompt}, {"role": "user", "content": query}]
 
         if self._logger:
@@ -1015,9 +1031,7 @@ class AsyncGlobalSearchEngine(_base_engine.AsyncQueryEngine):
             data.append(formatted_response)
 
         report_data = '\n\n'.join(data)
-        prompt = (reduce_sys_prompt or self._reduce_sys_prompt).format_map(
-            collections.defaultdict(str, report_data=report_data)
-        )
+        prompt = jinja2.Template(reduce_sys_prompt or self._reduce_sys_prompt).render(report_data=report_data)
         if self._allow_general_knowledge:
             prompt += f'\n{general_knowledge_sys_prompt or self._general_knowledge_sys_prompt}'
 

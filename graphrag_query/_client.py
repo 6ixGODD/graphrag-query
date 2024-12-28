@@ -70,8 +70,9 @@ class GraphRAGClient(
 
     @chat_llm.setter
     def chat_llm(self, chat_llm: _search.BaseChatLLM) -> None:
-        self._chat_llm.close()
         self._chat_llm = chat_llm
+        self._local_search_engine.chat_llm = self._chat_llm
+        self._global_search_engine.chat_llm = self._chat_llm
 
     @classmethod
     @typing_extensions.override
@@ -360,6 +361,16 @@ class AsyncGraphRAGClient(
     @logger.setter
     def logger(self, logger: _base_engine.Logger) -> None:
         self._logger = logger
+
+    @property
+    def chat_llm(self) -> _search.BaseAsyncChatLLM:
+        return self._chat_llm
+
+    @chat_llm.setter
+    def chat_llm(self, chat_llm: _search.BaseAsyncChatLLM) -> None:
+        self._chat_llm = chat_llm
+        self._local_search_engine.chat_llm = self._chat_llm
+        self._global_search_engine.chat_llm = self._chat_llm
 
     @classmethod
     @typing_extensions.override
