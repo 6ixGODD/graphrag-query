@@ -273,6 +273,15 @@ class QueryEngine(abc.ABC):
                 prompt_tokens=chunk.usage.prompt_tokens,
                 total_tokens=chunk.usage.total_tokens,
             ) if chunk.usage else None
+            if (
+                    hasattr(chunk.choices[0].delta, 'reasoning_content')
+                    and chunk.choices[0].delta.reasoning_content is not None
+            ):
+                delta_content = chunk.choices[0].delta.reasoning_content
+                thinking = True
+            else:
+                delta_content = chunk.choices[0].delta.content
+                thinking = False
             if not verbose:
                 yield _types.SearchResultChunk(
                     created=created.__int__(),
@@ -281,11 +290,12 @@ class QueryEngine(abc.ABC):
                     choice=_types.ChunkChoice(
                         finish_reason=chunk.choices[0].finish_reason,
                         delta=_types.Delta(
-                            content=chunk.choices[0].delta.content,
+                            content=delta_content,
                             refusal=chunk.choices[0].delta.refusal,
                         ),
                     ),
                     usage=usage,
+                    thinking=thinking,
                 )
             else:
                 if chunk.choices[0].finish_reason == "stop":
@@ -305,7 +315,7 @@ class QueryEngine(abc.ABC):
                     choice=_types.ChunkChoice(
                         finish_reason=chunk.choices[0].finish_reason,
                         delta=_types.Delta(
-                            content=chunk.choices[0].delta.content,
+                            content=delta_content,
                             refusal=chunk.choices[0].delta.refusal,
                         ),
                     ),
@@ -317,6 +327,7 @@ class QueryEngine(abc.ABC):
                     map_result=map_result,
                     reduce_context_data=reduce_context_data,
                     reduce_context_text=reduce_context_text,
+                    thinking=thinking,
                 )
 
     def close(self) -> None:
@@ -580,6 +591,15 @@ class AsyncQueryEngine(abc.ABC):
                 prompt_tokens=chunk.usage.prompt_tokens,
                 total_tokens=chunk.usage.total_tokens,
             ) if chunk.usage else None
+            if (
+                    hasattr(chunk.choices[0].delta, 'reasoning_content')
+                    and chunk.choices[0].delta.reasoning_content is not None
+            ):
+                delta_content = chunk.choices[0].delta.reasoning_content
+                thinking = True
+            else:
+                delta_content = chunk.choices[0].delta.content
+                thinking = False
             if not verbose:
                 yield _types.SearchResultChunk(
                     created=created.__int__(),
@@ -588,11 +608,12 @@ class AsyncQueryEngine(abc.ABC):
                     choice=_types.ChunkChoice(
                         finish_reason=chunk.choices[0].finish_reason,
                         delta=_types.Delta(
-                            content=chunk.choices[0].delta.content,
+                            content=delta_content,
                             refusal=chunk.choices[0].delta.refusal,
                         ),
                     ),
                     usage=usage,
+                    thinking=thinking,
                 )
             else:
                 if chunk.choices[0].finish_reason == "stop":
@@ -612,7 +633,7 @@ class AsyncQueryEngine(abc.ABC):
                     choice=_types.ChunkChoice(
                         finish_reason=chunk.choices[0].finish_reason,
                         delta=_types.Delta(
-                            content=chunk.choices[0].delta.content,
+                            content=delta_content,
                             refusal=chunk.choices[0].delta.refusal,
                         ),
                     ),
@@ -624,6 +645,7 @@ class AsyncQueryEngine(abc.ABC):
                     map_result=map_result,
                     reduce_context_data=reduce_context_data,
                     reduce_context_text=reduce_context_text,
+                    thinking=thinking,
                 )
 
     async def aclose(self) -> None:

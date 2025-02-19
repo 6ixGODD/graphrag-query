@@ -52,3 +52,5 @@ class SearchResultChunk(pydantic.BaseModel):
 
     usage: typing.Optional[_search.Usage] = None
     """Usage statistics for the completion request."""
+
+    thinking: bool

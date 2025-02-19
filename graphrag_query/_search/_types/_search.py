@@ -61,3 +61,5 @@ class SearchResult(pydantic.BaseModel):
 
     usage: typing.Optional[Usage] = None
     """Usage statistics for the completion request."""
+
+    thinking: bool

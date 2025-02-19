@@ -154,7 +154,11 @@ class GraphRAGCli(_base_client.ContextManager):
         """
         content = ''
         response = typing.cast(_search_types.StreamSearchResult_T, response)
+        flag = False
         for chunk in response:
+            if flag ^ chunk.thinking:
+                flag = not flag
+                yield "'''\n"
             sys.stdout.write(chunk.choice.delta.content or '')
             sys.stdout.flush()
             yield chunk.choice.delta.content or ''
