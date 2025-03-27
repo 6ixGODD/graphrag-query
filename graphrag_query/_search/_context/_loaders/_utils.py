@@ -1,6 +1,3 @@
-# Copyright (c) 2024 Microsoft Corporation.
-# Licensed under the MIT License
-
 """
 Module for reading and processing various graph data components such as
 entities, community reports, relationships, covariates, and text units.

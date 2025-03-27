@@ -1,6 +1,3 @@
-# Copyright (c) 2024 Microsoft Corporation.
-# Licensed under the MIT License.
-
 from __future__ import annotations
 
 from ._base_vector_store import (
@@ -9,7 +6,6 @@ from ._base_vector_store import (
     VectorStoreSearchResult,
 )
 from ._lancedb import LanceDBVectorStore
-
 
 __all__ = [
     "BaseVectorStore",

@@ -1,6 +1,3 @@
-# Copyright (c) 2024 Microsoft Corporation.
-# Licensed under the MIT License
-
 """
 Module for building context data tables for system prompts, including entities,
 relationships, and covariates, for use in the GraphRAG framework.

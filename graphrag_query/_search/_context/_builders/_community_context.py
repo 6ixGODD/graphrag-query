@@ -1,6 +1,3 @@
-# Copyright (c) 2024 Microsoft Corporation.
-# Licensed under the MIT License
-
 """
 Module for building community context data for system prompts in the GraphRAG
 framework.

@@ -1,6 +1,3 @@
-# Copyright (c) 2024 Microsoft Corporation.
-# Licensed under the MIT License.
-
 from __future__ import annotations
 
 import typing
@@ -53,4 +50,4 @@ class SearchResultChunk(pydantic.BaseModel):
     usage: typing.Optional[_search.Usage] = None
     """Usage statistics for the completion request."""
 
-    thinking: bool
+    thinking: bool = False

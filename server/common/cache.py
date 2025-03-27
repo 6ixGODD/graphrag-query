@@ -1,12 +1,8 @@
-# Copyright (c) 2024 Microsoft Corporation.
-# Licensed under the MIT License
-
 from __future__ import annotations
 
 import datetime
 import time
 import typing
-
 import typing_extensions
 
 
