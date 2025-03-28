@@ -139,7 +139,7 @@ def _parse_args() -> typing.Tuple[_Args, typing.Dict[str, typing.Any]]:
     parser.set_defaults(func=_help)
 
     args, unknown = parser.parse_known_args()
-    args_ = _Args.parse_obj(args.__dict__)
+    args_ = _Args.model_validate(args.__dict__)
     kwargs: typing.Dict[str, typing.Any] = {}
     for arg in unknown:
         if arg.startswith("--"):
